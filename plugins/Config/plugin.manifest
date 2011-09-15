@@ -1,0 +1,9 @@
+[Plugin]
+Name = Config
+SymbolicName = Config
+Version = 0.0.1
+Author = Chasm
+Enabled = True
+
+[Dependencies]
+ServerCore = 0.0.1

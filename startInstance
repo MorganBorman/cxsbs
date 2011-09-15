@@ -1,0 +1,44 @@
+#!/bin/bash
+
+# Determines where this script is located and stores this path in the SCRIPT_PATH variable
+SCRIPT_PATH="${BASH_SOURCE[0]}";
+if([ -h "${SCRIPT_PATH}" ]); then
+	while([ -h "${SCRIPT_PATH}" ]) do SCRIPT_PATH=`readlink "${SCRIPT_PATH}"`; done
+fi  
+pushd . > /dev/null
+cd `dirname ${SCRIPT_PATH}` > /dev/null
+SCRIPT_PATH=`pwd`;
+popd  > /dev/null
+
+CXSBS_DIR="${SCRIPT_PATH}"
+SERVER_NAMES=("dev")
+
+linkServerInitFile ()
+{
+	SERVER_CFG="${CXSBS_DIR}/server-init.cfg"
+	if [ -f "${SERVER_CFG}" ]; then
+		rm "${SERVER_CFG}"
+	fi
+	ln -s "${CXSBS_DIR}/instances/${SERVER_NAME}/server-init.cfg" "${SERVER_CFG}"
+}
+
+if [ -z "${1}" ]; then
+	echo "Must provide at least one argument"
+else
+	declare -i VALID_NAME
+	SERVER_NAME="${1}"
+	VALID_NAME=0
+	for NAME in "${SERVER_NAMES[@]}"; do
+		if [[ "${SERVER_NAME}" == "${NAME}" ]]; then
+			VALID_NAME=1
+		fi
+	done
+	if (( ${VALID_NAME} == 1 )); then
+		linkServerInitFile
+		${CXSBS_DIR}/bin/cxsbs -s"${CXSBS_DIR}/plugins/" -a"${CXSBS_DIR}/instances/${SERVER_NAME}/config/" -p"${CXSBS_DIR}/instances/${SERVER_NAME}/server-init.cfg"
+	else
+		echo "Invalid name $SERVER_NAME specified"
+	fi
+fi
+
+

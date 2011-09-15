@@ -1,0 +1,9 @@
+[Plugin]
+Name = Events
+SymbolicName = Events
+Version = 0.0.1
+Author = Chasm
+Enabled = True
+
+[Dependencies]
+Logging = 0.0.1
