@@ -1,4 +1,6 @@
+---
 CXSBS: Canonical eXtensible SauerBraten Server
+---
 By: Morgan Borman
 
 CXSBS is a total restructuring of the python side of the XSBS project.
@@ -8,6 +10,7 @@ XSBS is a great project and I salute Greg Haynes (https://github.com/greghaynes)
 That said, design is an iterative process and in working on XSBS I have seen many things which will benefit greatly from this restructuring.
 
 The goals of this restructuring process are as follows:
+
     *   Completely modularize the plugin architecture, turning everything into a plugin which have version dependencies on eachother
     *   Canonicalize the plugin structure to better support advanced operations like reloading server configurations.
     *   Promote a better documented and more maintainable Sauerbraten server mod.
