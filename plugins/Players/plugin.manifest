@@ -1,0 +1,14 @@
+[Plugin]
+Name = Players
+SymbolicName = Players
+Version = 0.0.1
+Author = Chasm
+Enabled = True
+
+[Dependencies]
+Events = 0.0.1
+UI = 0.0.1
+Timers = 0.0.1
+UserPrivilege = 0.0.1
+ServerCore = 0.0.1
+Logging = 0.0.1

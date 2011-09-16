@@ -1,9 +1,9 @@
 from ConfigParser import ConfigParser, NoOptionError, NoSectionError
 
 import cxsbs
-sbserver = cxsbs.getResource("ServerCore")
+ServerCore = cxsbs.getResource("ServerCore")
 
-configuration_path = sbserver.configdir()
+configuration_path = ServerCore.configdir()
 
 # Set this to what you want config file names to end with
 configuration_extension = '.conf'

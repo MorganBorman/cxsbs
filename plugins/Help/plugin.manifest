@@ -1,0 +1,13 @@
+[Plugin]
+Name = Command help
+SymbolicName = Help
+Version = 0.0.1
+Author = Chasm
+Enabled = True
+
+[Dependencies]
+Logging = 0.0.1
+ServerCore = 0.0.1
+Colors = 0.0.1
+UI = 0.0.1
+Players = 0.0.1

@@ -15,7 +15,7 @@ class Logging(Plugin):
 		
 import logging
 import cxsbs
-Config = cxsbs.getResource("Config") 
+Config = cxsbs.getResource("Config")
 
 def init():
 	config = Config.PluginConfig('logging')

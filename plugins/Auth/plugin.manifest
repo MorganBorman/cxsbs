@@ -1,0 +1,8 @@
+[Plugin]
+Name = Auth handling
+SymbolicName = Auth
+Version = 0.0.1
+Author = Chasm
+Enabled = False
+
+[Dependencies]

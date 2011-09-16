@@ -46,7 +46,9 @@ class PluginLoader:
 			try:
 				self.loadPlugin(SymbolicName, manifest.Version)
 			except UnsatisfiedDependency, e:
-				print "Could not load", manifest.Name, "unsatisfied dependency:", e
+				print "Ignore plugin:", manifest.Name, "-- unsatisfied dependency:", e
+			except UnavailableResource, e:
+				print "Failed plugin:", manifest.Name, "-- unsatisfied dependency:", e
 		
 		sys.path.remove(pluginPath)
 			
