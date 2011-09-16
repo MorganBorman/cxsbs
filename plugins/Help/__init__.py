@@ -14,6 +14,7 @@ class Help(Plugin):
 		pass
 		
 import cxsbs
+Config = cxsbs.getResource("Config")
 Logging = cxsbs.getResource("Logging")
 ServerCore = cxsbs.getResource("ServerCore")
 Colors = cxsbs.getResource("Colors")
@@ -24,44 +25,63 @@ class CommandInfo:
 	def __init__(self, command):
 		self.command = command
 		self.usages = []
-		self.public = False
+		self.allowGroups = []
+		self.denyGroups = []
+		self.documentation = ''
 	def addUsage(self, str):
 		str = '#' + self.command + ' ' + str
 		self.usages.append(str)
+		
+	def configureGroups(self):
+		config = Config.PluginConfig('Commands')
+		self.allowGroups = config.getOption('Permissions', 'deny_groups', ' '.join(self.allowGroups)).split()
+		self.denyGroups = config.getOption('Permissions', 'allow_groups', ' '.join(self.denyGroups)).split()
+		del config
+		
+	def finalize(self):
+		self.configureGroups()
+		if self.documentation == '':
+			Logging.warn("No documentation for command: " + self.command)
+		if self.allowGroups == []:
+			Logging.warn("No groups are allowed to issue command: " + self.command)
 
 def loadCommandInfo(command, handler):
 	docs = handler.__doc__
 	if docs != None:
 		info = CommandInfo(command)
 		lines = docs.split('\n')
-		valid = False
-		info.public = False
-		info.master = False
-		info.admin = False
+		doc = False
+		
 		for line in lines:
 			line = line.strip()
 			if line[0] == '@':
 				tag = line.split(' ', 1)[0]
+				text = line[len(tag)+1:]
+				
 				if tag == '@usage':
 					if len(line) == len(tag):
 						info.addUsage('')
 					else:
-						info.addUsage(line[len(tag)+1:])
-					valid = True
+						info.addUsage(text)
+					doc = False
 				elif tag == '@description':
-					info.description = line[len(tag)+1:]
-					valid  = True
-				elif tag == '@public':
-					info.public = True
-					valid = True
-				elif tag == '@master':
-					info.master = True
-					valid = True
-				elif tag == '@admin':
-					info.admin = True
-					valid = True
-		if valid:
-			command_info[command] = info
+					info.description = text
+					doc = False
+				elif tag == '@allowGroups':
+					info.allowGroups += text.split()
+					doc = False
+				elif tag == '@denyGroups':
+					info.denyGroups += text.split()
+					doc = False
+				elif tag == '@doc':
+					doc = True
+					info.documentation += text + '\n'
+				elif doc:
+					info.documentaation += text + '\n'
+					
+		info.finalize()
+					
+		command_info[command] = info
 	else:
 		Logging.warn('No help info for command: ' + command)
 

@@ -19,65 +19,28 @@ import cxsbs
 Events = cxsbs.getResource("Events")
 UI = cxsbs.getResource("UI")
 Timers = cxsbs.getResource("Timers")
-UserPrivilege = cxsbs.getResource("UserPrivilege")
 ServerCore = cxsbs.getResource("ServerCore")
 Logging = cxsbs.getResource("Logging")
 
 import math
 
-def playerPrivilege(cn):
-	if isAdmin(cn):
-		return 2
-	elif isMaster(cn):
-		return 1
-	else:
-		return 0
-
 def isMaster(cn):
 	if ServerCore.playerPrivilege(cn) == 1:
 		return True
-	try:
-		return UserPrivilege.isUserMaster(player(cn).user.id)
-	except AttributeError, ValueError:
+	else:
 		return False
 
 def isAtLeastMaster(cn):
 	if ServerCore.playerPrivilege(cn) > 0:
 		return True
-	try:
-		return UserPrivilege.isUserAtLeastMaster(player(cn).user.id)
-	except AttributeError, ValueError:
+	else:
 		return False
 
 def isAdmin(cn):
 	if ServerCore.playerPrivilege(cn) == 2:
 		return True
-	try:
-		return UserPrivilege.isUserAdmin(player(cn).user.id)
-	except AttributeError, ValueError:
+	else:
 		return False
-
-class masterRequired(object):
-	def __init__(self, func):
-		self.func = func
-		self.__doc__ = func.__doc__
-		self.__name__ = func.__name__
-	def __call__(self, *args):
-		if not isAtLeastMaster(args[0]):
-			UI.insufficientPermissions(args[0])
-		else:
-			self.func(*args)
-
-class adminRequired(object):
-	def __init__(self, func):
-		self.func = func
-		self.__doc__ = func.__doc__
-		self.__name__ = func.__name__
-	def __call__(self, *args):
-		if not isAdmin(args[0]):
-			UI.insufficientPermissions(args[0])
-		else:
-			self.func(*args)
 
 class Player:
 	'''Represents a client on the server'''

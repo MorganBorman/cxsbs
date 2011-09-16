@@ -46,6 +46,11 @@ class ArgumentValueError(Exception):
 	def __init__(self, value):
 		Exception.__init__(self, value)
 		
+class InsufficientPermissions(Exception):
+	'''...'''
+	def __init__(self):
+		Exception.__init__(self, "Insufficient Permissions")
+		
 class CommandThread(threading.Thread):
 	def __init__(self, p, command, func, args):
 		self.p = p
@@ -75,6 +80,9 @@ class CommandThread(threading.Thread):
 			exceptionType, exceptionValue, exceptionTraceback = sys.exc_info()	
 			Logging.warn('Uncaught ValueError raised in command handler.')
 			Logging.warn(traceback.format_exc())
+		except InsufficientPermissions:
+			UI.insufficientPermissions(p.cn)
+			Logging.warn('Insufficient Permissions:' + p.Name + "@" + p.ipString())
 		except:
 			exceptionType, exceptionValue, exceptionTraceback = sys.exc_info()	
 			Logging.warn('Uncaught exception occured in command handler.')
@@ -183,6 +191,18 @@ class commandHandler(object):
 		self.__name__ = f.__name__
 		registerCommandHandler(self.command_name, f)
 		return f
+	
+class permitGroup(object):
+	def __init__(self, groupName):
+		self.func = func
+		self.groupName = groupName
+		self.__doc__ = func.__doc__
+		self.__name__ = func.__name__
+	def __call__(self, f):
+		if not isAtLeastMaster(args[0]):
+			UI.insufficientPermissions(args[0])
+		else:
+			self.func(*args)
 
 class cnArg(object):
 	def __init__(self, argnum=0):

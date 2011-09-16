@@ -39,13 +39,8 @@ def init():
 	global notice_pre, info_pre, warning_pre, error_pre
 	
 	config = Config.PluginConfig('ui')
-	notice_pre = config.getOption('Prefixes', 'notice', '${blue}Notice:')
-	info_pre = config.getOption('Prefixes', 'info', '${yellow}Info:')
-	warning_pre = config.getOption('Prefixes', 'warning', '${red}Warning:')
-	error_pre = config.getOption('Prefixes', 'error', '${red}Error:')
+	notice_pre = config.getTemplateOption('Prefixes', 'notice', '${blue}Notice: ').substitute(Colors.colordict)
+	info_pre = config.getTemplateOption('Prefixes', 'info', '${yellow}Info: ').substitute(Colors.colordict)
+	warning_pre = config.getTemplateOption('Prefixes', 'warning', '${red}Warning: ').substitute(Colors.colordict)
+	error_pre = config.getTemplateOption('Prefixes', 'error', '${red}Error: ').substitute(Colors.colordict)
 	del config
-	
-	notice_pre = string.Template(notice_pre).substitute(Colors.colordict) + ' '
-	info_pre = string.Template(info_pre).substitute(Colors.colordict) + ' '
-	warning_pre = string.Template(warning_pre).substitute(Colors.colordict) + ' '
-	error_pre = string.Template(error_pre).substitute(Colors.colordict) + ' '

@@ -1,9 +1,8 @@
 [Plugin]
-Name = User Model
-SymbolicName = UserModel
+Name = Base User Model
+SymbolicName = BaseUserModel
 Version = 0.0.1
 Author = Chasm
 Enabled = True
 
 [Dependencies]
-BaseUserModel = 0.0.1

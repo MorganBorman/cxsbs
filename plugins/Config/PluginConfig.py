@@ -3,6 +3,8 @@ from ConfigParser import ConfigParser, NoOptionError, NoSectionError
 import cxsbs
 ServerCore = cxsbs.getResource("ServerCore")
 
+import string
+
 configuration_path = ServerCore.configdir()
 
 # Set this to what you want config file names to end with
@@ -45,6 +47,22 @@ class PluginConfig:
 			self.parser.set(section, option, default)
 			self.is_modified = True
 		return default
+	def getIntOption(self, section, option, default, write_if_absent=True):
+		'''
+		Return the value just as getOption does but try and convert to integer
+		'''
+		return int(self.getOption(section, option, default, write_if_absent))
+	def getTemplateOption(self, section, option, default, write_if_absent=True):
+		'''
+		Return the value just as getOption does but try and convert to template
+		'''
+		return string.template(self.getOption(section, option, default, write_if_absent))
+	def getBoolOption(self, section, option, default, write_if_absent=True):
+		'''
+		Return the value just as getOption does but try and convert to a boolean
+		'''
+		option = self.getOption(section, option, default, write_if_absent)
+		return option.lower() == "true" or option.lower() == "yes"
 	def getAllOptions(self, section):
 		'''
 		Returns all options and their values in section.
