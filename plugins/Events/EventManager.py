@@ -1,6 +1,6 @@
 import threading
-import cxsbs.PluginLoader
-logging = cxsbs.PluginLoader.getResource("Logging")
+import cxsbs
+logging = cxsbs.getResource("Logging")
 
 def executeEvent(func, args):
 	"""Used to execute the event itself"""
@@ -22,7 +22,8 @@ class EventThread(threading.Thread):
 		executeEvent(self.func, self.args)
 
 class EventManager:
-	def __init__(self):
+	def __init__(self, debugging=False):
+		self.debugging = debugging
 		self.events = {}
 	def connect(self, event, func):
 		try:
@@ -31,8 +32,8 @@ class EventManager:
 			self.events[event] = []
 			self.connect(event, func)
 	def trigger(self, eventName, args=()):
-		if debuggingPrintEventAndArgs:
-			print eventName, args
+		if self.debugging:
+			print "Event:", eventName, args
 		try:
 			if eventName.find("sync_") == 0:
 				eventName = eventName[5:]

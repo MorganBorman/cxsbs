@@ -7,11 +7,11 @@ class Config(Plugin):
 		Plugin.__init__(self)
 		
 	def load(self):
-		print "Config Plugin: load function"
+		pass
 		
 	def reload(self):
-		print "Config Plugin: reload function"
+		pass
 		
 	def unload(self):
-		print "Config Plugin: unload function"
+		pass
 		

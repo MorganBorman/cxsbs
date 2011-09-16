@@ -78,6 +78,8 @@ static PyObject *textModerationModule, *textModFunc;
 
 bool initPy()
 {
+	PyRun_SimpleString("import sys\nimport os\nsys.path.append(os.getcwd())");
+
 	cxsbsModule = PyImport_ImportModule("cxsbs");
 	SBPY_ERR(cxsbsModule)
 
@@ -89,6 +91,10 @@ bool initPy()
 		return false;
 	}
 
+	//Actually load the plugins...
+	callPyStringFunc(loadPluginsFunction, plugin_path);
+
+	//get the rest of the c++ accessible resources
 	getResourceFunction = PyObject_GetAttrString(cxsbsModule, "getResource");
 	SBPY_ERR(getResourceFunction);
 	if(!PyCallable_Check(getResourceFunction))

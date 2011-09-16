@@ -77,6 +77,7 @@ class PluginLoader:
 			self.pluginObjects[manifest.SymbolicName] = pluginObjectClass()
 			self.plugins[manifest.SymbolicName] = pluginModule
 			
+			print "Loaded plugin:", manifest.Name
 			self.pluginObjects[manifest.SymbolicName].load()
 			
 	def getResource(self, symbolicName):

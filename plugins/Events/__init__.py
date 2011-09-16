@@ -1,5 +1,26 @@
 from cxsbs.Plugin import Plugin
 
+class Events(Plugin):
+	def __init__(self):
+		Plugin.__init__(self)
+		
+	def load(self):
+		global eventManager
+		global policyEventManager
+		
+		eventManager = EventManager.EventManager()
+		policyEventManager = PolicyEventManager.PolicyEventManager()
+		
+	def reload(self):
+		eventManager.events.clear()
+		policyEventManager.events.clear()
+		
+	def unload(self):
+		pass
+	
+import cxsbs
+Logging = cxsbs.getResource("Logging")
+		
 from twisted.internet import reactor
 
 import EventManager
@@ -7,6 +28,7 @@ import PolicyEventManager
 
 eventManager = None
 policyEventManager = None
+exec_queue = []
 
 def registerServerEventHandler(event, func):
 	'''Call function when event has been executed.'''
@@ -54,9 +76,9 @@ def triggerExecQueue():
 			event[0](*event[1])
 		except:
 			exceptionType, exceptionValue, exceptionTraceback = sys.exc_info()	
-			logging.warn('Uncaught exception execLater queue.')
-			logging.warn(traceback.format_exc())
-			logging.warn(traceback.extract_tb(exceptionTraceback))
+			Logging.warn('Uncaught exception execLater queue.')
+			Logging.warn(traceback.format_exc())
+			Logging.warn(traceback.extract_tb(exceptionTraceback))
 	del exec_queue[:]
 
 def update():
@@ -65,22 +87,4 @@ def update():
 	triggerExecQueue()
 
 reactor.startRunning() #@UndefinedVariable
-
-class Events(Plugin):
-	def __init__(self):
-		Plugin.__init__(self)
-		
-	def load(self):
-		global eventManager
-		global policyEventManager
-		
-		eventManager = EventManager.EventManager()
-		policyEventManager = PolicyEventManager.PolicyEventManager()
-		
-	def reload(self):
-		eventManager.events.clear()
-		policyEventManager.events.clear()
-		
-	def unload(self):
-		print "Events Plugin: unload function"
 		

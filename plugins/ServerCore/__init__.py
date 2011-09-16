@@ -7,11 +7,11 @@ class ServerCore(Plugin):
 		Plugin.__init__(self)
 		
 	def load(self):
-		print "ServerCore Plugin: load function"
+		pass
 		
 	def reload(self):
-		print "ServerCore Plugin: reload function"
+		pass
 		
 	def unload(self):
-		print "ServerCore Plugin: unload function"
+		pass
 		

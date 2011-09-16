@@ -1,5 +1,7 @@
 from ConfigParser import ConfigParser, NoOptionError, NoSectionError
-sbserver = cxsbs.PluginLoader.getResource("ServerCore")
+
+import cxsbs
+sbserver = cxsbs.getResource("ServerCore")
 
 configuration_path = sbserver.configdir()
 

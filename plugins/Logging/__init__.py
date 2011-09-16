@@ -5,11 +5,38 @@ class Logging(Plugin):
 		Plugin.__init__(self)
 		
 	def load(self):
-		print "Logging Plugin: load function"
+		init()
 		
 	def reload(self):
-		print "Events Plugin: reload function"
+		init()
 		
 	def unload(self):
-		print "Events Plugin: unload function"
+		init()
 		
+import logging
+import cxsbs
+Config = cxsbs.getResource("Config") 
+
+def init():
+	config = Config.PluginConfig('logging')
+	path = config.getOption('Config', 'path', 'xsbs.log')
+	level = config.getOption('Config', 'level', 'error')
+	del config
+	
+	LEVELS = {'debug': logging.DEBUG,
+		'info': logging.INFO,
+		'warning': logging.WARNING,
+		'error': logging.ERROR,
+		'critical': logging.CRITICAL}
+	
+	print "\tLogging to:", path
+	
+	logging.basicConfig(
+		filename = path,
+		format = '%(levelname)-10s %(asctime)s %(module)s: %(message)s',
+		level = LEVELS[level])
+	
+#make these function available in this resource
+warn = logging.warn
+error = logging.error
+debug = logging.debug
