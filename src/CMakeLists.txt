@@ -4,7 +4,7 @@ find_package(PythonLibs REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(Threads REQUIRED)
 
-set(xsbs_srcs
+set(cxsbs_srcs
 	engine/server.cpp
 	engine/command.cpp
 
@@ -13,7 +13,7 @@ set(xsbs_srcs
 	pycontrol/sbpy.cpp
 	pycontrol/servermodule.cpp)
 
-set(XSBS_LIBS
+set(CXSBS_LIBS
 	enet
 	sauertools
 	${PYTHON_LIBRARIES}
@@ -23,7 +23,7 @@ set(XSBS_LIBS
 	-ldl)
     
 IF(WIN32)
-set(XSBS_LIBS ${XSBS_LIBS} ws2_32 winmm)
+set(CXSBS_LIBS ${CXSBS_LIBS} ws2_32 winmm)
 ENDIF(WIN32)
 
 include(CheckFunctionExists)
@@ -52,13 +52,11 @@ include_directories(${CMAKE_SOURCE_DIR}/src/engine
 	${PYTHON_INCLUDE_PATH}
 	${ZLIB_INCLUDE_PATH})
 
-add_executable(xsbs
-	${xsbs_srcs})
+add_executable(../bin/cxsbs ${cxsbs_srcs})
+target_link_libraries(../bin/cxsbs ${CXSBS_LIBS})
 
-target_link_libraries(xsbs ${XSBS_LIBS})
+add_executable(../bin/keygen keygen.cpp)
+target_link_libraries(../bin/keygen enet sauertools ${ZLIB_LIBRARIES})
 
-add_executable(keygen keygen.cpp)
-target_link_libraries(keygen enet sauertools ${ZLIB_LIBRARIES})
-
-install(TARGETS xsbs DESTINATION bin)
+install(TARGETS ../bin/cxsbs DESTINATION bin)
 

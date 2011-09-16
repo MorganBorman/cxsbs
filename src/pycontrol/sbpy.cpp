@@ -48,7 +48,29 @@ PyMODINIT_FUNC initModule(const char *);
 		return false;\
 	}
 
-//static PyObject *eventsModule, *triggerEventFunc, *triggerPolicyEventFunc, *textModFunc, *textModModule, *updateFunc;
+PyObject *callPyStringFunc(PyObject *func, const char *text)
+{
+	PyObject *val, *pArgs, *pText;
+
+	//check the function
+	if(!func || !PyCallable_Check(func))
+	{
+		fprintf(stderr, "Python Error: Invalid handler to triggerEvent function.\n");
+		return val;
+	}
+
+	//construct the args
+	pArgs = PyTuple_New(1);
+	pText = PyString_FromString(text);
+	SBPY_ERR(pText)
+	PyTuple_SetItem(pArgs, 0, pText);
+
+	val = PyObject_CallObject(func, pArgs);
+	Py_DECREF(pArgs);
+	if(!val)
+		PyErr_Print();
+	return val;
+}
 
 static PyObject *cxsbsModule, *loadPluginsFunction, *getResourceFunction;
 static PyObject *eventsModule, *triggerEventFunc, *triggerPolicyEventFunc, *updateFunc;
@@ -125,7 +147,7 @@ void deinitPy()
 	Py_XDECREF(loadPluginsFunction);
 	Py_XDECREF(getResourceFunction);
 
-	Py_XDECREF(eventsModule)
+	Py_XDECREF(eventsModule);
 	Py_XDECREF(triggerEventFunc);
 	Py_XDECREF(triggerPolicyEventFunc);
 	Py_XDECREF(updateFunc);
@@ -180,30 +202,6 @@ PyObject *callPyFunc(PyObject *func, PyObject *args)
 	PyObject *val;
 	val = PyObject_CallObject(func, args);
 	Py_DECREF(args);
-	if(!val)
-		PyErr_Print();
-	return val;
-}
-
-PyObject *callPyStringFunc(PyObject *func, const char *text)
-{
-	PyObject *val;
-
-	//check the function
-	if(!func || !PyCallable_Check(func))
-	{
-		fprintf(stderr, "Python Error: Invalid handler to triggerEvent function.\n");
-		return val;
-	}
-
-	//construct the args
-	pArgs = PyTuple_New(1);
-	pText = PyString_FromString(text);
-	SBPY_ERR(pText)
-	PyTuple_SetItem(pArgs, 0, pText);
-
-	val = PyObject_CallObject(func, pArgs);
-	Py_DECREF(pArgs);
 	if(!val)
 		PyErr_Print();
 	return val;
