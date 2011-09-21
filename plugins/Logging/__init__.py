@@ -11,7 +11,7 @@ class Logging(Plugin):
 		init()
 		
 	def unload(self):
-		init()
+		pass
 		
 import logging
 import cxsbs
@@ -33,7 +33,7 @@ def init():
 	
 	logging.basicConfig(
 		filename = path,
-		format = '%(levelname)-10s %(asctime)s %(module)s: %(message)s',
+		format = '%(levelname)-10s %(asctime)s %(pathname)s: %(message)s',
 		level = LEVELS[level])
 	
 #make these function available in this resource

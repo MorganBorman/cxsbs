@@ -46,7 +46,7 @@ class PluginLoader:
 		for SymbolicName in self.manifests.keys():
 			manifest = self.manifests[SymbolicName]
 			try:
-				self.loadPlugin(SymbolicName, manifest.Version)
+				self.loadPlugin(SymbolicName, None, [])
 			except UnsatisfiedDependency, e:
 				print "Ignore plugin:", manifest.Name, "-- unsatisfied dependency:", e
 			except UnavailableResource, e:
@@ -60,33 +60,58 @@ class PluginLoader:
 		
 		sys.path.remove(pluginPath)
 			
-	def loadPlugin(self, symbolicName, version):
+	def loadPlugin(self, symbolicName, dependency, dependList):
+		#dependList holds the list of dependencies along the depth-first cross section of the tree. Used to find cycles.
+		dependList = dependList[:]
+		dependList.append(symbolicName)
+		
+		#get the manifest from the manifest list
 		try:
 			manifest = self.manifests[symbolicName]
 		except KeyError:
 			self.failed.append(symbolicName)
-			raise UnsatisfiedDependency(symbolicName + ":" + version)
+			raise UnsatisfiedDependency(symbolicName + ":" + dependency.dependencyString)
 		
-		if version != manifest.Version:
-			self.failed.append(manifest.SymbolicName)
-			raise UnsatisfiedDependency(symbolicName + ":" + version)
+		if dependency != None:
+			if dependency.satisfied(manifest.SymbolicName, manifest.Version):
+				pass #dependency is satisfied
+			else:
+				self.failed.append(manifest.SymbolicName)
+				raise UnsatisfiedDependency(symbolicName + ":" + dependency.dependencyString + ". Version present is: " + manifest.Version)
 		
+		#plugin still needs to be loaded
 		if not manifest.SymbolicName in self.plugins.keys():
-			#plugin still needs to be loaded
 			
-			for dependencySymbolicName, dependencyVersion in manifest.Dependencies:
-				if dependencySymbolicName in self.failed:
+			#load the dependencies
+			for dependency in manifest.Dependencies:
+				#check if we have a cycle forming
+				if dependency.dependencyName in dependList:
+					#append the name here for showing the cycle in the exception
+					dependList.append(dependency.dependencyName)
+					
 					self.failed.append(manifest.SymbolicName)
-					raise FailedDependency(dependencySymbolicName)
-				self.loadPlugin(dependencySymbolicName, dependencyVersion)
+					raise DependencyCycle(str("->".join(dependList)))
+				
+				#skip ones that have previously failed to load
+				if dependency.dependencyName in self.failed:
+					#add this one to the list of failed
+					self.failed.append(manifest.SymbolicName)
+					raise FailedDependency(dependency.dependencyName)
+				#else load the plugin
+				else: 
+					self.loadPlugin(dependency.dependencyName, dependency, dependList)
 			
+			#import the plugin
 			pluginModule = __import__(manifest.SymbolicName)
+			
+			#get the plugin class from the module
 			try:
 				pluginObjectClass = pluginModule.__getattribute__(manifest.SymbolicName)
 			except AttributeError:
 				self.failed.append(manifest.SymbolicName)
 				raise MalformedPlugin(manifest.SymbolicName + ": class is not present.")
 			
+			#check that the plugin class is a subclass of Plugin
 			if not issubclass(pluginObjectClass, Plugin):
 				self.failed.append(manifest.SymbolicName)
 				raise MalformedPlugin(manifest.SymbolicName + ": is not derived from Plugin.")
@@ -94,8 +119,8 @@ class PluginLoader:
 			self.pluginObjects[manifest.SymbolicName] = pluginObjectClass()
 			self.plugins[manifest.SymbolicName] = pluginModule
 			
-			print "Loaded plugin:", manifest.Name
 			self.pluginObjects[manifest.SymbolicName].load()
+			print "Loaded plugin:", manifest.Name
 			
 	def getResource(self, symbolicName):
 		try:

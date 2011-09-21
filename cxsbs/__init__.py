@@ -1,4 +1,8 @@
 import PluginLoader
+import sys, os
+
+pydepsPath = os.path.abspath("pydeps/")
+sys.path.append(pydepsPath)
 
 pluginLoader = PluginLoader.PluginLoader()
 

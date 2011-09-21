@@ -1,0 +1,10 @@
+[Plugin]
+Name = Core database Manager
+SymbolicName = DatabaseManager
+Version = 0.0.1
+Author = Chasm
+Enabled = True
+
+[Dependencies]
+#DatabaseManagerInformix = 0.0.1
+DatabaseManagerSqlite = 0.0.1

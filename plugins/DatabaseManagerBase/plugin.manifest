@@ -1,0 +1,9 @@
+[Plugin]
+Name = Database Manager Base
+SymbolicName = DatabaseManagerBase
+Version = 0.0.1
+Author = Chasm
+Enabled = True
+
+[Dependencies]
+DatabaseSession = 0.0.1

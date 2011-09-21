@@ -1,0 +1,8 @@
+[Plugin]
+Name = Database Session
+SymbolicName = DatabaseSession
+Version = 0.0.1
+Author = Chasm
+Enabled = True
+
+[Dependencies]

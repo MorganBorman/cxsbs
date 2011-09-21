@@ -1,0 +1,11 @@
+[Plugin]
+Name = Database Manager Sqlite
+SymbolicName = DatabaseManagerSqlite
+Version = 0.0.1
+Author = Chasm
+Enabled = True
+
+[Dependencies]
+DatabaseManagerBase = 0.0.1
+DatabaseSession = 0.0.1
+Config = 0.0.1

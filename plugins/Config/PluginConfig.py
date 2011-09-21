@@ -56,7 +56,7 @@ class PluginConfig:
 		'''
 		Return the value just as getOption does but try and convert to template
 		'''
-		return string.template(self.getOption(section, option, default, write_if_absent))
+		return string.Template(self.getOption(section, option, default, write_if_absent))
 	def getBoolOption(self, section, option, default, write_if_absent=True):
 		'''
 		Return the value just as getOption does but try and convert to a boolean

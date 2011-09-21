@@ -1,8 +1,6 @@
-from ServerCore import *
-
 from cxsbs.Plugin import Plugin
 
-class ServerCore(Plugin):
+class Players(Plugin):
 	def __init__(self):
 		Plugin.__init__(self)
 		
@@ -24,24 +22,6 @@ Logging = cxsbs.getResource("Logging")
 
 import math
 
-def isMaster(cn):
-	if ServerCore.playerPrivilege(cn) == 1:
-		return True
-	else:
-		return False
-
-def isAtLeastMaster(cn):
-	if ServerCore.playerPrivilege(cn) > 0:
-		return True
-	else:
-		return False
-
-def isAdmin(cn):
-	if ServerCore.playerPrivilege(cn) == 2:
-		return True
-	else:
-		return False
-
 class Player:
 	'''Represents a client on the server'''
 	def __init__(self, cn):
@@ -62,9 +42,22 @@ class Player:
 	def ipString(self):
 		'''Ip of client as decimal octet string'''
 		return Net.ipLongToString(self.ipLong())
-	def privilege(self):
-		'''Integer privilege of client'''
-		return ServerCore.playerPrivilege(self.cn)
+	def groups(self):
+		'''Returns the groups which are based on server state'''
+		playerPriv = ServerCore.playerPrivilege(self.cn)
+		groups = []
+		if playerPriv == 1:
+			groups.append("__auth__")
+		elif playerPriv == 2:
+			groups.append("__admin__")
+		else:
+			groups.append("__norm__")
+			
+		if self.isSpectator():
+			groups.append("__spectator__")
+		else:
+			groups.append("__player__")
+		
 	def requestPlayerAuth(self, desc):
 		'''Request the players auth entry matching the given description'''
 		ServerCore.requestPlayerAuth(self.cn, desc)
@@ -86,12 +79,6 @@ class Player:
 	def isSpectator(self):
 		'''Is client a spectator'''
 		return ServerCore.playerIsSpectator(self.cn)
-	def isMaster(self):
-		return isMaster(self.cn)
-	def isAtLeastMaster(self):
-		return isAtLeastMaster(self.cn)
-	def isAdmin(self):
-		return isAdmin(self.cn)
 	def message(self, msg):
 		'''Send message to client'''
 		ServerCore.playerMessage(self.cn, msg)
@@ -148,9 +135,6 @@ def onMapChanged(mapname, mapmode):
 def all():
 	'''Get list of all clients'''
 	return players.values()
-
-AllPlayersGroup = DynamicGroup(Player, all)
-EmptyPlayersGroup = Group(Player, [])
 
 def cnsToPlayers(cns):
 	'''Turn list of cn's into list of Player's'''
@@ -219,17 +203,25 @@ def triggerConnectDelayed(cn):
 		return
 	else:
 		Events.triggerServerEvent('player_connect_delayed', (cn,))
+		
+def triggerBotConnectDelayed(cn):
+	try:
+		player(cn)
+	except ValueError:
+		return
+	else:
+		Events.triggerServerEvent('bot_connect_delayed', (cn,))
 
-def currentMaster():
-	for p in all():
-		if p.privilege() == 1:
-			return p
+def currentAuth():
+	for cn in ServerCore.clients():
+		if ServerCore.playerPrivilege(self.cn) == 1:
+			return cn
 	return None
 
 def currentAdmin():
-	for p in all():
-		if p.privilege() == 2:
-			return p
+	for cn in ServerCore.clients():
+		if ServerCore.playerPrivilege(self.cn) == 2:
+			return cn
 	return None
 
 def addPlayerForCn(cn):
@@ -247,12 +239,7 @@ def onPlayerConnect(cn):
 @Events.eventHandler('game_bot_added')
 def onBotConnect(cn):
 	addPlayerForCn(cn)
-
-@Events.eventHandler('restart_complete')
-def reload():
-	for cn in ServerCore.clients():
-		pass
-		#playerConnect(cn)
+	Timers.addTimer(1000, triggerConnectDelayed, (cn,))
 
 @Events.eventHandler('player_auth_succeed')
 def onAuthSuccess(cn, name):
@@ -264,3 +251,5 @@ def onAuthSuccess(cn, name):
 def init():
 	global players
 	players = {}
+	for cn in ServerCore.clients():
+		playerConnect(cn)

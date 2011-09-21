@@ -1,0 +1,9 @@
+[Plugin]
+Name = Clan Tags
+SymbolicName = ClanTags
+Version = 0.0.1
+Author = Chasm
+Enabled = True
+
+[Dependencies]
+Database = 0.0.1
