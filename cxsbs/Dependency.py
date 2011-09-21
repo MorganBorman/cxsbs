@@ -57,6 +57,20 @@ def versionEqual(version1, version2):
 		else: #==
 			pass #and look at the next part
 	return True
+	
+def satisfiesParameter(version1, parameter):
+	"""checks one parameter against the version given"""
+	if parameter[0] in "><!":
+		qualifier = parameter[0]
+		version2 = parameter[1:]
+		if qualifier == ">":
+			return versionGreater(version1, version2)
+		elif qualifier == "<":
+			return versionLess(version1, version2)
+		elif qualifier == "!":
+			return not versionEqual(version1, version2)
+	else:
+		return versionEqual(version1, parameter)
 
 class Dependency:
 	"""A class to hold a dependency and encapsulate dependency satisfation checks"""
@@ -72,20 +86,6 @@ class Dependency:
 			return False
 		
 		for parameter in self.dependencyParameters:
-			if not self.satisfiesParameter(version, parameter):
+			if not satisfiesParameter(version, parameter):
 				return False
 		return True
-			
-	def satisfiesParameter(self, version1, parameter):
-		"""checks one parameter against the version given"""
-		if parameter[0] in "><!":
-			qualifier = parameter[0]
-			version2 = parameter[1:]
-			if qualifier == ">":
-				return versionGreater(version1, version2)
-			elif qualifier == "<":
-				return versionLess(version1, version2)
-			elif qualifier == "!":
-				return not versionEqual(version1, version2)
-		else:
-			return versionEqual(version1, parameter)

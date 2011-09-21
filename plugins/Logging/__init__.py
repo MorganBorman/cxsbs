@@ -19,7 +19,7 @@ Config = cxsbs.getResource("Config")
 
 def init():
 	config = Config.PluginConfig('logging')
-	path = config.getOption('Config', 'path', 'xsbs.log')
+	path = config.getOption('Config', 'path', 'cxsbs.log')
 	level = config.getOption('Config', 'level', 'error')
 	del config
 	

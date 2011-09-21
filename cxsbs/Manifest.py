@@ -1,5 +1,6 @@
 import ConfigParser
 import Dependency
+import Request
 
 class Manifest:
 	def __init__(self, manifestPath, manifestFile):
@@ -14,15 +15,35 @@ class Manifest:
 		
 		self.Name = manifest.get("Plugin", "Name")
 		self.SymbolicName = manifest.get("Plugin", "SymbolicName")
+		
+		try:
+			self.Provides = manifest.get("Plugin", "Provides")
+		except:
+			self.Provides = None
+			
 		self.Version = manifest.get("Plugin", "Version")
 		self.Author = manifest.get("Plugin", "Author")
 		self.Enabled = manifest.get("Plugin", "Enabled") == "True"
 		
 		self.Dependencies = []
-		
-		for dependencyName, dependencyString in manifest.items("Dependencies"):
+		dependencies = {}
+		try:
+			dependencies = manifest.items("Dependencies")
+		except:
+			pass
+		for dependencyName, dependencyString in dependencies:
 			dependency = Dependency.Dependency(dependencyName, dependencyString)
 			self.Dependencies.append(dependency)
+			
+		self.Requests = []
+		requests = {}
+		try:
+			requests = manifest.items("Requests")
+		except:
+			pass
+		for requestName, requestString in requests:
+			request = Request.Request(requestName, requestString)
+			self.Requests.append(request)
 		
 class MalformedManifest(Exception):
 	'''Invalid manifest form'''

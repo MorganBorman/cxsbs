@@ -1,0 +1,6 @@
+[Plugin]
+Name = User Model Base
+SymbolicName = UserModelBase
+Version = 0.0.1
+Author = Chasm
+Enabled = True

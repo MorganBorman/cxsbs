@@ -1,9 +1,10 @@
 [Plugin]
 Name = Database Manager Informix
 SymbolicName = DatabaseManagerInformix
+Provides = DatabaseManagerBackend
 Version = 0.0.1
 Author = Chasm
-Enabled = True
+Enabled = False
 
 [Dependencies]
 DatabaseManagerBase = 0.0.1

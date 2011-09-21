@@ -3,7 +3,7 @@ Name = Users
 SymbolicName = Users
 Version = 0.0.1
 Author = Chasm
-Enabled = True
+Enabled = False
 
 [Dependencies]
 UserModel = 0.0.1

@@ -1,6 +1,6 @@
 from cxsbs.Plugin import Plugin
 
-class BaseUserModel(Plugin):
+class UserModelBase(Plugin):
 	def __init__(self):
 		Plugin.__init__(self)
 		

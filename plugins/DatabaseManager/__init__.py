@@ -14,49 +14,25 @@ class DatabaseManager(Plugin):
 		pass
 
 import cxsbs
-Config = cxsbs.getResource("Config")
+DatabaseManagerBase = cxsbs.getResource("DatabaseManagerBase")
 
 import sys
 from contextlib import contextmanager
 
-databaseConfigurationFilename = 'db'
-
-def getProtocol():
-	try:
-		config = Config.PluginConfig(databaseConfigurationFilename)
-		protocol = config.getOption('Config', 'protocol', 'sqlite://')
-		return protocol
-	except:
-		raise #probably should have something better here. just rethrow for now.
-	finally:
-		del config
-
-def uriBeginsWithQuote(uri):
-	if len(uri) < 1:
-		return False
-	return (uri[0] == "'" or uri[0] == "\"")
-
-def isProtocol(uri, protocolName):
-	offset = 0
-	if (uriBeginsWithQuote(uri)):
-		offset = 1
-	delimiterPosition = uri.find("://")
-	uriBeginPosition = uri.find(protocolName)
-	return uriBeginPosition >= offset and uriBeginPosition < delimiterPosition
-
 def initializeDatabaseManager():
 	"""returns the correct DatabaseManager instance"""
-	protocol = getProtocol()
+	backendName = DatabaseManagerBase.getBackendName()
 	
-	if isProtocol(protocol, "sqlite"):
-		DatabaseManagerSqlite = cxsbs.getResource("DatabaseManagerSqlite")
-		return DatabaseManagerSqlite.SqliteManager()
-	elif isProtocol(protocol, "informix"):
-		DatabaseManagerInformix = cxsbs.getResource("DatabaseManagerInformix")
-		return DatabaseManagerInformix.InformixManager()
-	else:
-		sys.stderr.write("Unable to create database engine for Protocol: " + protocol + "\n")
-		sys.exit(1);
+	DatabaseManagerBackendModule = cxsbs.getResource(backendName)
+	try:
+		DatabaseManagerBackendClass = DatabaseManagerBackendModule.__getattribute__("DatabaseManagerBackend")
+	except AttributeError:
+		raise MissingResourceComponent(backendName, "DatabaseManagerBackend", "class")
+	
+	if not issubclass(DatabaseManagerBackendClass, DatabaseManagerBase.DatabaseManagerBackend):
+		raise InvalidResourceComponent(backendName, "DatabaseManagerBackend", "class")
+		
+	return DatabaseManagerBackendClass()
 
 @contextmanager
 def dbsession():

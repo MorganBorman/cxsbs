@@ -11,6 +11,7 @@ class PluginLoader:
 		self.manifests = {}
 		self.pluginObjects = {}
 		self.plugins = {}
+		self.providers = {}
 		self.failed = []
 			
 	def scanManifests(self, pluginPath):
@@ -26,14 +27,25 @@ class PluginLoader:
 			if os.path.isdir(pluginDirectory) and os.path.exists(manifestPath):
 				try:
 					manifest = Manifest(pluginDirectory, manifestFilename)
-					if manifest.Enabled:
-						self.manifests[manifest.SymbolicName] = manifest
-					else:
-						print "Plugin disabled:", manifest.Name
+					self.processManifest(manifest)
+					
 				except MalformedManifest:
 					print "Malformed plugin manifest:", manifestPath
 			else:
 				print "Cannot read plugin:", pluginDirectory
+				
+	def processManifest(self, manifest):
+		if manifest.Enabled:
+	
+			if manifest.Provides != None:
+			
+				if not manifest.Provides in self.providers.keys():
+					self.providers[manifest.Provides] = {}
+				self.providers[manifest.Provides][manifest.SymbolicName] = manifest
+	
+			self.manifests[manifest.SymbolicName] = manifest
+		else:
+			print "Plugin disabled:", manifest.Name	
 				
 	def loadPlugins(self, pluginPath):
 		if not os.path.isdir(pluginPath):
@@ -59,6 +71,48 @@ class PluginLoader:
 				print "Failed plugin:", manifest.Name, "Required resource:", e.resource, "did not provide a valid", e.componentType, e.component
 		
 		sys.path.remove(pluginPath)
+		
+	def loadDependencies(self, manifest, dependList):
+		for dependency in manifest.Dependencies:
+			#check if we have a cycle forming
+			if dependency.dependencyName in dependList:
+				#append the name here for showing the cycle in the exception
+				dependList.append(dependency.dependencyName)
+				
+				self.failed.append(manifest.SymbolicName)
+				raise DependencyCycle(str("->".join(dependList)))
+			
+			#skip ones that have previously failed to load
+			if dependency.dependencyName in self.failed:
+				#add this one to the list of failed
+				self.failed.append(manifest.SymbolicName)
+				raise FailedDependency(dependency.dependencyName)
+			#else load the plugin
+			else: 
+				self.loadPlugin(dependency.dependencyName, dependency, dependList)
+	
+	def loadRequests(self, manifest, dependList):
+		for request in manifest.Requests:
+			for provider in self.getProviderManifests(request.requestName):
+				#check if we have a cycle forming
+				if provider.SymbolicName in dependList:
+					#append the name here for showing the cycle in the exception
+					dependList.append(provider.SymbolicName)
+				
+					self.failed.append(manifest.SymbolicName)
+					raise DependencyCycle(str("->".join(dependList)))
+			
+				#skip ones that have previously failed to load
+				if provider.SymbolicName in self.failed:
+					print provider.Name, "a", provider.Provides, "provider previously failed to load."
+				#else load the provider
+				else: 
+					try:
+						self.loadPlugin(provider.SymbolicName, request, dependList)
+					except UnsatisfiedDependency:
+						print provider.Name, "a", provider.Provides, "provider previously does not satisfy request."
+					except MalformedPlugin:
+						print provider.Name, "a", provider.Provides, "provider previously does not satisfy request."
 			
 	def loadPlugin(self, symbolicName, dependency, dependList):
 		#dependList holds the list of dependencies along the depth-first cross section of the tree. Used to find cycles.
@@ -72,6 +126,7 @@ class PluginLoader:
 			self.failed.append(symbolicName)
 			raise UnsatisfiedDependency(symbolicName + ":" + dependency.dependencyString)
 		
+		#to check whether the dependency can actually be satisfied by loading this plugin
 		if dependency != None:
 			if dependency.satisfied(manifest.SymbolicName, manifest.Version):
 				pass #dependency is satisfied
@@ -79,27 +134,14 @@ class PluginLoader:
 				self.failed.append(manifest.SymbolicName)
 				raise UnsatisfiedDependency(symbolicName + ":" + dependency.dependencyString + ". Version present is: " + manifest.Version)
 		
-		#plugin still needs to be loaded
+		#preliminary checks done. Start actually loading the plugin now
 		if not manifest.SymbolicName in self.plugins.keys():
 			
 			#load the dependencies
-			for dependency in manifest.Dependencies:
-				#check if we have a cycle forming
-				if dependency.dependencyName in dependList:
-					#append the name here for showing the cycle in the exception
-					dependList.append(dependency.dependencyName)
-					
-					self.failed.append(manifest.SymbolicName)
-					raise DependencyCycle(str("->".join(dependList)))
-				
-				#skip ones that have previously failed to load
-				if dependency.dependencyName in self.failed:
-					#add this one to the list of failed
-					self.failed.append(manifest.SymbolicName)
-					raise FailedDependency(dependency.dependencyName)
-				#else load the plugin
-				else: 
-					self.loadPlugin(dependency.dependencyName, dependency, dependList)
+			self.loadDependencies(manifest, dependList)
+			
+			#load the requests
+			self.loadRequests(manifest, dependList)
 			
 			#import the plugin
 			pluginModule = __import__(manifest.SymbolicName)
@@ -116,9 +158,11 @@ class PluginLoader:
 				self.failed.append(manifest.SymbolicName)
 				raise MalformedPlugin(manifest.SymbolicName + ": is not derived from Plugin.")
 			
+			#add the plugin object and plugin module to the correct dictionaries
 			self.pluginObjects[manifest.SymbolicName] = pluginObjectClass()
 			self.plugins[manifest.SymbolicName] = pluginModule
 			
+			#load the actual plugin
 			self.pluginObjects[manifest.SymbolicName].load()
 			print "Loaded plugin:", manifest.Name
 			
@@ -127,3 +171,9 @@ class PluginLoader:
 			return self.plugins[symbolicName]
 		except KeyError:
 			raise UnavailableResource(symbolicName)
+			
+	def getProviderManifests(self, provides):
+		try:
+			return self.providers[provides].values()
+		except KeyError:
+			return []

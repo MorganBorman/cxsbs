@@ -1,6 +1,7 @@
 [Plugin]
 Name = Database Manager Sqlite
 SymbolicName = DatabaseManagerSqlite
+Provides = DatabaseManagerBackend
 Version = 0.0.1
 Author = Chasm
 Enabled = True

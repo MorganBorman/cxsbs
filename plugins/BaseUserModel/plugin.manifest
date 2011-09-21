@@ -1,8 +1,0 @@
-[Plugin]
-Name = Base User Model
-SymbolicName = BaseUserModel
-Version = 0.0.1
-Author = Chasm
-Enabled = True
-
-[Dependencies]

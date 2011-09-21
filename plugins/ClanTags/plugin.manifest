@@ -3,7 +3,7 @@ Name = Clan Tags
 SymbolicName = ClanTags
 Version = 0.0.1
 Author = Chasm
-Enabled = True
+Enabled = False
 
 [Dependencies]
 Database = 0.0.1
