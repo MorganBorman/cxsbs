@@ -1,5 +1,7 @@
 subdirs(enet shared)
 
+#set(CMAKE_USE_PYTHON_VERSION "2.7")
+
 find_package(PythonLibs REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(Threads REQUIRED)
