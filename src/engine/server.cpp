@@ -640,6 +640,9 @@ bool setuplistenserver(bool dedicated)
 
 void initserver(bool listen, bool dedicated)
 {
+	char *tempserverinitfile = new char[strlen(serverinitfile) + strlen(server::instanceRoot) + 1];
+	setsvar("serverinitfile", tempserverinitfile);
+
     if(dedicated) execfile(serverinitfile, false);
 
     if(listen) setuplistenserver(dedicated);
@@ -689,6 +692,7 @@ COMMAND(stoplistenserver, "");
 
 void showhelp()
 {
+/*
 	printf("Usage: xsbs -pINIT_FILE -sPYSCRIPTS_PATH [OPTION...]\n");
 	printf("\n");
 	printf(" -pINIT_FILE              Path to the server-init.cfg file.\n");
@@ -698,23 +702,25 @@ void showhelp()
 	printf(" -mMASTER_HOSTNAME        Use hostname as master server.\n");
 	printf(" -sPYSCRIPTS_PATH         Path to the pyscripts directory.\n");
 	printf(" -aCONFIGDIR_PATH         Path to configuration directory.\n\n");
+*/
+	printf("Usage: cxsbs -rPYTHON_ROOT -pPLUGIN_PATH -iINSTANCEROOT\n");
 }
 
 bool serveroption(char *opt)
 {
     switch(opt[1])
     {
-        case 'u': setvar("serveruprate", atoi(opt+2)); return true;
-        case 'c': setvar("maxclients", atoi(opt+2)); return true;
-        case 'i': setsvar("serverip", opt+2); return true;
-        case 'j': setvar("serverport", atoi(opt+2)); return true; 
-        case 'm': setsvar("mastername", opt+2); setvar("updatemaster", mastername[0] ? 1 : 0); return true;
+//      case 'u': setvar("serveruprate", atoi(opt+2)); return true;
+//      case 'c': setvar("maxclients", atoi(opt+2)); return true;
+//      case 'i': setsvar("serverip", opt+2); return true;
+//      case 'j': setvar("serverport", atoi(opt+2)); return true;
+//      case 'm': setsvar("mastername", opt+2); setvar("updatemaster", mastername[0] ? 1 : 0); return true;
 #ifdef STANDALONE
-	case 'p': setsvar("serverinitfile", opt+2); return true;
-        case 'q': printf("Using home directory: %s\n", opt+2); sethomedir(opt+2); return true;
-        case 'k': printf("Adding package directory: %s\n", opt+2); addpackagedir(opt+2); return true;
+//      case 'p': setsvar("serverinitfile", opt+2); return true;
+//      case 'q': printf("Using home directory: %s\n", opt+2); sethomedir(opt+2); return true;
+//      case 'k': printf("Adding package directory: %s\n", opt+2); addpackagedir(opt+2); return true;
 #endif
-	case 'h': showhelp(); exit(0);
+        case 'h': showhelp(); exit(0);
         default: return false;
     }
 }

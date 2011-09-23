@@ -20,6 +20,8 @@ class Events(Plugin):
 	
 import cxsbs
 Logging = cxsbs.getResource("Logging")
+
+import cxsbs.AsyncronousExecutor
 		
 from twisted.internet import reactor
 
@@ -42,6 +44,25 @@ class eventHandler(object):
 		self.__doc__ = f.__doc__
 		self.__name__ = f.__name__
 		registerServerEventHandler(self.name, f)
+		return f
+	
+class EventThreadQueuer:
+	def __init__(self, f):
+		self.func = f
+		self.__doc__ = f.__doc__
+		self.__name__ = f.__name__
+
+	def __call__(self, *args, **kwargs):
+		cxsbs.AsyncronousExecutor.queue(self.func, *args, **kwargs)
+		
+class threadedEventHandler(object):
+	'''Decorator to register an event as an asyncronous event handler.'''
+	def __init__(self, name):
+		self.name = name
+	def __call__(self, f):
+		self.__doc__ = f.__doc__
+		self.__name__ = f.__name__
+		registerServerEventHandler(self.name, EventThreadQueuer(f))
 		return f
 
 def triggerServerEvent(event, args):

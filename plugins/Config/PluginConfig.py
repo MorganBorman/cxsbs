@@ -5,7 +5,7 @@ ServerCore = cxsbs.getResource("ServerCore")
 
 import string
 
-configuration_path = ServerCore.configdir()
+configuration_path = ServerCore.instanceRoot() + "/config/"
 
 # Set this to what you want config file names to end with
 configuration_extension = '.conf'

@@ -25,7 +25,7 @@ else
 		fi
 	done
 	if (( ${VALID_NAME} == 1 )); then
-		${CXSBS_DIR}/bin/cxsbs -s"${CXSBS_DIR}/plugins" -a"${CXSBS_DIR}/instances/${SERVER_NAME}/config/" -p"${CXSBS_DIR}/instances/${SERVER_NAME}/server-init.cfg"
+		${CXSBS_DIR}/bin/cxsbs -r"${CXSBS_DIR}" -p"${CXSBS_DIR}/plugins" -i"${CXSBS_DIR}/instances/${SERVER_NAME}"
 	else
 		echo "Invalid name $SERVER_NAME specified"
 	fi

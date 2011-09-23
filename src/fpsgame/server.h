@@ -389,7 +389,11 @@ namespace server
 	extern int mastermode;
 	extern int mastermask;
 	extern char smapname[260];
-	extern char *pyconfigpath;
+
+	extern char *pythonRoot;
+	extern char *serverinitfile;
+	extern char *instanceRoot;
+
 	extern int publicserver;
 	extern char *adminpass;
 	extern char *serverpass;

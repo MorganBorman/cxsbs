@@ -16,10 +16,12 @@ class Logging(Plugin):
 import logging
 import cxsbs
 Config = cxsbs.getResource("Config")
+ServerCore = cxsbs.getResource("ServerCore")
+import cxsbs.Logging
 
 def init():
 	config = Config.PluginConfig('logging')
-	path = config.getOption('Config', 'path', 'cxsbs.log')
+	path = ServerCore.instanceRoot() + "/" + config.getOption('Config', 'path', 'gamelog.log')
 	level = config.getOption('Config', 'level', 'error')
 	del config
 	
@@ -29,14 +31,24 @@ def init():
 		'error': logging.ERROR,
 		'critical': logging.CRITICAL}
 	
-	print "\tLogging to:", path
+	cxsbs.Logging.logger.info("Game is now being logged to: " + path)
 	
-	logging.basicConfig(
-		filename = path,
-		format = '%(levelname)-10s %(asctime)s %(pathname)s: %(message)s',
-		level = LEVELS[level])
+	global gameLogger
+	gameLogger = logging.getLogger('gameLogger')
 	
-#make these function available in this resource
-warn = logging.warn
-error = logging.error
-debug = logging.debug
+	fh = logging.FileHandler(path)
+	fh.setLevel(LEVELS[level])
+	
+	formatter = logging.Formatter('%(levelname)-10s %(asctime)s %(pathname)s: %(message)s')
+	fh.setFormatter(formatter)
+	
+	gameLogger.addHandler(fh)
+	
+	global warn, info, error, debug, critical, exception
+	#make these function available in this resource
+	warn = gameLogger.warn
+	error = gameLogger.error
+	debug = gameLogger.debug
+	info = gameLogger.info
+	critical = gameLogger.critical
+	exception = gameLogger.exception

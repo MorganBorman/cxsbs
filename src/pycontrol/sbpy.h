@@ -26,7 +26,7 @@
 namespace SbPy
 {
 
-bool init(const char*, const char*, const char *);
+bool init(const char*, const char*, const char*, const char*);
 bool initPy();
 void deinitPy();
 bool restartPy();

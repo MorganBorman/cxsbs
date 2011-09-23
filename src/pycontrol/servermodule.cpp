@@ -1048,9 +1048,14 @@ static PyObject *suicide(PyObject *self, PyObject *args)
 	return Py_None;
 }
 
-static PyObject *configdir(PyObject *self, PyObject *args)
+//static PyObject *configdir(PyObject *self, PyObject *args)
+//{
+//	return Py_BuildValue("s", server::pyconfigpath);
+//}
+
+static PyObject *instanceRoot(PyObject *self, PyObject *args)
 {
-	return Py_BuildValue("s", server::pyconfigpath);
+	return Py_BuildValue("s", server::instanceRoot);
 }
 
 static PyMethodDef ModuleMethods[] = {
@@ -1127,14 +1132,15 @@ static PyMethodDef ModuleMethods[] = {
 	{"sendDemo", sendDemo, METH_VARARGS, "Send demo to client."},
 	{"saveDemoFile", saveDemoFile, METH_VARARGS, "Save last demo file."},
 	{"suicide", suicide, METH_VARARGS, "Force client to commit suicide."},
-	{"configdir", configdir, METH_VARARGS, "Python config dir."},
+//	{"configdir", configdir, METH_VARARGS, "Python config dir."},
+	{"instanceRoot", instanceRoot, METH_VARARGS, "Get the root directory of the instance."},
 	{NULL, NULL, 0, NULL}
 };
 
 PyMODINIT_FUNC
-initModule(const char *module_name)
+initModule(void)
 {
-	(void) Py_InitModule(module_name, ModuleMethods);
+	(void) Py_InitModule("sbserver", ModuleMethods);
 	return;
 }
 

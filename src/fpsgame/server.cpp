@@ -14,15 +14,12 @@
 
 namespace game
 {
-    void parseoptions(vector<const char *> &args)
-    {
-        loopv(args)
-#ifndef STANDALONE
-            if(!game::clientoption(args[i]))
-#endif
-            if(!server::serveroption(args[i]))
-                conoutf(CON_ERROR, "unknown command-line option: %s", args[i]);
-    }
+	void parseoptions(vector<const char *> &args)
+	{
+		loopv(args)
+			if(!server::serveroption(args[i]))
+				conoutf(CON_ERROR, "unknown command-line option: %s", args[i]);
+	}
 }
 
 extern ENetAddress masteraddress;
@@ -71,8 +68,11 @@ namespace server
     SVAR(serverdesc, "");
     SVAR(serverpass, "");
     SVAR(adminpass, "");
-    SVAR(pyscriptspath, "");
-    SVAR(pyconfigpath, "Config/");
+
+    SVAR(pythonRoot, ".");
+    SVAR(pluginPath, "plugins");
+    SVAR(instanceRoot, "instances/dev");
+
     VARF(publicserver, 0, 0, 2, {
         switch(publicserver)
         {
@@ -140,13 +140,14 @@ namespace server
     {
         if(arg[0]=='-') switch(arg[1])
         {
-            case 'n': setsvar("serverdesc", &arg[2]); return true;
-            case 'y': setsvar("serverpass", &arg[2]); return true;
-            case 'p': setsvar("adminpass", &arg[2]); return true;
-            case 'o': setvar("publicserver", atoi(&arg[2])); return true;
-            case 'g': setvar("serverbotlimit", atoi(&arg[2])); return true;
-            case 's': setsvar("pyscriptspath", &arg[2]); return true;
-            case 'a': setsvar("pyconfigpath", &arg[2]); return true;
+//          case 'n': setsvar("serverdesc", &arg[2]); return true;
+//          case 'y': setsvar("serverpass", &arg[2]); return true;
+//          case 'p': setsvar("adminpass", &arg[2]); return true;
+//          case 'o': setvar("publicserver", atoi(&arg[2])); return true;
+//          case 'g': setvar("serverbotlimit", atoi(&arg[2])); return true;
+            case 'r': setsvar("pythonRoot", &arg[2]); return true;
+            case 'p': setsvar("pluginPath", &arg[2]); return true;
+            case 'i': setsvar("instanceRoot", &arg[2]); return true;
         }
         return false;
     }
@@ -157,7 +158,7 @@ namespace server
         resetitems();
 
         // Initialize python modules
-        if(!SbPy::init("sauer_server", pyscriptspath, "sbserver"))
+        if(!SbPy::init("cxsbs_server", pythonRoot, pluginPath, instanceRoot))
             return false;
         return true;
     }

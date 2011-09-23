@@ -19,6 +19,7 @@ def setConfigurationFilename(filename):
 
 import cxsbs
 DatabaseManagerBase = cxsbs.getResource("DatabaseManagerBase")
+ServerCore = cxsbs.getResource("ServerCore")
 Config = cxsbs.getResource("Config")
 
 from sqlalchemy import create_engine
@@ -35,5 +36,5 @@ class DatabaseManagerBackend(DatabaseManagerBase.DatabaseManagerBackend):
 	def readConfiguration(self):
 		config = Config.PluginConfig(DatabaseManagerBase.databaseConfigurationFilename)
 		self.protocol = "sqlite:///"
-		self.database = config.getOption('Config', 'database', 'cxsbs.db')
+		self.database = ServerCore.instanceRoot() + "/" + config.getOption('Config', 'database', 'cxsbs.db')
 		del config

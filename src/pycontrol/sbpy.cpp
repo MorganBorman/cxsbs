@@ -38,7 +38,14 @@ void loadPluginPath()
 		plugin_path = path;
 }
 
-PyMODINIT_FUNC initModule(const char *);
+void loadPythonRoot()
+{
+	char *path = getenv("CXSBS_PYTHON_ROOT");
+	if(!path)
+		plugin_path = path;
+}
+
+PyMODINIT_FUNC initModule(void);
 
 #define SBPY_ERR(x) \
 	if(!x) \
@@ -164,21 +171,21 @@ void deinitPy()
 	Py_Finalize();
 }
 
-bool init(const char *prog_name, const char *arg_plugin_path, const char *module_name)
+bool init(const char *programName, const char *pythonRoot, const char *pluginPath, const char *instanceRoot)
 {
 	// Setup env vars and chdir
 	if(!pn)
 	{
-		pn = new char[strlen(prog_name)+1];
-		strcpy(pn, prog_name);
+		pn = new char[strlen(programName)+1];
+		strcpy(pn, programName);
 	}
 
-	if(arg_plugin_path[0] || plugin_path)
+	if(pluginPath[0] || plugin_path)
 	{
 		if(!plugin_path)
 		{
-			plugin_path = new char[strlen(arg_plugin_path)+1];
-			strcpy(plugin_path, arg_plugin_path);
+			plugin_path = new char[strlen(pluginPath)+1];
+			strcpy(plugin_path, pluginPath);
 		}
 	}
 	else loadPluginPath();
@@ -194,7 +201,7 @@ bool init(const char *prog_name, const char *arg_plugin_path, const char *module
 
 	// Initialize
 	Py_Initialize();
-	initModule(module_name);
+	initModule();
 	if(!initPy())
 	{
 		fprintf(stderr, "Error retrieving core python resources modules.\n");

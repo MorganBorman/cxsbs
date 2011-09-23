@@ -9,4 +9,5 @@ Enabled = True
 [Dependencies]
 DatabaseManagerBase = 0.0.1
 DatabaseSession = 0.0.1
+ServerCore = 0.0.1
 Config = 0.0.1

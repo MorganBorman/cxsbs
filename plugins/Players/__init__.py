@@ -79,6 +79,9 @@ class Player:
 	def isSpectator(self):
 		'''Is client a spectator'''
 		return ServerCore.playerIsSpectator(self.cn)
+	def isInvisible(self):
+		'''Is client invisible'''
+		return ServerCore.playerIsInvisible(self.cn)
 	def message(self, msg):
 		'''Send message to client'''
 		ServerCore.playerMessage(self.cn, msg)

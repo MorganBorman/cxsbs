@@ -1,6 +1,6 @@
 [Plugin]
-Name = Logging
-SymbolicName = Logging
+Name = Invisible connect
+SymbolicName = Invisibility
 Version = 0.0.1
 Author = Chasm
 Enabled = True
@@ -8,3 +8,4 @@ Enabled = True
 [Dependencies]
 Config = 0.0.1
 ServerCore = 0.0.1
+Events = 0.0.1

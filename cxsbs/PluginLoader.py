@@ -3,6 +3,7 @@ import os, imp, sys
 from Manifest import Manifest, MalformedManifest
 from Plugin import Plugin, MalformedPlugin
 from Errors import *
+from Logging import logger
 
 manifestFilename = "plugin.manifest"
 
@@ -30,9 +31,9 @@ class PluginLoader:
 					self.processManifest(manifest)
 					
 				except MalformedManifest:
-					print "Malformed plugin manifest:", manifestPath
+					logger.error("Malformed plugin manifest: " + manifestPath)
 			else:
-				print "Cannot read plugin:", pluginDirectory
+				logger.error("Cannot read plugin: " + pluginDirectory)
 				
 	def processManifest(self, manifest):
 		if manifest.Enabled:
@@ -45,7 +46,7 @@ class PluginLoader:
 	
 			self.manifests[manifest.SymbolicName] = manifest
 		else:
-			print "Plugin disabled:", manifest.Name	
+			logger.info("Plugin disabled: " + manifest.Name)	
 				
 	def loadPlugins(self, pluginPath):
 		if not os.path.isdir(pluginPath):
@@ -59,16 +60,16 @@ class PluginLoader:
 			manifest = self.manifests[SymbolicName]
 			try:
 				self.loadPlugin(SymbolicName, None, [])
-			except UnsatisfiedDependency, e:
-				print "Ignore plugin:", manifest.Name, "-- unsatisfied dependency:", e
-			except UnavailableResource, e:
-				print "Failed plugin:", manifest.Name, "-- unsatisfied dependency:", e
-			except MalformedPlugin, e:
-				print "Failed plugin:", manifest.Name, "-- failed loading dependency:", e
-			except FailedDependency, e:
-				print "Failed plugin:", manifest.Name, "-- dependency previously failed to load:", e
-			except InvalidResourceComponent, e:
-				print "Failed plugin:", manifest.Name, "Required resource:", e.resource, "did not provide a valid", e.componentType, e.component
+			except UnsatisfiedDependency as e:
+				logger.error("Ignore plugin: " + manifest.Name + " -- unsatisfied dependency: " + str(e))
+			except UnavailableResource as e:
+				logger.error("Failed plugin: " + manifest.Name + " -- unsatisfied dependency: " + str(e))
+			except MalformedPlugin as e:
+				logger.error("Failed plugin: " + manifest.Name + " -- failed loading dependency: " + str(e))
+			except FailedDependency as e:
+				logger.error("Failed plugin: " + manifest.Name + " -- dependency previously failed to load: " + str(e))
+			except InvalidResourceComponent as e:
+				logger.error("Failed plugin: " + manifest.Name + " Required resource: " + e.resource + " did not provide a valid " + e.componentType + e.component)
 		
 		sys.path.remove(pluginPath)
 		
@@ -104,15 +105,15 @@ class PluginLoader:
 			
 				#skip ones that have previously failed to load
 				if provider.SymbolicName in self.failed:
-					print provider.Name, "a", provider.Provides, "provider previously failed to load."
+					logging.error(provider.Name + " a " + provider.Provides + " provider previously failed to load.")
 				#else load the provider
 				else: 
 					try:
 						self.loadPlugin(provider.SymbolicName, request, dependList)
 					except UnsatisfiedDependency:
-						print provider.Name, "a", provider.Provides, "provider previously does not satisfy request."
+						logging.error(provider.Name + " a " + provider.Provides + " provider failed: missing dependencies.")
 					except MalformedPlugin:
-						print provider.Name, "a", provider.Provides, "provider previously does not satisfy request."
+						logging.error(provider.Name + " a " + provider.Provides + " provider failed: malformed plugin.")
 			
 	def loadPlugin(self, symbolicName, dependency, dependList):
 		#dependList holds the list of dependencies along the depth-first cross section of the tree. Used to find cycles.
@@ -164,7 +165,7 @@ class PluginLoader:
 			
 			#load the actual plugin
 			self.pluginObjects[manifest.SymbolicName].load()
-			print "Loaded plugin:", manifest.Name
+			logger.info("Loaded plugin: " + manifest.Name)
 			
 	def getResource(self, symbolicName):
 		try:

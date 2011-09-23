@@ -1,10 +1,8 @@
 [Plugin]
-Name = Logging
-SymbolicName = Logging
+Name = Map Modified Checks
+SymbolicName = MapCheck
 Version = 0.0.1
 Author = Chasm
 Enabled = True
 
 [Dependencies]
-Config = 0.0.1
-ServerCore = 0.0.1
