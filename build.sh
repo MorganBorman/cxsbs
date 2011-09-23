@@ -1,0 +1,2 @@
+mkdir bin
+cmake . && make
