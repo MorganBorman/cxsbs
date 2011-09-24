@@ -1606,8 +1606,8 @@ namespace server
     void clientdisconnect(int n)
     {
         clientinfo *ci = getinfo(n);
-        SbPy::triggerEventInt("sync_player_disconnect", n);
-        SbPy::triggerEventInt("sync_player_disconnect_post", n);
+        SbPy::triggerEventInt("player_disconnect", n);
+        SbPy::triggerEventInt("player_disconnect_post", n);
         if(ci->connected)
         {
             if(ci->privilege) resetpriv(ci);

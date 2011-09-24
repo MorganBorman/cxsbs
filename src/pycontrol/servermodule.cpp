@@ -1058,6 +1058,16 @@ static PyObject *instanceRoot(PyObject *self, PyObject *args)
 	return Py_BuildValue("s", server::instanceRoot);
 }
 
+static PyObject *shutdown(PyObject *self, PyObject *args)
+{
+	int exit_status;
+	if(!PyArg_ParseTuple(args, "i", &exit_status))
+		return 0;
+
+	exit(exit_status);
+	return Py_None;
+}
+
 static PyMethodDef ModuleMethods[] = {
 	{"numClients", numClients, METH_VARARGS, "Return the number of clients on the server."},
 	{"message", message, METH_VARARGS, "Send a server message."},
@@ -1134,6 +1144,7 @@ static PyMethodDef ModuleMethods[] = {
 	{"suicide", suicide, METH_VARARGS, "Force client to commit suicide."},
 //	{"configdir", configdir, METH_VARARGS, "Python config dir."},
 	{"instanceRoot", instanceRoot, METH_VARARGS, "Get the root directory of the instance."},
+	{"shutdown", shutdown, METH_VARARGS, "Shutdown the c++ side of things."},
 	{NULL, NULL, 0, NULL}
 };
 

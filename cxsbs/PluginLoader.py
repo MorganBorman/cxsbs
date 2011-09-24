@@ -1,4 +1,4 @@
-import os, imp, sys
+import os, imp, sys, traceback
 
 from Manifest import Manifest, MalformedManifest
 from Plugin import Plugin, MalformedPlugin
@@ -14,6 +14,7 @@ class PluginLoader:
 		self.plugins = {}
 		self.providers = {}
 		self.failed = []
+		self.unloaded = False
 			
 	def scanManifests(self, pluginPath):
 		self.manifests = {}
@@ -73,6 +74,13 @@ class PluginLoader:
 		
 		sys.path.remove(pluginPath)
 		
+	def unloadAll(self):
+		if not self.unloaded:
+			for pluginName, pluginObject in self.pluginObjects.items():
+				pluginObject.unload()
+				logger.info("Unloaded plugin: " + pluginName)
+			self.unloaded = True
+		
 	def loadDependencies(self, manifest, dependList):
 		for dependency in manifest.Dependencies:
 			#check if we have a cycle forming
@@ -105,15 +113,15 @@ class PluginLoader:
 			
 				#skip ones that have previously failed to load
 				if provider.SymbolicName in self.failed:
-					logging.error(provider.Name + " a " + provider.Provides + " provider previously failed to load.")
+					logger.error(provider.Name + " a " + provider.Provides + " provider previously failed to load.")
 				#else load the provider
 				else: 
 					try:
 						self.loadPlugin(provider.SymbolicName, request, dependList)
 					except UnsatisfiedDependency:
-						logging.error(provider.Name + " a " + provider.Provides + " provider failed: missing dependencies.")
+						logger.error(provider.Name + " a " + provider.Provides + " provider failed: missing dependencies.")
 					except MalformedPlugin:
-						logging.error(provider.Name + " a " + provider.Provides + " provider failed: malformed plugin.")
+						logger.error(provider.Name + " a " + provider.Provides + " provider failed: malformed plugin.")
 			
 	def loadPlugin(self, symbolicName, dependency, dependList):
 		#dependList holds the list of dependencies along the depth-first cross section of the tree. Used to find cycles.
@@ -145,7 +153,13 @@ class PluginLoader:
 			self.loadRequests(manifest, dependList)
 			
 			#import the plugin
-			pluginModule = __import__(manifest.SymbolicName)
+			try:
+				pluginModule = __import__(manifest.SymbolicName)
+			except ImportError:
+				exceptionType, exceptionValue, exceptionTraceback = sys.exc_info()	
+				logger.error('Uncaught exception occured in command handler.')
+				logger.error(traceback.format_exc())
+				raise MalformedPlugin(manifest.SymbolicName + ": failed to import.")
 			
 			#get the plugin class from the module
 			try:

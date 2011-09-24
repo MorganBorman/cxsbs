@@ -21,4 +21,3 @@ def addTimer(msecs, func, args=(), persistent=False):
 	else:
 		call = twisted.internet.task.LoopingCall(func, *args)
 		call.start(msecs / 1000)
-

@@ -228,7 +228,8 @@ const char *textModerate(const char *type, int cn, const char *text, PyObject *f
 	
 	if(!func)
 	{
-		fprintf(stderr, "Python Error: Invalid handler to triggerEvent function.\n");
+		//fprintf(stderr, "Python Error: Invalid handler to triggerEvent function.\n");
+		std::cerr << "Python Error: Invalid handler to triggerEvent function when triggering text moderator type:" << type << std::endl;
 		return false;
 	}
 	pArgs = PyTuple_New(3);
@@ -263,7 +264,7 @@ bool triggerFuncEvent(const char *name, std::vector<PyObject*> *args, PyObject *
 	
 	if(!func)
 	{
-		fprintf(stderr, "Python Error: Invalid handler to triggerEvent function.\n");
+		std::cerr << "Python Error: Invalid handler to triggerEvent function when triggering event:" << name << std::endl;
 		return false;
 	}
 	pArgs = PyTuple_New(2);

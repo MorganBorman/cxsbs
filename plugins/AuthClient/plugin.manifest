@@ -1,0 +1,17 @@
+[Plugin]
+Name = Auth Client
+SymbolicName = AuthClient
+Version = 0.0.1
+Author = Chasm
+Enabled = True
+
+[Dependencies]
+ServerCore = 0.0.1
+Players = 0.0.1
+Config = 0.0.1
+UI = 0.0.1
+Events = 0.0.1
+Net = 0.0.1
+Logging = 0.0.1
+MessageFramework = 0.0.1
+SetMaster = 0.0.1

@@ -1,0 +1,11 @@
+[Plugin]
+Name = Message Framework
+SymbolicName = MessageFramework
+Version = 0.0.1
+Author = Chasm
+Enabled = True
+
+[Dependencies]
+Colors = 0.0.1
+Players = 0.0.1
+Config = 0.0.1

@@ -19,14 +19,34 @@ UI = cxsbs.getResource("UI")
 Timers = cxsbs.getResource("Timers")
 ServerCore = cxsbs.getResource("ServerCore")
 Logging = cxsbs.getResource("Logging")
+Net = cxsbs.getResource("Net")
 
 import math
+
+from groups.DynamicGroup import DynamicGroup
+from groups.Group import Group
+
+def logPlayerAction(cn, action, level='info', **kwargs):
+	p = player(cn)
+	msg = p.name() + "@" + p.ipString() + " " + str(action)
+	if kwargs != {}:
+		msg += " with args:"
+		first = True
+		for key, value in kwargs.items():
+			if not first:
+				msg += ','
+			else:
+				first = False
+			msg += " " + key + ":" + value
+	Logging.log(Logging.LEVELS[level], msg)
 
 class Player:
 	'''Represents a client on the server'''
 	def __init__(self, cn):
 		self.cn = cn
 		self.gamevars = {}
+	def logAction(self, action, level='info', **kwargs):
+		logPlayerAction(self.cn, action, level, **kwargs)
 	def newGame(self):
 		'''Reset game variables'''
 		self.gamevars.clear()
@@ -46,8 +66,10 @@ class Player:
 		'''Returns the groups which are based on server state'''
 		playerPriv = ServerCore.playerPrivilege(self.cn)
 		groups = []
+		groups.append("__all__")
+		
 		if playerPriv == 1:
-			groups.append("__auth__")
+			groups.append("__master__")
 		elif playerPriv == 2:
 			groups.append("__admin__")
 		else:
@@ -57,6 +79,8 @@ class Player:
 			groups.append("__spectator__")
 		else:
 			groups.append("__player__")
+			
+		return groups
 		
 	def requestPlayerAuth(self, desc):
 		'''Request the players auth entry matching the given description'''
@@ -139,6 +163,9 @@ def all():
 	'''Get list of all clients'''
 	return players.values()
 
+AllPlayersGroup = DynamicGroup(Player, all)
+EmptyPlayersGroup = Group(Player, [])
+
 def cnsToPlayers(cns):
 	'''Turn list of cn's into list of Player's'''
 	ps = []
@@ -191,14 +218,6 @@ def playerByIpString(ip):
 	'''Return Player instance with matching string ip'''
 	return playerByIpLong(Net.ipStringToLong(ip))
 
-@Events.eventHandler('player_disconnect_post')
-@Events.eventHandler('game_bot_removed')
-def playerDisconnect(cn):
-	try:
-		del players[cn]
-	except KeyError:
-		Logging.error('Player disconnected but does not have player class instance!')
-
 def triggerConnectDelayed(cn):
 	try:
 		player(cn)
@@ -215,15 +234,15 @@ def triggerBotConnectDelayed(cn):
 	else:
 		Events.triggerServerEvent('bot_connect_delayed', (cn,))
 
-def currentAuth():
+def currentMaster():
 	for cn in ServerCore.clients():
-		if ServerCore.playerPrivilege(self.cn) == 1:
+		if ServerCore.playerPrivilege(cn) == 1:
 			return cn
 	return None
 
 def currentAdmin():
 	for cn in ServerCore.clients():
-		if ServerCore.playerPrivilege(self.cn) == 2:
+		if ServerCore.playerPrivilege(cn) == 2:
 			return cn
 	return None
 
@@ -233,26 +252,40 @@ def addPlayerForCn(cn):
 	except KeyError:
 		pass
 	players[cn] = Player(cn)
-
-@Events.eventHandler('player_connect_pre')
-def onPlayerConnect(cn):
-	addPlayerForCn(cn)
-	Timers.addTimer(1000, triggerConnectDelayed, (cn,))
-
-@Events.eventHandler('game_bot_added')
-def onBotConnect(cn):
-	addPlayerForCn(cn)
-	Timers.addTimer(1000, triggerConnectDelayed, (cn,))
-
-@Events.eventHandler('player_auth_succeed')
-def onAuthSuccess(cn, name):
-	if currentAdmin() != None:
-		ServerCore.playerMessage(cn, UI.error('Admin is present'))
-		return
-	ServerCore.setMaster(cn)
 	
 def init():
+	#create the circular reference so that Players can be referenced later
+	#from inside Events
+	Events.bootStrapPlayersModule(cxsbs.getResource("Players"))
+	
 	global players
 	players = {}
 	for cn in ServerCore.clients():
 		playerConnect(cn)
+		
+	@Events.eventHandler('player_connect')
+	def onPlayerConnect(cn):
+		logPlayerAction(cn, 'connect')
+		
+	@Events.eventHandler('player_disconnect')
+	def onPlayerDisconnect(cn):
+		logPlayerAction(cn, 'disconnect')
+		
+	@Events.eventHandler('player_connect_pre')
+	def onPlayerConnectPre(cn):
+		addPlayerForCn(cn)
+		Timers.addTimer(1000, triggerConnectDelayed, (cn,))
+	
+	@Events.eventHandler('game_bot_added')
+	def onBotConnect(cn):
+		addPlayerForCn(cn)
+		Timers.addTimer(1000, triggerConnectDelayed, (cn,))
+		
+	@Events.eventHandler('player_disconnect_post')
+	@Events.eventHandler('game_bot_removed')
+	def playerDisconnect(cn):
+		try:
+			del players[cn]
+		except KeyError:
+			Logging.error('Player disconnected but does not have player class instance!')
+		

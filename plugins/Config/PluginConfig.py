@@ -61,6 +61,11 @@ class PluginConfig:
 		'''
 		Return the value just as getOption does but try and convert to a boolean
 		'''
+		if type(default) == bool:
+			if default:
+				default = "True"
+			else:
+				default = "False"
 		option = self.getOption(section, option, default, write_if_absent)
 		return option.lower() == "true" or option.lower() == "yes"
 	def getAllOptions(self, section):

@@ -1,7 +1,5 @@
 from cxsbs.Plugin import Plugin
 
-from PluginConfig import PluginConfig
-
 class Config(Plugin):
 	def __init__(self):
 		Plugin.__init__(self)
@@ -15,3 +13,4 @@ class Config(Plugin):
 	def unload(self):
 		pass
 		
+from PluginConfig import PluginConfig

@@ -63,6 +63,7 @@ def clientReloadRotate():
 	ServerCore.sendMapReload()
 
 def presetRotate():
+	global rotate_on_join
 	try:
 		map = getSuccessor(ServerCore.gameMode(), ServerCore.mapName())
 	except KeyError:
@@ -74,29 +75,33 @@ def presetRotate():
 	else:
 		ServerCore.setMap(map, ServerCore.gameMode())
 	if ServerCore.numClients() == 0:
-		rotate_on_join[0] = True
+		rotate_on_join = True
 		ServerCore.setPaused(True)
 
 def onNextMapCmd(cn, args):
 	'''@description Display next map
 	   @usage
-	   @public'''
+	   @allowGroups __all__'''
 	if args != '':
-		ServerCore.playerMessage(cn, UI.error('Usage: #nextmap'))
+		raise Commands.UsageError()
 	else:
 		try:
 			ServerCore.playerMessage(cn, UI.info(nextmap_response.substitute(Colors.colordict, mapname=getSuccessor(ServerCore.gameMode(), ServerCore.mapName()))))
 		except (KeyError, ValueError):
 			ServerCore.playerMessage(cn, UI.error('Could not determine next map'))
 
+def onServerStart(*args):
+		startMapName = modeMapLists[start_mode][0]
+		startModeNumber = Game.modeNumber(start_mode)
+		ServerCore.setMap(startMapName, startModeNumber)
 
 def init():
 	config = Config.PluginConfig('MapRotation')
 	
+	global preset_rotation, start_mode, nextmap_response, modeMapLists
 	preset_rotation = config.getBoolOption('Config', 'use_preset_rotation', 'yes')
 	start_mode = config.getOption('Config', 'start_mode', 'ffa')
 	nextmap_response = config.getTemplateOption('Config', 'nextmap_response', 'The next map is ${blue}${mapname}')
-	
 	modeMapLists = {}
 	
 	modeMapLists["hold"] = config.getOption('Map Rotation', 'hold', DefaultMapRotation.hold).split()
@@ -127,13 +132,9 @@ def init():
 		global rotate_on_join
 		rotate_on_join = False
 		
-		startMapName = modeMapLists[start_mode][0]
-		startModeNumber = Game.modeNumber(start_mode)
-		
-		ServerCore.setMap(startMapName, startModeNumber)
-		
 		Events.registerServerEventHandler('intermission_ended', presetRotate)
 		Events.registerServerEventHandler('player_connect', onConnect)
+		Events.registerServerEventHandler('server_start', onServerStart)
 		
 		Commands.registerCommandHandler('nextmap', onNextMapCmd)
 	else:

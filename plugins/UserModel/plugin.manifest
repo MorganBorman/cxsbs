@@ -7,3 +7,4 @@ Enabled = True
 
 [Requests]
 UserModelBackend = 0.0.1
+UserModelBase = 0.0.1

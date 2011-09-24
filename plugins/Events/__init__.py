@@ -1,5 +1,7 @@
 from cxsbs.Plugin import Plugin
 
+import sys
+
 class Events(Plugin):
 	def __init__(self):
 		Plugin.__init__(self)
@@ -16,14 +18,19 @@ class Events(Plugin):
 		policyEventManager.events.clear()
 		
 	def unload(self):
-		pass
+		global dont_iterate
+		dont_iterate = True
+		reactor.stop()
 	
 import cxsbs
 Logging = cxsbs.getResource("Logging")
+EventInformation = cxsbs.getResource("EventInformation")
 
 import cxsbs.AsyncronousExecutor
 		
 from twisted.internet import reactor
+
+import traceback
 
 import EventManager
 import PolicyEventManager
@@ -34,6 +41,7 @@ exec_queue = []
 
 def registerServerEventHandler(event, func):
 	'''Call function when event has been executed.'''
+	EventInformation.loadEventHandlerInfo(event, func)
 	eventManager.connect(event, func)
 
 class eventHandler(object):
@@ -101,11 +109,14 @@ def triggerExecQueue():
 			Logging.warn(traceback.format_exc())
 			Logging.warn(traceback.extract_tb(exceptionTraceback))
 	del exec_queue[:]
+	
+def bootStrapPlayersModule(module):
+	global Players
+	Players = module
 
 def update():
-	reactor.runUntilCurrent() #@UndefinedVariable
-	reactor.doIteration(0) #@UndefinedVariable
-	triggerExecQueue()
+		reactor.runUntilCurrent() #@UndefinedVariable
+		reactor.doIteration(0) #@UndefinedVariable
+		triggerExecQueue()
 
 reactor.startRunning() #@UndefinedVariable
-		

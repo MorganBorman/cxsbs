@@ -33,14 +33,14 @@ def error(message):
 	return error_pre + message
 
 def insufficientPermissions(cn):
-	ServerCore.playerMessage(cn, error('Insufficient permissions'))
+	ServerCore.playerMessage(cn, error('Insufficient permissions.'))
 
 def init():
 	global notice_pre, info_pre, warning_pre, error_pre
 	
 	config = Config.PluginConfig('ui')
-	notice_pre = config.getTemplateOption('Prefixes', 'notice', '${blue}Notice: ').substitute(Colors.colordict)
-	info_pre = config.getTemplateOption('Prefixes', 'info', '${yellow}Info: ').substitute(Colors.colordict)
-	warning_pre = config.getTemplateOption('Prefixes', 'warning', '${red}Warning: ').substitute(Colors.colordict)
-	error_pre = config.getTemplateOption('Prefixes', 'error', '${red}Error: ').substitute(Colors.colordict)
+	notice_pre = config.getTemplateOption('Prefixes', 'notice', '${blue}Notice:${white}').substitute(Colors.colordict) + " "
+	info_pre = config.getTemplateOption('Prefixes', 'info', '${yellow}Info:${white}').substitute(Colors.colordict) + " "
+	warning_pre = config.getTemplateOption('Prefixes', 'warning', '${red}Warning:${white}').substitute(Colors.colordict) + " "
+	error_pre = config.getTemplateOption('Prefixes', 'error', '${red}Error:${white}').substitute(Colors.colordict) + " "
 	del config

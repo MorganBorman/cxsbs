@@ -1,0 +1,9 @@
+[Plugin]
+Name = CommandInformation
+SymbolicName = CommandInformation
+Version = 0.0.1
+Author = Chasm
+Enabled = True
+
+[Dependencies]
+Config = 0.0.1
