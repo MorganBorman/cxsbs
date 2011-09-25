@@ -51,7 +51,7 @@ class PluginConfig:
 		'''
 		Return the value just as getOption does but try and convert to integer
 		'''
-		return int(self.getOption(section, option, default, write_if_absent))
+		return int(self.getOption(section, option, str(default), write_if_absent))
 	def getTemplateOption(self, section, option, default, write_if_absent=True):
 		'''
 		Return the value just as getOption does but try and convert to template

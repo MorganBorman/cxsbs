@@ -21,6 +21,7 @@ UI = cxsbs.getResource("UI")
 Events = cxsbs.getResource("Events")
 Players = cxsbs.getResource("Players")
 Commands = cxsbs.getResource("Commands")
+MessageFramework = cxsbs.getResource("MessageFramework")
 
 import string
 
@@ -41,13 +42,11 @@ def setPaused(val, cn=-1):
 	try:
 		p = Players.player(cn)
 	except ValueError:
-		name = 'Unknown'
+		name = 'the server'
 	else:
 		name = p.name()
-	ServerCore.message(UI.notice(pause_message.substitute(
-		Colors.colordict,
-		action=action,
-		name=name)))
+		p.logAction(action)
+	messageModule.sendMessage('set_paused', dictionary={'action':action, 'name':name})
 	Events.triggerServerEvent(action, (cn, ))
 	ServerCore.setPaused(val)
 
@@ -87,6 +86,18 @@ def setMasterMode(mm_number):
 	   3 - private'''
 	ServerCore.setMasterMode(mm_number)
 
+def clientCount():
+	'''Number of clients currently on the server.'''
+	return len(ServerCore.clients())
+
+def playerCount():
+	'''Number of players currently on the server.'''
+	return len(ServerCore.players())
+
+def spectatorCount():
+	'''Number of spectators currently on the server.'''
+	return len(ServerCore.spectators())
+
 def maxClients():
 	'''Maximum clients allowed in server.'''
 	return ServerCore.maxClients()
@@ -111,11 +122,15 @@ def init():
 	global server_frozen
 	server_frozen = False
 	
-	global pause_message
-	config = Config.PluginConfig('server')
-	pause_message = config.getTemplateOption('Templates', 'pause_message', 'The game has been ${action} by ${orange}${name}')
-	del config
+	global messageModule
+	messageModule = MessageFramework.MessagingModule()
+	messageModule.addMessage("set_paused", "The game has been ${blue}${action}${white} by ${green}${name}${white}.", "Pause")
+	messageModule.finalize()
 	
 	@Events.eventHandler('player_pause')
 	def onPlayerPause(cn, val):
+		'''
+		@commandType
+		@allowGroups __admin__ __master__
+		'''
 		setPaused(val, cn)

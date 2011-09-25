@@ -42,7 +42,7 @@ colordict = { 'green': green(),
 	'grey' : grey(),
 	'magenta': magenta(),
 	'orange': orange(),
-	'white': white() }
+	'white': white()}
 
 def colorstring(str, text):
 	textcolor(colordict[str],text)

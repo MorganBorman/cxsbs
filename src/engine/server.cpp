@@ -11,6 +11,8 @@
 #include "engine.h"
 #include "server.h"
 
+#include <iostream>
+
 #include <signal.h>
 
 #ifdef STANDALONE
@@ -640,7 +642,11 @@ bool setuplistenserver(bool dedicated)
 
 void initserver(bool listen, bool dedicated)
 {
-	char *tempserverinitfile = new char[strlen(serverinitfile) + strlen(server::instanceRoot) + 1];
+	char *tempserverinitfile = new char[strlen(serverinitfile) + strlen(server::instanceRoot) + 2];
+	strcat(tempserverinitfile, server::instanceRoot);
+	strcat(tempserverinitfile, "/");
+	strcat(tempserverinitfile, serverinitfile);
+	//std::cout << tempserverinitfile << std::endl;
 	setsvar("serverinitfile", tempserverinitfile);
 
     if(dedicated) execfile(serverinitfile, false);

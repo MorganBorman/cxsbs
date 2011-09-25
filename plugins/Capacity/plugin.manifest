@@ -1,0 +1,11 @@
+[Plugin]
+Name = Player Capacity
+SymbolicName = Capacity
+Version = 0.0.1
+Author = Chasm
+Enabled = True
+
+[Dependencies]
+Config = 0.0.1
+Server = 0.0.1
+Events = 0.0.1

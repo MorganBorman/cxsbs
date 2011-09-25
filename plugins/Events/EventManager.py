@@ -16,9 +16,8 @@ def executeEvent(func, args):
 		Logging.error(traceback.format_exc())
 
 class EventManager:
-	def __init__(self, Players=None, debugging=False):
+	def __init__(self, Players=None):
 		self.Players = Players
-		self.debugging = debugging
 		self.events = {}
 	def connect(self, event, func):
 		try:
@@ -27,8 +26,7 @@ class EventManager:
 			self.events[event] = []
 			self.connect(event, func)
 	def trigger(self, eventName, args=()):
-		if self.debugging:
-			Logging.debug("Event: " + eventName + " " + str(args))
+		Logging.debug("Event: " + str(eventName) + " " + str(args))
 		try:
 			for event in self.events[eventName]:
 				info = EventInformation.getEventHandlerInfo(event)

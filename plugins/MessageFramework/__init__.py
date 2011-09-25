@@ -14,6 +14,7 @@ class MessageFramework(Plugin):
 		pass
 		
 import cxsbs
+UI = cxsbs.getResource("UI")
 Colors = cxsbs.getResource("Colors")
 Players = cxsbs.getResource("Players")
 Config = cxsbs.getResource("Config")
@@ -22,6 +23,7 @@ class MessagingModule:
 	def __init__(self, config="Messages"):
 		self.configHandle = Config.PluginConfig(config)
 		self.dictionary = Colors.colordict
+		self.dictionary.update(UI.UIDict)
 		self.messages = {}
 		
 	def addMessage(self, name, text, section):

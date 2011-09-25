@@ -52,7 +52,7 @@ def getSuccessor(mode_num, map):
 			Logging.info('Current map not in rotation list.  Restarting rotation.')
 			return maps[0]
 		else:
-			raise ValueError('Empty maps list for specfied mode')
+			raise ValueError('Empty maps list for specified mode')
 	try:
 	 	return maps[ndx+1]
 	except IndexError:

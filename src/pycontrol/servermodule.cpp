@@ -33,17 +33,22 @@ static PyObject *numClients(PyObject *self, PyObject *args)
 static PyObject *clients(PyObject *self, PyObject *args)
 {
 	server::clientinfo *ci;
-	PyObject *pTuple = PyTuple_New(server::numclients());
+	std::vector<int> spects;
+	std::vector<int>::iterator itr;
+	PyObject *pTuple;
 	PyObject *pInt;
 	int y = 0;
+
 	loopv(server::clients)
 	{
-		ci = server::getinfo(i);
-		if(ci)
-		{
-			pInt = PyInt_FromLong(i);
-			PyTuple_SetItem(pTuple, i, pInt);
-		}
+		spects.push_back(i);
+	}
+	pTuple = PyTuple_New(spects.size());
+
+	for(itr = spects.begin(); itr != spects.end(); itr++)
+	{
+		pInt = PyInt_FromLong(*itr);
+		PyTuple_SetItem(pTuple, y, pInt);
 		y++;
 	}
 	return pTuple;
@@ -867,6 +872,15 @@ static PyObject *publicServer(PyObject *self, PyObject *args)
 	return Py_BuildValue("i", server::publicserver);
 }
 
+static PyObject *setServerDesc(PyObject *self, PyObject *args)
+{
+	char *desc;
+	if(!PyArg_ParseTuple(args, "s", &desc))
+		return 0;
+
+
+}
+
 static PyObject *sendMapReload(PyObject *self, PyObject *args)
 {
 	server::sendmapreload();
@@ -1125,6 +1139,7 @@ static PyMethodDef ModuleMethods[] = {
 	{"setMinsRemaining", setGameMins, METH_VARARGS, "Set the minutes remanining in current game."},
 	{"adminPassword", adminPass, METH_VARARGS, "Get the administrator password."},
 	{"publicServer", publicServer, METH_VARARGS, "Decides how masters are chosen and what privileges they have."},
+	{"setServerDesc", setServerDesc, METH_VARARGS, "Set the server description."},
 	{"sendMapReload", sendMapReload, METH_VARARGS, "Causes all users to send vote on next map."},
 	{"serverPassword", serverPassword, METH_VARARGS, "Password for entry to the server."},
 	{"minutesRemaining", minRemain, METH_VARARGS, "Minutes remaining in current match."},

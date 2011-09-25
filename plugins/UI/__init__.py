@@ -43,4 +43,13 @@ def init():
 	info_pre = config.getTemplateOption('Prefixes', 'info', '${yellow}Info:${white}').substitute(Colors.colordict) + " "
 	warning_pre = config.getTemplateOption('Prefixes', 'warning', '${red}Warning:${white}').substitute(Colors.colordict) + " "
 	error_pre = config.getTemplateOption('Prefixes', 'error', '${red}Error:${white}').substitute(Colors.colordict) + " "
+	
+	global UIDict
+	UIDict = 	{
+					'notice': notice_pre,
+					'info': info_pre,
+					'warning:': warning_pre,
+					'error': error_pre,
+				}
+	
 	del config

@@ -23,17 +23,29 @@ Players = cxsbs.getResource("Players")
 Net = cxsbs.getResource("Net")
 Server = cxsbs.getResource("Server")
 Commands = cxsbs.getResource("Commands")
+MessageFramework = cxsbs.getResource("MessageFramework")
 		
 def init():
 	config = Config.PluginConfig('mapcheck')
 	global spectate_map_modified
-	spectate_map_modified = (config.getOption('Config', 'spectate_map_modified', 'yes') == 'yes')
+	spectate_map_modified = config.getBoolOption('Config', 'spectate_map_modified', True)
 	del config
+	
+	config = Config.PluginConfig('Permissions')
+	global allowgroups_modified_unspec
+	allowgroups_modified_unspec = config.getBoolOption('MapCheck', "allowgroups_modified_unspec", "__admin__ __master__")
+	del config
+	
+	global messageModule
+	messageModule = MessageFramework.MessagingModule()
+	messageModule.addMessage('map_modified', "${info}${green}${name}${white} has a ${red}modified${white} map.", 'MapCheck')
+	messageModule.addMessage('modified_unspec', "${warning}You cannot play with a ${red}modified${white} map.", 'MapCheck')
+	messageModule.finalize()
 	
 	@Events.eventHandler('player_modified_map')
 	def onMapModified(cn):
 		p = Players.player(cn)
-		ServerCore.message(UI.info(Colors.green(p.name()) + " has a " + Colors.red("modified") + " map."))
+		messageModule.messagePlayer('map_modified', p, dictionary={'name':p.name()})
 		p.gamevars['modified_map'] = True
 		if not onUnspectate(cn, cn):
 			p.spectate()
@@ -48,12 +60,12 @@ def init():
 		if not p.gamevars['modified_map']:
 			return True
 			
-		#TODO: create equivalent functionality for groups
-		#if isAtLeastMaster(cn):
-		#	return True
+		for group in p.groups():
+			if group in allowgroups_modified_unspec:
+				return True
 			
 		if cn == tcn:
-			p.message(UI.warning('You cannot play with a ' + Colors.red("modified") + ' map.'))
+			messageModule.messagePlayer('modified_unspec', p)
 			
 		return False
 	
@@ -68,6 +80,7 @@ def init():
 		except ValueError:
 			pass
 	
+	"""
 	@Commands.commandHandler('mapmodifiedspec')
 	def mapModifiedSpecCmd(cn, args):
 		'''@description Enable or disable spectate clients with modified map
@@ -81,4 +94,5 @@ def init():
 			spectate_map_modified = True
 			p.message(UI.info('Spectate modified maps enabled'))
 		else:
-			p.message(UI.error('Usage: #mapmodifiedspec (enable/disable)'))
+	
+			p.message(UI.error('Usage: #mapmodifiedspec (enable/disable)'))"""

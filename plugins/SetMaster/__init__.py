@@ -74,8 +74,8 @@ def init():
 	def onSetMasterOff(cn):
 		'''
 		@commandType
-		@allowGroups = __admin__ __master__
-		@denyGroups =
+		@allowGroups __admin__ __master__
+		@denyGroups
 		'''
 		p = Players.player(cn)
 		groups = p.groups()
