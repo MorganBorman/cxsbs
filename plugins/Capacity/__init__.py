@@ -27,9 +27,10 @@ def nearestGreaterMultiple(number, factor):
 	return n
 		
 def init():
-	global resize, default_size, resize_by
+	global resize, default_size, resize_by, pause_when_empty
 	config = Config.PluginConfig('Capacity')
 	resize = config.getBoolOption('Config', 'resize', True)
+	pause_when_empty = config.getBoolOption('Config', 'pause_when_empty', True)
 	default_size = config.getIntOption('Config', 'default_size', 8)
 	max_size = config.getIntOption('Config', 'max_size', 24)
 	resize_by = config.getIntOption('Config', 'resize_by', 2)
@@ -41,8 +42,15 @@ def init():
 	@Events.eventHandler('no_clients')
 	@Events.eventHandler('server_start')
 	def onServerStart():
+		if pause_when_empty:
+			Server.setPaused(True)
 		Server.setMaxClients(default_size)
-		
+	
+	@Events.eventHandler('player_connect')
+	def onConnect(cn):
+		if Server.clientCount() == 1:
+			Server.setPaused(False)
+	
 	@Events.eventHandler('player_spectated')
 	@Events.eventHandler('player_connect')
 	@Events.eventHandler('player_disconnect')

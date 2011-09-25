@@ -25,15 +25,10 @@ Net = cxsbs.getResource("Net")
 Server = cxsbs.getResource("Server")
 Commands = cxsbs.getResource("Commands")
 Game = cxsbs.getResource("Game")
+MessageFramework = cxsbs.getResource("MessageFramework")
 
 import string
 import DefaultMapRotation
-
-def onConnect(cn):
-	global rotate_on_join
-	if rotate_on_join:
-		rotate_on_join = False
-		ServerCore.setPaused(False)
 
 class Map:
 	def __init__(self, name, mode):
@@ -63,7 +58,6 @@ def clientReloadRotate():
 	ServerCore.sendMapReload()
 
 def presetRotate():
-	global rotate_on_join
 	try:
 		map = getSuccessor(ServerCore.gameMode(), ServerCore.mapName())
 	except KeyError:
@@ -74,9 +68,6 @@ def presetRotate():
 		clientReloadRotate()
 	else:
 		ServerCore.setMap(map, ServerCore.gameMode())
-	if ServerCore.numClients() == 0:
-		rotate_on_join = True
-		ServerCore.setPaused(True)
 
 def onNextMapCmd(cn, args):
 	'''@description Display next map
@@ -85,10 +76,11 @@ def onNextMapCmd(cn, args):
 	if args != '':
 		raise Commands.UsageError()
 	else:
+		p = Players.player(cn)
 		try:
-			ServerCore.playerMessage(cn, UI.info(nextmap_response.substitute(Colors.colordict, mapname=getSuccessor(ServerCore.gameMode(), ServerCore.mapName()))))
+			messageModule.sendPlayerMessage('nextmap_response', p, dictionary={'mapname':getSuccessor(ServerCore.gameMode(), ServerCore.mapName())})
 		except (KeyError, ValueError):
-			ServerCore.playerMessage(cn, UI.error('Could not determine next map'))
+			messageModule.sendPlayerMessage('nextmap_unknown', p)
 
 def onServerStart(*args):
 		startMapName = modeMapLists[start_mode][0]
@@ -96,12 +88,11 @@ def onServerStart(*args):
 		ServerCore.setMap(startMapName, startModeNumber)
 
 def init():
-	config = Config.PluginConfig('MapRotation')
-	
 	global preset_rotation, start_mode, nextmap_response, modeMapLists
-	preset_rotation = config.getBoolOption('Config', 'use_preset_rotation', 'yes')
+	config = Config.PluginConfig('MapRotation')
+	preset_rotation = config.getBoolOption('Config', 'use_preset_rotation', True)
 	start_mode = config.getOption('Config', 'start_mode', 'ffa')
-	nextmap_response = config.getTemplateOption('Config', 'nextmap_response', 'The next map is ${blue}${mapname}')
+	newmap_on_empty = config.getBoolOption('Config', 'newmap_on_empty', True)
 	modeMapLists = {}
 	
 	modeMapLists["hold"] = config.getOption('Map Rotation', 'hold', DefaultMapRotation.hold).split()
@@ -128,13 +119,18 @@ def init():
 	
 	del config
 	
+	global messageModule
+	messageModule = MessageFramework.MessagingModule()
+	messageModule.addMessage('nextmap_response', '${info}The next map is ${blue}${mapname}${white}.', "MapRotation")
+	messageModule.addMessage('nextmap_unknown', '${info}Could not determine next map in rotation.', "MapRotation")
+	messageModule.finalize()
+	
 	if preset_rotation:
-		global rotate_on_join
-		rotate_on_join = False
-		
 		Events.registerServerEventHandler('intermission_ended', presetRotate)
-		Events.registerServerEventHandler('player_connect', onConnect)
 		Events.registerServerEventHandler('server_start', onServerStart)
+		
+		if newmap_on_empty:
+			Events.registerServerEventHandler('no_clients', presetRotate)
 		
 		Commands.registerCommandHandler('nextmap', onNextMapCmd)
 	else:

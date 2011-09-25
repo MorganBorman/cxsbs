@@ -21,14 +21,16 @@ Colors = cxsbs.getResource("Colors")
 UI = cxsbs.getResource("UI")
 Players = cxsbs.getResource("Players")
 CommandInformation = cxsbs.getResource("CommandInformation")
+MessageFramework = cxsbs.getResource("MessageFramework")
 
 import cxsbs.Logging
 
 def msgHelpText(cn, cmd):
 	try:
-		helpinfo = CommandInformation.command_info[cmd]
+		helpinfo = CommandInformation.getCommandInfo(cmd)
 	except KeyError:
-		ServerCore.playerMessage(cn, UI.error('Command not found'))
+		p = Players.player(cn)
+		messageModule.sendPlayerMessage('unknown_command', p)
 	else:
 		msgs = []
 		try:
@@ -67,11 +69,17 @@ def listCommands(cn, args):
 	
 	playerGroups = p.groups()
 	
-	str = 'Available commands: '
+	available = []
+	
 	for cmd in CommandInformation.command_info.values():
-		if allowCommand(cmd, p):
-			str += cmd.command + ' '
-	q.message(UI.info(str))
+		if CommandInformation.allowCommand(cmd, p):
+			available.append(cmd.command)
+	messageModule.sendPlayerMessage('available_commands', q, dictionary={'commands':', '.join(available)})
 	
 def init():
-	pass
+
+	global messageModule
+	messageModule = MessageFramework.MessagingModule()
+	messageModule.addMessage('available_commands', '${info}Available commands: ${commands}.', "Help")
+	messageModule.addMessage('unkown_command', '${error}Command not found.', "Help")
+	messageModule.finalize()

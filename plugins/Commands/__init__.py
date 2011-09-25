@@ -22,6 +22,7 @@ UI = cxsbs.getResource("UI")
 Players = cxsbs.getResource("Players")
 Help = cxsbs.getResource("Help")
 CommandInformation = cxsbs.getResource("CommandInformation")
+MessageFramework = cxsbs.getResource("MessageFramework")
 
 import sys
 import traceback
@@ -54,37 +55,37 @@ class InsufficientPermissions(Exception):
 		
 def executeCommand(p, command, func, args):
 	try:
-		info = Help.getCommandInfo(command)
+		info = CommandInformation.getCommandInfo(command)
 		if info == None:
 			raise StateError("Commands without info cannot be executed.")
 			
-		if not Help.allowCommand(info, p):
+		if not CommandInformation.allowCommand(info, p):
 			raise InsufficientPermissions()
 		
 		func(p.cn, args)
 	except UsageError, e:
 		try:
-			usages = Help.command_info[command].usages
+			usages = CommandInformation.getCommandInfo(command).usages
 		except KeyError:
 			usages = []
-		p.message(UI.error('Invalid Usage of #' + command + ' command. ' + str(e)))
+		messageModule.sendPlayerMessage('invalid_usage', p, dictionary={'command': command})
 		for usage in usages:
-			p.message(UI.info('Usage: ' + command + ' ' + usage))
+			messageModule.sendPlayerMessage('command_usage', p, dictionary={'command': command, 'usage':usage})
 	except StateError, e:
-		p.message(UI.error(str(e)))
+		messageModule.sendPlayerMessage('command_state_error', p, dictionary={'msg': str(e)})
 	except ArgumentValueError, e:
-		p.message(UI.error('Invalid argument. ' + str(e)))
+		messageModule.sendPlayerMessage('command_argument_error', p, dictionary={'msg': str(e)})
 	except ValueError:
-		p.message(UI.error('Value Error: Did you specify a valid cn?'))
+		messageModule.sendPlayerMessage('command_value_error', p)
 		exceptionType, exceptionValue, exceptionTraceback = sys.exc_info()	
 		Logging.warn('Uncaught ValueError raised in command handler.')
 		Logging.warn(traceback.format_exc())
 	except InsufficientPermissions:
 		UI.insufficientPermissions(p.cn)
-		Logging.warn('Insufficient Permissions for command:' + command + " args: " + str(args) + " player: " + p.name() + "@" + p.ipString())
+		Logging.warn(p.name() + "@" + p.ipString() + ': Insufficient Permissions for command:' + command + " args: " + str(args))
 	except:
 		exceptionType, exceptionValue, exceptionTraceback = sys.exc_info()	
-		Logging.warn('Uncaught exception occured in command handler.')
+		Logging.warn(p.name() + "@" + p.ipString() + ': Uncaught exception occurred in command handler.')
 		Logging.warn(traceback.format_exc())
 					
 def executeCallback(p, command, func, args):
@@ -95,24 +96,24 @@ def executeCallback(p, command, func, args):
 			removeCallback = True
 	except UsageError, e:
 		try:
-			usages = Help.command_info[command].usages
+			usages = CommandInformation.getCommandInfo(command).usages
 		except KeyError:
 			usages = []
-		p.message(UI.error('Invalid Usage of #' + command + ' command. ' + str(e)))
+		messageModule.sendPlayerMessage('invalid_usage', p, dictionary={'command': command})
 		for usage in usages:
-			p.message(UI.info('Usage: ' + self.command + ' ' + usage))
+			messageModule.sendPlayerMessage('command_usage', p, dictionary={'command': command, 'usage':usage})
 	except StateError, e:
-		p.message(UI.error(str(e)))
+		messageModule.sendPlayerMessage('command_state_error', p, dictionary={'msg': str(e)})
 	except ArgumentValueError, e:
-		p.message(UI.error('Invalid argument. ' + str(e)))
+		messageModule.sendPlayerMessage('command_argument_error', p, dictionary={'msg': str(e)})
 	except ValueError:
-		p.message(UI.error('Value Error: Did you specify a valid cn?'))
+		messageModule.sendPlayerMessage('command_value_error', p)
 		exceptionType, exceptionValue, exceptionTraceback = sys.exc_info()	
 		Logging.warn('Uncaught ValueError raised in command handler.')
 		Logging.warn(traceback.format_exc())
 	except:
 		exceptionType, exceptionValue, exceptionTraceback = sys.exc_info()	
-		Logging.warn('Uncaught exception occurred in command handler.')
+		Logging.warn(p.name() + "@" + p.ipString() + ': Uncaught exception occurred in command handler.')
 		Logging.warn(traceback.format_exc())
 	if removeCallback:
 		commandManager.removeCallback(p.cn)
@@ -153,7 +154,7 @@ class CommandManager:
 			for func in self.command_handlers[command]:
 					executeCommand(p, command, func, text)
 		else:
-			p.message(UI.error('Command not found'))
+			messageModule.sendPlayerMessage('unknown_command', p)
 	def onMsg(self, cn, text):
 		if len(text) > 0 and self.prefixes.find(text[0]) != -1:
 			cmd = text[1:].split(' ')[0]
@@ -205,3 +206,13 @@ def init():
 	commandManager = CommandManager()
 	registerCommandHandler('help', Help.onHelpCommand)
 	registerCommandHandler('listcommands', Help.listCommands)
+	
+	global messageModule
+	messageModule = MessageFramework.MessagingModule()
+	messageModule.addMessage('unknown_command', '${error}Command not found.', "Help")
+	messageModule.addMessage('command_usage', '${info}Usage: #${command} ${usage}', "Help")
+	messageModule.addMessage('invalid_usage', '${error}Usage Error: #${command}:', "Commands")
+	messageModule.addMessage('command_value_error', '${error}Value Error: Did you specify a valid cn?', "Commands")
+	messageModule.addMessage('command_argument_error', '${error}Argument Error: ${msg}', "Commands")
+	messageModule.addMessage('command_state_error', '${error}State Error: ${msg}', "Commands")
+	messageModule.finalize()

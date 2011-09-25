@@ -22,6 +22,7 @@ Events = cxsbs.getResource("Events")
 Players = cxsbs.getResource("Players")
 Commands = cxsbs.getResource("Commands")
 MessageFramework = cxsbs.getResource("MessageFramework")
+Logging = cxsbs.getResource("Logging")
 
 import string
 
@@ -43,6 +44,7 @@ def setPaused(val, cn=-1):
 		p = Players.player(cn)
 	except ValueError:
 		name = 'the server'
+		Logging.info('The server has ' + action + ' itself.')
 	else:
 		name = p.name()
 		p.logAction(action)
