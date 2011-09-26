@@ -1,8 +1,8 @@
-from cxsbs.Plugin import Plugin
+import cxsbs.Plugin
 
-class Invisibility(Plugin):
+class Plugin(cxsbs.Plugin.Plugin):
 	def __init__(self):
-		Plugin.__init__(self)
+		cxsbs.Plugin.Plugin.__init__(self)
 		
 	def load(self):
 		init()

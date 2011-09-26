@@ -171,7 +171,8 @@ class PluginLoader:
 			
 			#get the plugin class from the module
 			try:
-				pluginObjectClass = pluginModule.__getattribute__(manifest.SymbolicName)
+				#pluginObjectClass = pluginModule.__getattribute__(manifest.SymbolicName)
+				pluginObjectClass = pluginModule.__getattribute__("Plugin")
 			except AttributeError:
 				self.failed.append(manifest.SymbolicName)
 				raise MalformedPlugin(manifest.SymbolicName + ": class is not present.")

@@ -3,6 +3,6 @@ Name = Setting
 SymbolicName = Setting
 Version = 0.0.1
 Author = Chasm
-Enabled = False
+Enabled = True
 
 [Dependencies]

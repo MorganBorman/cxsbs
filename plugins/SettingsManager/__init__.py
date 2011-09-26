@@ -1,20 +1,41 @@
-from cxsbs.Plugin import Plugin
+import cxsbs.Plugin
 
-class PluginTemplate(Plugin):
+class Plugin(cxsbs.Plugin.Plugin):
 	def __init__(self):
-		Plugin.__init__(self)
+		cxsbs.Plugin.Plugin.__init__(self)
 		
 	def load(self):
-		init()
+		pass
 		
 	def reload(self):
-		init()
+		pass
 		
 	def unload(self):
-		deinit()
+		pass
+	
+class Portal:
+	def __init__(self, settingsManager, category, subcategory):
+		self.settingsManager = settingsManager
+		self.category = category
+		self.subcategory = subcategory
+	
+	def __getattr__(self, name):
+		pass
+	
+	def __setattr__(self, name, value):
+		pass
+	
+class SettingsManager(object):
+	def __init__(self):
+		settings = {}
+	
+	def addSetting(self, setting):
+		pass
+	
+	def getValue(self, category, subcategory, symbolicName):
+		pass
 		
-def init():
-	pass
-
-def deinit():
-	pass
+	def syncronize(self, write=False):
+		pass
+	
+	

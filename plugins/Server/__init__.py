@@ -1,8 +1,8 @@
-from cxsbs.Plugin import Plugin
+import cxsbs.Plugin
 
-class Server(Plugin):
+class Plugin(cxsbs.Plugin.Plugin):
 	def __init__(self):
-		Plugin.__init__(self)
+		cxsbs.Plugin.Plugin.__init__(self)
 		
 	def load(self):
 		init()
@@ -34,12 +34,13 @@ def setPaused(val, cn=-1):
 	'''Pause or unpause the game'''
 	if isFrozen():
 		raise Commands.StateError('Server is currently frozen')
-	if val == isPaused():
+	if val == ServerCore.isPaused():
 		return
 	if val:
 		action = 'paused'
 	else:
 		action = 'unpaused'
+	print "got here"
 	try:
 		p = Players.player(cn)
 	except ValueError:
@@ -51,6 +52,7 @@ def setPaused(val, cn=-1):
 	messageModule.sendMessage('set_paused', dictionary={'action':action, 'name':name})
 	Events.triggerServerEvent(action, (cn, ))
 	ServerCore.setPaused(val)
+	print "end of setPaused function"
 
 def adminPassword():
 	'''Administrator password of server.'''

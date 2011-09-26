@@ -1,20 +1,24 @@
-from cxsbs.Plugin import Plugin
+import cxsbs.Plugin
 
-class PluginTemplate(Plugin):
+class Plugin(cxsbs.Plugin.Plugin):
 	def __init__(self):
-		Plugin.__init__(self)
+		cxsbs.Plugin.Plugin.__init__(self)
 		
 	def load(self):
-		init()
+		pass
 		
 	def reload(self):
-		init()
+		pass
 		
 	def unload(self):
-		deinit()
-		
-def init():
-	pass
-
-def deinit():
-	pass
+		pass
+	
+class Setting(object):
+	def __init__(self, symbolicName, type, category, subcategory, default, writeBack, value):
+		self.symbolicName = symbolicName
+		self.type = type
+		self.category = category
+		self.subcategory = subcategory
+		self.default = default
+		self.writeBack = writeBack
+		self.value = value

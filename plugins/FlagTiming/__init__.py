@@ -1,8 +1,8 @@
-from cxsbs.Plugin import Plugin
+import cxsbs.Plugin
 
-class PluginTemplate(Plugin):
+class Plugin(cxsbs.Plugin.Plugin):
 	def __init__(self):
-		Plugin.__init__(self)
+		cxsbs.Plugin.Plugin.__init__(self)
 		
 	def load(self):
 		init()
@@ -11,10 +11,4 @@ class PluginTemplate(Plugin):
 		init()
 		
 	def unload(self):
-		deinit()
-		
-def init():
-	pass
-
-def deinit():
-	pass
+		pass

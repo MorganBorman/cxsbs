@@ -1,8 +1,8 @@
-from cxsbs.Plugin import Plugin
+import cxsbs.Plugin
 
-class Capacity(Plugin):
+class Plugin(cxsbs.Plugin.Plugin):
 	def __init__(self):
-		Plugin.__init__(self)
+		cxsbs.Plugin.Plugin.__init__(self)
 		
 	def load(self):
 		init()
@@ -43,13 +43,14 @@ def init():
 	@Events.eventHandler('server_start')
 	def onServerStart():
 		if pause_when_empty:
-			Server.setPaused(True)
+			ServerCore.setPersistentIntermission(True)
+			ServerCore.setMinsRemaining(0)
 		Server.setMaxClients(default_size)
 	
 	@Events.eventHandler('player_connect')
 	def onConnect(cn):
 		if Server.clientCount() == 1:
-			Server.setPaused(False)
+			ServerCore.setPersistentIntermission(False)
 			
 	@Events.eventHandler('player_disconnect')
 	def onDisconnect(cn):

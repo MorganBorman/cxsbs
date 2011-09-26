@@ -1,8 +1,8 @@
-from cxsbs.Plugin import Plugin
+import cxsbs.Plugin
 
-class Players(Plugin):
+class Plugin(cxsbs.Plugin.Plugin):
 	def __init__(self):
-		Plugin.__init__(self)
+		cxsbs.Plugin.Plugin.__init__(self)
 		
 	def load(self):
 		init()
@@ -53,6 +53,9 @@ class Player:
 	def sessionId(self):
 		'''Session ID of client'''
 		return ServerCore.playerSessionId(self.cn)
+	def requestAuth(self, description):
+		'''Request that a player send their auth key with the given description'''
+		ServerCore.requestPlayerAuth(self.cn, description)
 	def name(self):
 		'''Name of client'''
 		return ServerCore.playerName(self.cn)
