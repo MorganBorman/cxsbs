@@ -208,6 +208,7 @@ class Model(object):
 		
 		return the userIds as a list
 		"""
+		pass
 		
 	@abc.abstractmethod
 	def isGroup(self, groupId):

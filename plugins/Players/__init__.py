@@ -261,7 +261,7 @@ def init():
 	global players
 	players = {}
 	for cn in ServerCore.clients():
-		playerConnect(cn)
+		addPlayerForCn(cn)
 		
 	@Events.eventHandler('player_connect')
 	def onPlayerConnect(cn):

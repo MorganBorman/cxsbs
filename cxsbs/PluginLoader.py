@@ -15,6 +15,7 @@ class PluginLoader:
 		self.providers = {}
 		self.failed = []
 		self.unloaded = False
+		self.reloadOrder = [] #Used to reload the plugins in dependency order
 			
 	def scanManifests(self, pluginPath):
 		self.manifests = {}
@@ -80,6 +81,13 @@ class PluginLoader:
 				pluginObject.unload()
 				logger.info("Unloaded plugin: " + pluginName)
 			self.unloaded = True
+			
+	def reloadAll(self):
+		if not self.unloaded:
+			for symbolicName in self.reloadOrder:
+				pluginObject = self.pluginObjects[symbolicName]
+				pluginObject.reload()
+				logger.info("reloaded plugin: " + symbolicName)
 		
 	def loadDependencies(self, manifest, dependList):
 		for dependency in manifest.Dependencies:
@@ -180,6 +188,7 @@ class PluginLoader:
 			#load the actual plugin
 			self.pluginObjects[manifest.SymbolicName].load()
 			logger.info("Loaded plugin: " + manifest.Name)
+			self.reloadOrder.append(manifest.SymbolicName)
 			
 	def getResource(self, symbolicName):
 		try:

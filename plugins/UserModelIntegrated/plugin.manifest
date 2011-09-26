@@ -1,0 +1,6 @@
+[Plugin]
+Name = User Model Integrated
+SymbolicName = UserModelIntegrated
+Version = 0.0.1
+Author = Chasm
+Enabled = True

@@ -7,6 +7,11 @@ class Events(Plugin):
 		Plugin.__init__(self)
 		
 	def load(self):
+		reactor.startRunning() #@UndefinedVariable
+		
+		import EventManager
+		import PolicyEventManager
+		
 		global eventManager
 		global policyEventManager
 		
@@ -31,9 +36,6 @@ import cxsbs.AsyncronousExecutor
 from twisted.internet import reactor
 
 import traceback
-
-import EventManager
-import PolicyEventManager
 
 eventManager = None
 policyEventManager = None
@@ -118,5 +120,3 @@ def update():
 		reactor.runUntilCurrent() #@UndefinedVariable
 		reactor.doIteration(0) #@UndefinedVariable
 		triggerExecQueue()
-
-reactor.startRunning() #@UndefinedVariable

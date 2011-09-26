@@ -59,7 +59,7 @@ def loadEventHandlerInfo(event, handler):
 		
 		for line in lines:
 			line = line.strip()
-			if len(line) > 0:
+			if len(line) > 0 or doc:
 				if line[0] == '@':
 					tag = line.split(' ', 1)[0].lower()
 					text = line[len(tag)+1:]

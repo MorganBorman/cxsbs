@@ -1,0 +1,17 @@
+[Plugin]
+Name = Set Map
+SymbolicName = SetMap
+Version = 0.0.1
+Author = Chasm
+Enabled = True
+
+[Dependencies]
+ServerCore = 0.0.1
+MessageFramework = 0.0.1
+Events = 0.0.1
+MapRotation = 0.0.1
+Game = 0.0.1
+Logging = 0.0.1
+Commands = 0.0.1
+Config = 0.0.1
+Timers = 0.0.1

@@ -7,3 +7,4 @@ Enabled = True
 
 [Requests]
 DatabaseManagerBackend = 0.0.1
+DatabaseManagerBase = 0.0.1

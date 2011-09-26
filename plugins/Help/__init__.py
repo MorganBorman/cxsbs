@@ -26,10 +26,10 @@ MessageFramework = cxsbs.getResource("MessageFramework")
 import cxsbs.Logging
 
 def msgHelpText(cn, cmd):
+	p = Players.player(cn)
 	try:
 		helpinfo = CommandInformation.getCommandInfo(cmd)
 	except KeyError:
-		p = Players.player(cn)
 		messageModule.sendPlayerMessage('unknown_command', p)
 	else:
 		msgs = []
@@ -40,7 +40,7 @@ def msgHelpText(cn, cmd):
 		for usage in helpinfo.usages:
 			msgs.append(usage)
 		for msg in msgs:
-			ServerCore.playerMessage(cn, UI.info(msg))
+			messageModule.sendPlayerMessage('help_message', p, dictionary={'msg':msg})
 
 def onHelpCommand(cn, args):
 	'''@description Display help information about a command
@@ -80,6 +80,7 @@ def init():
 
 	global messageModule
 	messageModule = MessageFramework.MessagingModule()
-	messageModule.addMessage('available_commands', '${info}Available commands: ${commands}.', "Help")
+	messageModule.addMessage('available_commands', '${help}${yellow}Available commands:${white} ${commands}.', "Help")
 	messageModule.addMessage('unkown_command', '${error}Command not found.', "Help")
+	messageModule.addMessage('help_message', '${help}${msg}', "Help")
 	messageModule.finalize()

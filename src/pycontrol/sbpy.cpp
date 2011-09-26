@@ -154,6 +154,73 @@ bool initPy()
 	return true;
 }
 
+bool reinitPy()
+{
+	cxsbsModule = PyImport_ImportModule("cxsbs");
+	SBPY_ERR(cxsbsModule)
+
+	loadPluginsFunction = PyObject_GetAttrString(cxsbsModule, "loadPlugins");
+	SBPY_ERR(loadPluginsFunction);
+	if(!PyCallable_Check(loadPluginsFunction))
+	{
+		fprintf(stderr, "Error: loadPlugins function could not be loaded.\n");
+		return false;
+	}
+
+	//get the rest of the c++ accessible resources
+	getResourceFunction = PyObject_GetAttrString(cxsbsModule, "getResource");
+	SBPY_ERR(getResourceFunction);
+	if(!PyCallable_Check(getResourceFunction))
+	{
+		fprintf(stderr, "Error: getResource function could not be loaded.\n");
+		return false;
+	}
+
+	//Get the Events plugin
+	eventsModule = callPyStringFunc(getResourceFunction, "Events");
+	SBPY_ERR(eventsModule)
+
+	//get the stuff we need out of the Events plugin
+	triggerEventFunc = PyObject_GetAttrString(eventsModule, "triggerServerEvent");
+	SBPY_ERR(triggerEventFunc);
+	if(!PyCallable_Check(triggerEventFunc))
+	{
+		fprintf(stderr, "Error: triggerEvent function could not be loaded.\n");
+		return false;
+	}
+
+	triggerPolicyEventFunc = PyObject_GetAttrString(eventsModule, "triggerPolicyEvent");
+	SBPY_ERR(triggerPolicyEventFunc);
+	if(!PyCallable_Check(triggerPolicyEventFunc))
+	{
+		fprintf(stderr, "Error: triggerPolicyEvent function could not be loaded.\n");
+		return false;
+	}
+
+	updateFunc = PyObject_GetAttrString(eventsModule, "update");
+	SBPY_ERR(updateFunc);
+	if(!PyCallable_Check(updateFunc))
+	{
+		fprintf(stderr, "Error: update function could not be loaded.\n");
+		return false;
+	}
+
+	//Get the textModeration plugin
+	textModerationModule = callPyStringFunc(getResourceFunction, "TextModeration");
+	SBPY_ERR(textModerationModule)
+
+	textModFunc = PyObject_GetAttrString(textModerationModule, "textModerate");
+	SBPY_ERR(textModFunc);
+	if(!PyCallable_Check(textModFunc))
+	{
+		fprintf(stderr, "Error: textModerate function could not be loaded.\n");
+		return false;
+	}
+
+	return true;
+
+}
+
 void deinitPy()
 {
 	Py_XDECREF(cxsbsModule);

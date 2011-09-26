@@ -5,6 +5,8 @@ Version = 0.0.1
 Author = Chasm
 Enabled = True
 
+[Dependencies]
+UserModelBase = 0.0.1
+
 [Requests]
 UserModelBackend = 0.0.1
-UserModelBase = 0.0.1

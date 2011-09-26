@@ -1,0 +1,12 @@
+[Plugin]
+Name = Auth support
+SymbolicName = Auth
+Version = 0.0.1
+Author = Chasm
+Enabled = True
+
+[Dependencies]
+Players = 0.0.1
+Events = 0.0.1
+Config = 0.0.1
+ServerCore = 0.0.1

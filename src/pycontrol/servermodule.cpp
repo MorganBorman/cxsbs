@@ -25,6 +25,12 @@
 namespace SbPy
 {
 
+static PyObject *reinitializeHandlers(PyObject *self, PyObject *args)
+{
+	SbPy::reinitPy();
+	return Py_None;
+}
+
 static PyObject *numClients(PyObject *self, PyObject *args)
 {
 	return Py_BuildValue("i", server::numclients());
@@ -1083,6 +1089,7 @@ static PyObject *shutdown(PyObject *self, PyObject *args)
 }
 
 static PyMethodDef ModuleMethods[] = {
+	{"reinitializeHandlers", reinitializeHandlers, METH_VARARGS, "Re-retreive python functions for the c++ handlers."},
 	{"numClients", numClients, METH_VARARGS, "Return the number of clients on the server."},
 	{"message", message, METH_VARARGS, "Send a server message."},
 	{"clients", clients, METH_VARARGS, "List of client numbers."},

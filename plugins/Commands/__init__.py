@@ -8,6 +8,7 @@ class Commands(Plugin):
 		init()
 		
 	def reload(self):
+		commandManager.command_handlers.clear()
 		init()
 		
 	def unload(self):
@@ -204,6 +205,7 @@ class commandHandler(object):
 def init():
 	global commandManager
 	commandManager = CommandManager()
+	
 	registerCommandHandler('help', Help.onHelpCommand)
 	registerCommandHandler('listcommands', Help.listCommands)
 	

@@ -171,7 +171,7 @@ def init():
 	config = Config.PluginConfig('masterclient')
 	master_host = config.getOption('Config', 'master_host', 'sauerbraten.org')
 	master_port = config.getOption('Config', 'master_port', '28787')
-	allow_auth = config.getOption('Config', 'allow_auth', 'yes') == 'yes'
+	allow_auth = config.getBoolOption('Config', 'allow_auth', True)
 	register_interval = config.getIntOption('Config', 'register_interval', '3600')
 	del config
 	

@@ -1,0 +1,8 @@
+[Plugin]
+Name = Plugin Template
+SymbolicName = PluginTemplate
+Version = 0.0.1
+Author = Chasm
+Enabled = True
+
+[Dependencies]

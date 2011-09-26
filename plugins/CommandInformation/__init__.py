@@ -59,49 +59,50 @@ def loadCommandInfo(command, handler):
 		
 		for line in lines:
 			line = line.strip()
-			if line[0] == '@':
-				tag = line.split(' ', 1)[0].lower()
-				text = line[len(tag)+1:]
-				if tag == '@usage':
-					if len(line) == len(tag):
-						info.addUsage('')
-					else:
-						info.addUsage(text)
-					doc = False
-				elif tag == '@description':
-					info.description = text
-					doc = False
-				elif tag == '@allowgroups':
-					info.allowGroups += text.split()
-					doc = False
-				elif tag == '@denygroups':
-					info.denyGroups += text.split()
-					doc = False
-				elif tag == '@allowfunctiongroup':
-					args = text.split()
-					
-					function = args[0]
-					groups = args[1:]
-					
-					if not function in info.allowFunctionGroups.keys():
-						info.allowFunctionGroups[function] = []
-					
-					info.allowFunctionGroups[function] += groups
-				elif tag == '@denyfunctiongroup':
-					args = text.split()
-					
-					function = args[0]
-					groups = args[1:]
-					
-					if not function in info.denyFunctionGroups.keys():
-						info.denyFunctionGroups[function] = []
-					
-					info.denyFunctionGroups[function] += groups
-				elif tag == '@doc':
-					doc = True
-					info.documentation += text + '\n'
-				elif doc:
-					info.documentaation += text + '\n'
+			if len(line) > 0 or doc:
+				if line[0] == '@':
+					tag = line.split(' ', 1)[0].lower()
+					text = line[len(tag)+1:]
+					if tag == '@usage':
+						if len(line) == len(tag):
+							info.addUsage('')
+						else:
+							info.addUsage(text)
+						doc = False
+					elif tag == '@description':
+						info.description = text
+						doc = False
+					elif tag == '@allowgroups':
+						info.allowGroups += text.split()
+						doc = False
+					elif tag == '@denygroups':
+						info.denyGroups += text.split()
+						doc = False
+					elif tag == '@allowfunctiongroup':
+						args = text.split()
+						
+						function = args[0]
+						groups = args[1:]
+						
+						if not function in info.allowFunctionGroups.keys():
+							info.allowFunctionGroups[function] = []
+						
+						info.allowFunctionGroups[function] += groups
+					elif tag == '@denyfunctiongroup':
+						args = text.split()
+						
+						function = args[0]
+						groups = args[1:]
+						
+						if not function in info.denyFunctionGroups.keys():
+							info.denyFunctionGroups[function] = []
+						
+						info.denyFunctionGroups[function] += groups
+					elif tag == '@doc':
+						doc = True
+						info.documentation += text + '\n'
+					elif doc:
+						info.documentaation += text + '\n'
 		
 		info.finalize()
 		

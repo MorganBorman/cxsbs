@@ -15,6 +15,8 @@ class Email(Plugin):
 
 import smtplib
 
+from VerificationMessages import *
+
 import cxsbs
 Config = cxsbs.getResource("Config")
 
@@ -32,9 +34,23 @@ def isValidEmail(email):
 			return True
 	return False
 
+def send_create_verification(email, serverName, initiatedTime, serverClusterName, verificationCode, administrativeEmail):
+	pass
+
 def init():
 	global send_email_from, administrative_email
 	config = Config.PluginConfig('email')
 	send_email_from = config.getOption('Email', 'send_email_from', 'no.reply@mydomain.com')
 	administrative_email = config.getOption('Email', 'administrative_email', 'admin@mydomain.com')
+	
+	global create_verification_subject, create_verification_body, change_verification_subject, change_verification_body, delete_verification_subject, delete_verification_body
+	create_verification_subject = config.getOption('Email', 'create_verification_subject', create_verification_subject)
+	create_verification_body = config.getOption('Email', 'create_verification_body', create_verification_body)
+	
+	change_verification_subject = config.getOption('Email', 'change_verification_subject', change_verification_subject)
+	change_verification_body = config.getOption('Email', 'change_verification_body', change_verification_body)
+	
+	delete_verification_subject = config.getOption('Email', 'delete_verification_subject', delete_verification_subject)
+	delete_verification_body = config.getOption('Email', 'delete_verification_body', delete_verification_body)
+	
 	del config

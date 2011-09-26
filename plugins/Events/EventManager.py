@@ -20,14 +20,21 @@ class EventManager:
 		self.Players = Players
 		self.events = {}
 	def connect(self, event, func):
-		try:
-			self.events[event].append(func)
-		except KeyError:
+		if not event in self.events.keys():
 			self.events[event] = []
-			self.connect(event, func)
+		
+		for i in range(len(self.events[event])):
+			f = self.events[event][i]
+			if f.__module__ == func.__module__ and f.__name__ == func.__name__:
+				self.events[event][i] = func
+				return
+			
+		self.events[event].append(func)
+		
 	def trigger(self, eventName, args=()):
 		Logging.debug("Event: " + str(eventName) + " " + str(args))
 		try:
+			#Logging.debug("Event handlers: " + str(self.events[eventName]))
 			for event in self.events[eventName]:
 				info = EventInformation.getEventHandlerInfo(event)
 				if info != None:

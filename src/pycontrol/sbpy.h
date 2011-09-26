@@ -28,6 +28,7 @@ namespace SbPy
 
 bool init(const char*, const char*, const char*, const char*);
 bool initPy();
+bool reinitPy();
 void deinitPy();
 bool restartPy();
 const char *moderateText(const char *type, int cn, const char *text);

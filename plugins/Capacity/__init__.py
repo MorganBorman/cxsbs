@@ -50,6 +50,11 @@ def init():
 	def onConnect(cn):
 		if Server.clientCount() == 1:
 			Server.setPaused(False)
+			
+	@Events.eventHandler('player_disconnect')
+	def onDisconnect(cn):
+		if Server.clientCount() == 0:
+			Server.setPaused(True)
 	
 	@Events.eventHandler('player_spectated')
 	@Events.eventHandler('player_connect')

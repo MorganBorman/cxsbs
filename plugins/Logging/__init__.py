@@ -8,6 +8,7 @@ class Logging(Plugin):
 		init()
 		
 	def reload(self):
+		gameLogger.removeHandler(gameLoggerFileHandler)
 		init()
 		
 	def unload(self):
@@ -37,13 +38,15 @@ def init():
 	global gameLogger
 	gameLogger = logging.getLogger('gameLogger')
 	gameLogger.setLevel(LEVELS[level])
-	fh = logging.FileHandler(path)
-	fh.setLevel(LEVELS[level])
+	
+	global gameLoggerFileHandler
+	gameLoggerFileHandler = logging.FileHandler(path)
+	gameLoggerFileHandler.setLevel(LEVELS[level])
 	
 	formatter = logging.Formatter('%(levelname)-10s %(asctime)s %(message)s')
-	fh.setFormatter(formatter)
+	gameLoggerFileHandler.setFormatter(formatter)
 	
-	gameLogger.addHandler(fh)
+	gameLogger.addHandler(gameLoggerFileHandler)
 	
 	global warn, info, error, debug, critical, exception, log
 	#make these function available in this resource

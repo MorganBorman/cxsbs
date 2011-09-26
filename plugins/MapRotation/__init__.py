@@ -47,7 +47,7 @@ def getSuccessor(mode_num, map):
 			Logging.info('Current map not in rotation list.  Restarting rotation.')
 			return maps[0]
 		else:
-			raise ValueError('Empty maps list for specified mode')
+			raise ValueError('Empty maps list for specified mode.')
 	try:
 	 	return maps[ndx+1]
 	except IndexError:
@@ -67,7 +67,10 @@ def presetRotate():
 		Logging.info('Maps list for current mode is empty.  Defaulting to user-specified rotation.')
 		clientReloadRotate()
 	else:
-		ServerCore.setMap(map, ServerCore.gameMode())
+		try:
+			Game.setMap(map, ServerCore.gameMode())
+		except Commands.StateError:
+			Logging.warning('Preset rotation tried to change the map while server was frozen.')
 
 def onNextMapCmd(cn, args):
 	'''@description Display next map
@@ -85,7 +88,10 @@ def onNextMapCmd(cn, args):
 def onServerStart(*args):
 		startMapName = modeMapLists[start_mode][0]
 		startModeNumber = Game.modeNumber(start_mode)
-		ServerCore.setMap(startMapName, startModeNumber)
+		try:
+			Game.setMap(startMapName, startModeNumber)
+		except Commands.StateError:
+			Logging.warning('Start server map set tried to change the map while server was frozen.')
 
 def init():
 	global preset_rotation, start_mode, nextmap_response, modeMapLists
@@ -118,6 +124,13 @@ def init():
 	modeMapLists["demo"] = config.getOption('Map Rotation', 'demo', DefaultMapRotation.demo).split()
 	
 	del config
+	
+	global allRotationMaps
+	allRotationMaps = []
+	for mapNames in modeMapLists.values():
+		for mapName in mapNames:
+			if not mapName in allRotationMaps:
+				allRotationMaps.append(mapName)
 	
 	global messageModule
 	messageModule = MessageFramework.MessagingModule()

@@ -5,33 +5,69 @@ class ClanTags(Plugin):
 		Plugin.__init__(self)
 		
 	def load(self):
-		pass
+		global tags, refreshTags
+		tags = {}
+		refreshTags = False
+		
+		self.init_config()
+		self.init_tables()
+		
+		tagsUpdater = LoopingCall(updateTags)
+		tagsUpdater.start(60)
+		
+		refreshTags = True
 		
 	def reload(self):
-		pass
+		self.init_config()
 		
 	def unload(self):
 		pass
 		
+	def init_tables(self):
+		config = Config.PluginConfig('db')
+		tableName = config.getOption('ClanTags', 'table_name', 'clantags')
+		del config
+		
+		global ClanTag
+		class ClanTag(Base):
+			'''Associates a tag with a group, permitting only those in the group to have that in their name'''
+			__tablename__ = tableName
+			id = Column(Integer, primary_key=True)
+			tag = Column(String(16), index=True)
+			group = Column(String(16), index=True)
+			def __init__(self, tag, group):
+				self.tag = tag
+				self.group = group
+		
+		Base.metadata.create_all(DatabaseManager.dbmanager.engine)
+		
+	def init_config(self):
+		config = Config.PluginConfig('ClanTags')
+		max_warnings = config.getIntOption('Config', 'max_warnings', 5)
+		warning_interval = config.getIntOption('Config', 'warning_interval', 5)
+		del config
+		
+		global messageModule
+		messageModule = MessageFramework.MessagingModule()
+		messageModule.addMessage("clantag_reserved", "${warning}You're are using a reserved clan tag; ${blue}${tag}${white}. You have ${red}${remaining}${white} seconds to login or be kicked.", "ClanTags")
+		messageModule.addMessage("clantags_reserved", "${warning}You're are using reserved clan tags; ${tags}${white}. You have ${red}${remaining}${white} seconds to login or be kicked.", "ClanTags")
+		messageModule.finalize()
 		
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
+from twisted.internet.task import LoopingCall
+
 import cxsbs
 Players = cxsbs.getResource("Players")
-Database = cxsbs.getResource("Database")
-Ban = cxsbs.getResource("Ban")
+DatabaseManager = cxsbs.getResource("DatabaseManager")
+BanCore = cxsbs.getResource("BanCore")
 Colors = cxsbs.getResource("Colors")
 Events = cxsbs.getResource("Events")
-
-from xsbs.events import eventHandler, execLater, registerServerEventHandler
-from xsbs.players import player, adminRequired
-from xsbs.timers import addTimer
-from xsbs.ui import warning, info, error
-from xsbs.users.users import isLoggedIn
-import logging
-import re
+Timers = cxsbs.getResource("Timers")
+Config = cxsbs.getResource("Config")
+MessageFramework = cxsbs.getResource("MessageFramework")
 
 import string
 
@@ -60,15 +96,15 @@ def getTags(name):
 	return nameTags
 	
 def updateTags():
+	global refreshTags
 	if not refreshTags:
-		refreshTags = False
 		return
 	global tags
 	tags['[FD]'] = ["__admin__", "__master__"]
 
 def warnTagReserved(cn, count, startTime=None):
 	try:
-		p = player(cn)
+		p = Players.player(cn)
 	except ValueError:
 		return
 	
@@ -96,47 +132,13 @@ def warnTagReserved(cn, count, startTime=None):
 		return
 	
 	if count > max_warnings:
-		Ban.addBan(cn, 0, 'Use of reserved clan tag', -1)
+		BanCore.addBan(cn, 0, 'Use of reserved clan tag', -1)
 		return
 	
 	remaining = (max_warnings*warning_interval) - (count*warning_interval)
 	if len(disallowedTags) > 1:
-		messageModule.sendMessage('clantags_reserved', dictionary={'tag':disallowedTags.join(', '), 'remaining':remaining})
+		messageModule.sendMessage('clantags_reserved', dictionary={'tag':', '.join(disallowedTags), 'remaining':remaining})
 	else:
 		messageModule.sendMessage('clantag_reserved', dictionary={'tag':disallowedTags[0], 'remaining':remaining})
-	Events.addTimer(warning_interval*1000, warnTagReserved, (cn, count+1, startTime))
-
-def init():
-	global tags, refreshTags
-	tags = {}
-	
-	config = Config.PluginConfig('db')
-	tableName = config.getOption('ClanTags', 'table_name', 'clantags')
-	max_warnings = config.getIntOption('ClanTags', 'max_warnings', 5)
-	warning_interval = config.getIntOption('ClanTags', 'warning_interval', 5)
-	del config
-	
-	global messageModule
-	messageModule = MessageFramework.MessagingModule()
-	messageModule.addMessage("clantag_reserved", warning("You're are using a reserved clan tag; ${blue}${tag}${white}. You have ${red}${remaining}${white} seconds to login or be kicked."), "ClanTags")
-	messageModule.addMessage("clantags_reserved", warning("You're are using reserved clan tags; ${tags}${white}. You have ${red}${remaining}${white} seconds to login or be kicked."), "ClanTags")
-	messageModule.finalize()
-	
-	tagsUpdater = LoopingCall(updateTags)
-	tagsUpdater.start(60)
-	
-	global ClanTag
-	class ClanTag(Base):
-		'''Associates a tag with a group, permitting only those in the group to have that in their name'''
-		__tablename__ = tableName
-		id = Column(Integer, primary_key=True)
-		tag = Column(String(16), index=True)
-		group = Column(String(16), index=True)
-		def __init__(self, tag, group):
-			self.tag = tag
-			self.group = group
-	
-	Base.metadata.create_all(Database.dbmanager.engine)
-	
-	refreshTags = True
+	Timers.addTimer(warning_interval*1000, warnTagReserved, (cn, count+1, startTime))
 	
