@@ -1,6 +1,6 @@
 [Plugin]
-Name = Plugin Template
-SymbolicName = PluginTemplate
+Name = Setting Factory
+SymbolicName = SettingFactory
 Version = 0.0.1
 Author = Chasm
 Enabled = False

@@ -1,6 +1,6 @@
 [Plugin]
-Name = Plugin Template
-SymbolicName = PluginTemplate
+Name = Flag Timing
+SymbolicName = FlagTiming
 Version = 0.0.1
 Author = Chasm
 Enabled = False
