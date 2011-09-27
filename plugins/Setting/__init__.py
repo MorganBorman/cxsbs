@@ -93,7 +93,7 @@ class Setting(object):
 		
 	def writeString(self):
 		"""Get the string representation of this value to write back to the config file"""
-		return self.value
+		return str(self.value)
 	
 	def isDirty(self):
 		"""Get whether or not the value has changed since it was last read from config or instantiated"""
@@ -104,7 +104,7 @@ class Setting(object):
 		self.dirty = value
 		
 class BoolSetting(Setting):
-	def __init__(self, displayName, symbolicName, category, subcategory, default, writeBackDefault=None, value=NotSpecified, writeBack=NotSpecified, doc=""):
+	def __init__(self, category, subcategory, symbolicName, displayName, default, writeBackDefault=None, value=NotSpecified, writeBack=NotSpecified, doc=""):
 		Setting.__init__(self, displayName, symbolicName, category, subcategory, default, writeBackDefault, value, writeBack, doc)
 		
 	def readString(self, string):
@@ -114,16 +114,25 @@ class BoolSetting(Setting):
 			self.value = True
 		else:
 			self.value = False
-			
-	def writeString(self):
-		return str(self.value)
 	
 class IntSetting(Setting):
-	def __init__(self, displayName, symbolicName, category, subcategory, default, writeBackDefault=None, value=NotSpecified, writeBack=NotSpecified, doc=""):
+	def __init__(self, category, subcategory, symbolicName, displayName, default, writeBackDefault=None, value=NotSpecified, writeBack=NotSpecified, doc=""):
 		Setting.__init__(self, displayName, symbolicName, category, subcategory, default, writeBackDefault, value, writeBack, doc)
 		
 	def readString(self, string):
 		self.value = int(string)
-			
-	def writeString(self):
-		return str(self.value)
+	
+import string
+	
+class TemplateSetting(Setting):
+	def __init__(self, category, subcategory, symbolicName, displayName, default, writeBackDefault=None, value=NotSpecified, writeBack=NotSpecified, doc=""):
+		Setting.__init__(self, displayName, symbolicName, category, subcategory, default, writeBackDefault, value, writeBack, doc)
+		self.templateValue = string.Template(self.value)
+		
+	def setValue(self, string):
+		self.value = string
+		self.templateValue = string.Template(self.value)
+		
+	def readString(self, string):
+		self.value = string
+		self.templateValue = string.Template(self.value)

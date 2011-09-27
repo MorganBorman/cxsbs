@@ -1,0 +1,8 @@
+[Plugin]
+Name = Messages Framework
+SymbolicName = Messages
+Version = 0.0.1
+Author = Chasm
+Enabled = True
+
+[Dependencies]

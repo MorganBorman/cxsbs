@@ -5,7 +5,8 @@ class Plugin(cxsbs.Plugin.Plugin):
 		cxsbs.Plugin.Plugin.__init__(self)
 		
 	def load(self):
-		pass
+		global messagesManager
+		messagesManager = MessagesManager()
 		
 	def reload(self):
 		pass
