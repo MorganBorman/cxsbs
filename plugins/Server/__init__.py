@@ -40,19 +40,18 @@ def setPaused(val, cn=-1):
 		action = 'paused'
 	else:
 		action = 'unpaused'
-	print "got here"
+
 	try:
 		p = Players.player(cn)
+		name = p.name()
+		p.logAction(action)
 	except ValueError:
 		name = 'the server'
 		Logging.info('The server has ' + action + ' itself.')
-	else:
-		name = p.name()
-		p.logAction(action)
+
 	messageModule.sendMessage('set_paused', dictionary={'action':action, 'name':name})
 	Events.triggerServerEvent(action, (cn, ))
 	ServerCore.setPaused(val)
-	print "end of setPaused function"
 
 def adminPassword():
 	'''Administrator password of server.'''

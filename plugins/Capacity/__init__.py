@@ -14,11 +14,20 @@ class Plugin(cxsbs.Plugin.Plugin):
 		pass
 		
 import cxsbs
-Config = cxsbs.getResource("Config")
 Server = cxsbs.getResource("Server")
 Events = cxsbs.getResource("Events")
 Logging = cxsbs.getResource("Logging")
 ServerCore = cxsbs.getResource("ServerCore")
+Setting = cxsbs.getResource("Setting")
+SettingsManager = cxsbs.getResource("SettingsManager")
+
+SettingsManager.addSetting(Setting.BoolSetting('Capacity', 'General', 'pause_when_vacant', 'Pause when vacant', True))
+SettingsManager.addSetting(Setting.BoolSetting('Capacity', 'General', 'resize', 'Resize server', True))
+SettingsManager.addSetting(Setting.IntSetting('Capacity', 'General', 'default_size', 'Default server size', 8))
+SettingsManager.addSetting(Setting.IntSetting('Capacity', 'General', 'max_size', 'Max server size', 24))
+SettingsManager.addSetting(Setting.IntSetting('Capacity', 'General', 'resize_by', 'Resize server by', 2))
+
+settings = SettingsManager.getAccessor('Capacity', 'General')
 
 def nearestGreaterMultiple(number, factor):
 	n = 0
@@ -27,35 +36,20 @@ def nearestGreaterMultiple(number, factor):
 	return n
 		
 def init():
-	global resize, default_size, resize_by, pause_when_empty
-	config = Config.PluginConfig('Capacity')
-	resize = config.getBoolOption('Config', 'resize', True)
-	pause_when_empty = config.getBoolOption('Config', 'pause_when_empty', True)
-	default_size = config.getIntOption('Config', 'default_size', 8)
-	max_size = config.getIntOption('Config', 'max_size', 24)
-	resize_by = config.getIntOption('Config', 'resize_by', 2)
-	del config
-	
-	if default_size % 2 == 1:
+	if settings["default_size"] % 2 == 1:
 		Logging.warn("Even server sizes are recommended for consistent capacity scaling behavior.")
 	
 	@Events.eventHandler('no_clients')
 	@Events.eventHandler('server_start')
 	def onServerStart():
-		if pause_when_empty:
-			ServerCore.setPersistentIntermission(True)
-			ServerCore.setMinsRemaining(0)
-		Server.setMaxClients(default_size)
+		if settings["pause_when_vacant"]:
+			Server.setPaused(True)
+		Server.setMaxClients(settings["default_size"])
 	
 	@Events.eventHandler('player_connect')
 	def onConnect(cn):
 		if Server.clientCount() == 1:
-			ServerCore.setPersistentIntermission(False)
-			
-	@Events.eventHandler('player_disconnect')
-	def onDisconnect(cn):
-		if Server.clientCount() == 0:
-			Server.setPaused(True)
+			Server.setPaused(False)
 	
 	@Events.eventHandler('player_spectated')
 	@Events.eventHandler('player_connect')
@@ -64,21 +58,14 @@ def init():
 	def checkSize(cn):
 		newsize = 0
 		clientCount = Server.clientCount()
-		#print "maxClients - clientCount: " + str(Server.maxClients() - clientCount)
-		if (Server.maxClients() - clientCount) >= resize_by:
-			#print "try here"
+		if (Server.maxClients() - clientCount) >= settings["resize_by"]:
 			#check if we should downsize the server
-			downsize = nearestGreaterMultiple(clientCount, resize_by)
-			#print "or here"
-			#print map(type, (default_size, downsize))
-			newsize = max(default_size, downsize)
-			#print "mayvbe here"
+			downsize = nearestGreaterMultiple(clientCount, settings["resize_by"])
+			newsize = max(settings["default_size"], downsize)
 		elif clientCount == Server.maxClients():
 			#check if we should increase size
-			#print "foo"
-			if (clientCount - Server.spectatorCount()) <= default_size:
-				#print "boo"
-				newsize = min(clientCount + resize_by, max_size)
+			if (clientCount - Server.spectatorCount()) <= settings["default_size"]:
+				newsize = min(clientCount + settings["resize_by"], settings["max_size"])
 		else:
 			return
 		Logging.debug('Adjusting server size to %i', newsize)

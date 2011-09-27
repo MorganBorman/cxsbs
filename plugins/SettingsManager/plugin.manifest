@@ -3,6 +3,8 @@ Name = Settings Manager
 SymbolicName = SettingsManager
 Version = 0.0.1
 Author = Chasm
-Enabled = False
+Enabled = True
 
 [Dependencies]
+Setting = 0.0.1
+ServerCore = 0.0.1
