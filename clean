@@ -23,7 +23,12 @@ for MAKE_FILE in "${MAKE_FILES[@]}"; do
 done
 echo -ne "\n"
 
-echo "Removing .pyc files..."
-find . -name "*.pyc" -exec rm '{}' ';' >/dev/null 2>/dev/null
+echo -ne "Removing files with extension: "
+EXTENSIONS=( ".a" ".pyc" )
+for EXTENSION in "${EXTENSIONS[@]}"; do
+	echo -ne "${EXTENSION} "
+	find . -name "*${EXTENSION}" -delete
+done
+echo -ne "\n"
 
 echo "Done."
