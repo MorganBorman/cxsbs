@@ -15,7 +15,8 @@ class Plugin(cxsbs.Plugin.Plugin):
 	
 import cxsbs.Logging
 import cxsbs
-Config = cxsbs.getResource("Config")
+Setting = cxsbs.getResource("Setting")
+SettingsManager = cxsbs.getResource("SettingsManager")
 		
 class EventInfo:
 	def __init__(self, event, handler):
@@ -31,9 +32,30 @@ class EventInfo:
 		self.documentation = ''
 		
 	def configureGroups(self):
-		config = Config.PluginConfig('Permissions')
-		self.allowGroups = config.getOption(self.name, 'allow_groups', ' '.join(self.allowGroups)).split()
-		self.denyGroups = config.getOption(self.name, 'deny_groups', ' '.join(self.denyGroups)).split()
+		pluginCategory = 'Permissions'
+		
+		SettingsManager.addSetting(Setting.ListSetting	(
+															category=pluginCategory, 
+															subcategory=self.name, 
+															symbolicName="allow_groups",
+															displayName="Allow Groups", 
+															default=self.allowGroups,
+															doc="Allowed groups for command type event: " + self.name
+														))
+		
+		SettingsManager.addSetting(Setting.ListSetting	(
+															category=pluginCategory, 
+															subcategory=self.name, 
+															symbolicName="deny_groups",
+															displayName="Deny Groups", 
+															default=self.denyGroups,
+															doc="Denied groups for command type event: " + self.name
+														))
+		
+		self.settings = SettingsManager.getAccessor(category=pluginCategory, subcategory=self.name)
+		
+		self.allowGroups = self.settings["allow_groups"]
+		self.denyGroups = self.settings["deny_groups"]
 		
 		for function, groups in self.allowFunctionGroups.items():
 			self.allowFunctionGroups[function] = config.getOption(self.command, function + '_allow_groups', ' '.join(groups)).split()

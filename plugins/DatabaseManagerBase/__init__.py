@@ -7,27 +7,29 @@ class Plugin(cxsbs.Plugin.Plugin):
 	def load(self):
 		pass
 		
-	def reload(self):
-		pass
-		
 	def unload(self):
 		pass
 
 import cxsbs
 DatabaseSession = cxsbs.getResource("DatabaseSession")
-Config = cxsbs.getResource("Config")
+SettingsManager = cxsbs.getResource("SettingsManager")
+Setting = cxsbs.getResource("Setting")
 
 databaseConfigurationFilename = 'db'
+
+SettingsManager.addSetting(Setting.Setting	(
+												category=databaseConfigurationFilename, 
+												subcategory="General", 
+												symbolicName="backend", 
+												displayName="Backend Manager Name", 
+												default="DatabaseManagerSqlite", 
+												doc="Name of the plugin providing the backend to the database manager."
+											))
+
+settings = SettingsManager.getAccessor(category=databaseConfigurationFilename, subcategory="General")
 		
 def getBackendName():
-	try:
-		config = Config.PluginConfig(databaseConfigurationFilename)
-		backend = config.getOption('Config', 'backend', 'DatabaseManagerSqlite')
-		return backend
-	except:
-		raise #probably should have something better here. just rethrow for now.
-	finally:
-		del config
+	return settings["backend"]
 
 def uriBeginsWithQuote(uri):
 	if len(uri) < 1:

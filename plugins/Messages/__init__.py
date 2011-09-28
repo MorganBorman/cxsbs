@@ -15,11 +15,11 @@ class Plugin(cxsbs.Plugin.Plugin):
 		pass
 	
 import cxsbs
+Setting = cxsbs.getResource("Setting")
 SettingsManager = cxsbs.getResource("SettingsManager")
 UI = cxsbs.getResource("UI")
 Colors = cxsbs.getResource("Colors")
 Players = cxsbs.getResource("Players")
-Config = cxsbs.getResource("Config")
 	
 class Accessor:
 	'''Thin interface to the settingsManager to clean up sending of messages for a particular plugin'''

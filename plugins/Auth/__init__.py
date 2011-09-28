@@ -5,36 +5,47 @@ class Plugin(cxsbs.Plugin.Plugin):
 		cxsbs.Plugin.Plugin.__init__(self)
 		
 	def load(self):
-		self.init_config()
-		self.init_handlers()
-		
-	def reload(self):
-		self.init_config()
-		self.init_handlers()
+		pass
 		
 	def unload(self):
-		deinit()
-	
-	def init_config(self):
-		global autoAuth, authDesc
-		config = Config.PluginConfig('Auth')
-		autoAuth = config.getBoolOption('Config', 'automatically_request_auth', True)
-		authDesc = config.getOption('Config', 'automatic_request_description', 'mydomain.com')
-		del config
-		
-	def init_handlers(self):
-		@Events.eventHandler("player_connect")
-		def onConnect(cn):
-			if autoAuth:
-				p = Players.player(cn)
-				p.requestAuth(authDesc)
+		pass
 		
 import time
+
 import cxsbs
 Players = cxsbs.getResource("Players")
 Events = cxsbs.getResource("Events")
-Config = cxsbs.getResource("Config")
+Setting = cxsbs.getResource("Setting")
+SettingsManager = cxsbs.getResource("SettingsManager")
 ServerCore = cxsbs.getResource("ServerCore")
+
+pluginCategory = 'Auth'
+
+SettingsManager.addSetting(Setting.BoolSetting	(
+													category=pluginCategory, 
+													subcategory="General", 
+													symbolicName="automatically_request_auth", 
+													displayName="Automatically request auth", 
+													default=True, 
+													doc="Whether or not to automatically request auth from users when they connect."
+												))
+
+SettingsManager.addSetting(Setting.Setting		(
+													category=pluginCategory, 
+													subcategory="General", 
+													symbolicName="automatic_request_description", 
+													displayName="Automatic request description", 
+													default="mydomain.com", 
+													doc="Description to send when automatically requesting clients auth key."
+												))
+
+settings = SettingsManager.getAccessor(category=pluginCategory, subcategory="General")
+
+@Events.eventHandler("player_connect")
+def onConnect(cn):
+	if settings["autoAuth"]:
+		p = Players.player(cn)
+		p.requestAuth(settings["authDesc"])
 
 def genKeyPair(keySeed):
 	newSeed = ""

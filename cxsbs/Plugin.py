@@ -7,11 +7,6 @@ class Plugin(object):
     def load(self, input):
         """Initialize the plugin."""
         return
-    
-    @abc.abstractmethod
-    def reload(self, output, data):
-        """Reinitialize the plugin."""
-        return
        
 	@abc.abstractmethod
 	def unload(self, output, data):

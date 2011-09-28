@@ -5,16 +5,14 @@ class Plugin(cxsbs.Plugin.Plugin):
 		cxsbs.Plugin.Plugin.__init__(self)
 		
 	def load(self):
-		init()
-		
-	def reload(self):
-		init()
+		pass
 		
 	def unload(self):
 		pass
 
 import cxsbs
-Config = cxsbs.getResource("Config")
+Setting = cxsbs.getResource("Setting")
+SettingsManager = cxsbs.getResource("SettingsManager")
 ServerCore = cxsbs.getResource("ServerCore")
 Colors = cxsbs.getResource("Colors")
 Logging = cxsbs.getResource("Logging")
@@ -25,10 +23,68 @@ Net = cxsbs.getResource("Net")
 Server = cxsbs.getResource("Server")
 Commands = cxsbs.getResource("Commands")
 Game = cxsbs.getResource("Game")
-MessageFramework = cxsbs.getResource("MessageFramework")
+Messages = cxsbs.getResource("Messages")
 
 import string
 import DefaultMapRotation
+
+pluginCategory = 'MapRotation'
+
+SettingsManager.addSetting(Setting.BoolSetting	(
+												category=pluginCategory, 
+												subcategory="General", 
+												symbolicName="use_preset_rotation", 
+												displayName="Use preset rotation", 
+												default=True, 
+												doc="Use the preset rotation. If set to False server will ask clients for what the next map is."
+											))
+SettingsManager.addSetting(Setting.Setting	(
+												category=pluginCategory, 
+												subcategory="General", 
+												symbolicName="start_mode", 
+												displayName="Start mode", 
+												default="ffa", 
+												doc="The start mode."
+											))
+SettingsManager.addSetting(Setting.BoolSetting	(
+												category=pluginCategory, 
+												subcategory="General", 
+												symbolicName="newmap_on_empty", 
+												displayName="New map on empty", 
+												default=True, 
+												doc="Use a new map when the first player joins again after the server has been empty."
+											))
+
+for modeName, rotationParams in DefaultMapRotation.defaultMapModeLists.items():
+	mapNames = rotationParams[0].split()
+	SettingsManager.addSetting(Setting.ListSetting	(
+														category=pluginCategory, 
+														subcategory="Rotation", 
+														symbolicName=modeName, 
+														displayName=rotationParams[1], 
+														default=mapNames,
+														doc=rotationParams[2]
+													))
+	
+rotationSettings = SettingsManager.getAccessor(category=pluginCategory, subcategory="Rotation")
+
+Messages.addMessage	(
+						subcategory=pluginCategory, 
+						symbolicName="nextmap_response", 
+						displayName="Next map response", 
+						default="${info}The next map is ${blue}${mapname}${white}.", 
+						doc="Message to print when user should be informed about what the next map is."
+					)
+
+Messages.addMessage	(
+						subcategory=pluginCategory, 
+						symbolicName="nextmap_unknown", 
+						displayName="Next map unknown", 
+						default="${info}Could not determine next map in rotation.", 
+						doc="Message to print when the next map in the rotation could not be determined."
+					)
+
+messager = Messages.getAccessor(subcategory=pluginCategory)
 
 class Map:
 	def __init__(self, name, mode):
@@ -56,6 +112,13 @@ def getSuccessor(mode_num, map):
 def clientReloadRotate():
 	Events.triggerServerEvent('reload_map_selection', ())
 	ServerCore.sendMapReload()
+	
+def isRotationMap(mapName):
+	for modeName in Game.modes:
+		mapNames = rotationSettings[modeName]
+		if mapName in mapNames:
+			return True
+	return False
 
 def presetRotate():
 	try:
@@ -81,71 +144,26 @@ def onNextMapCmd(cn, args):
 	else:
 		p = Players.player(cn)
 		try:
-			messageModule.sendPlayerMessage('nextmap_response', p, dictionary={'mapname':getSuccessor(ServerCore.gameMode(), ServerCore.mapName())})
+			messager.sendPlayerMessage('nextmap_response', p, dictionary={'mapname':getSuccessor(ServerCore.gameMode(), ServerCore.mapName())})
 		except (KeyError, ValueError):
-			messageModule.sendPlayerMessage('nextmap_unknown', p)
+			messager.sendPlayerMessage('nextmap_unknown', p)
 
 def onServerStart(*args):
-		startMapName = modeMapLists[start_mode][0]
-		startModeNumber = Game.modeNumber(start_mode)
+		startMapName = modeMapLists[settings['start_mode']][0]
+		startModeNumber = Game.modeNumber(settings['start_mode'])
 		try:
 			Game.setMap(startMapName, startModeNumber)
 		except Commands.StateError:
 			Logging.warning('Start server map set tried to change the map while server was frozen.')
 
-def init():
-	global preset_rotation, start_mode, nextmap_response, modeMapLists
-	config = Config.PluginConfig('MapRotation')
-	preset_rotation = config.getBoolOption('Config', 'use_preset_rotation', True)
-	start_mode = config.getOption('Config', 'start_mode', 'ffa')
-	newmap_on_empty = config.getBoolOption('Config', 'newmap_on_empty', True)
-	modeMapLists = {}
+if settings['preset_rotation']:
+	Events.registerServerEventHandler('intermission_ended', presetRotate)
+	Events.registerServerEventHandler('server_start', onServerStart)
 	
-	modeMapLists["hold"] = config.getOption('Map Rotation', 'hold', DefaultMapRotation.hold).split()
-	modeMapLists["instahold"] = config.getOption('Map Rotation', 'instahold', DefaultMapRotation.instahold).split()
-	modeMapLists["effichold"] = config.getOption('Map Rotation', 'effichold', DefaultMapRotation.effichold).split()
-	modeMapLists["capture"] = config.getOption('Map Rotation', 'capture', DefaultMapRotation.capture).split()
-	modeMapLists["regencapture"] = config.getOption('Map Rotation', 'regencapture', DefaultMapRotation.regencapture).split()
-	modeMapLists["ctf"] = config.getOption('Map Rotation', 'ctf', DefaultMapRotation.ctf).split()
-	modeMapLists["instactf"] = config.getOption('Map Rotation', 'instactf', DefaultMapRotation.instactf).split()
-	modeMapLists["efficctf"] = config.getOption('Map Rotation', 'efficctf', DefaultMapRotation.efficctf).split()
-	modeMapLists["coop"] = config.getOption('Map Rotation', 'coop', DefaultMapRotation.coop).split()
-	modeMapLists["protect"] = config.getOption('Map Rotation', 'protect', DefaultMapRotation.protect).split()
-	modeMapLists["instaprotect"] = config.getOption('Map Rotation', 'instaprotect', DefaultMapRotation.instaprotect).split()
-	modeMapLists["efficprotect"] = config.getOption('Map Rotation', 'efficprotect', DefaultMapRotation.efficprotect).split()
-	modeMapLists["tacteam"] = config.getOption('Map Rotation', 'tacteam', DefaultMapRotation.tacteam).split()
-	modeMapLists["tac"] = config.getOption('Map Rotation', 'tac', DefaultMapRotation.tac).split()
-	modeMapLists["insta"] = config.getOption('Map Rotation', 'insta', DefaultMapRotation.insta).split()
-	modeMapLists["effic"] = config.getOption('Map Rotation', 'effic', DefaultMapRotation.effic).split()
-	modeMapLists["ffa"] = config.getOption('Map Rotation', 'ffa', DefaultMapRotation.ffa).split()
-	modeMapLists["efficteam"] = config.getOption('Map Rotation', 'efficteam', DefaultMapRotation.efficteam).split()
-	modeMapLists["instateam"] = config.getOption('Map Rotation', 'instateam', DefaultMapRotation.instateam).split()
-	modeMapLists["teamplay"] = config.getOption('Map Rotation', 'teamplay', DefaultMapRotation.teamplay).split()
-	modeMapLists["demo"] = config.getOption('Map Rotation', 'demo', DefaultMapRotation.demo).split()
+	if settings['newmap_on_empty']:
+		Events.registerServerEventHandler('no_clients', presetRotate)
 	
-	del config
-	
-	global allRotationMaps
-	allRotationMaps = []
-	for mapNames in modeMapLists.values():
-		for mapName in mapNames:
-			if not mapName in allRotationMaps:
-				allRotationMaps.append(mapName)
-	
-	global messageModule
-	messageModule = MessageFramework.MessagingModule()
-	messageModule.addMessage('nextmap_response', '${info}The next map is ${blue}${mapname}${white}.', "MapRotation")
-	messageModule.addMessage('nextmap_unknown', '${info}Could not determine next map in rotation.', "MapRotation")
-	messageModule.finalize()
-	
-	if preset_rotation:
-		Events.registerServerEventHandler('intermission_ended', presetRotate)
-		Events.registerServerEventHandler('server_start', onServerStart)
-		
-		if newmap_on_empty:
-			Events.registerServerEventHandler('no_clients', presetRotate)
-		
-		Commands.registerCommandHandler('nextmap', onNextMapCmd)
-	else:
-		Events.registerServerEventHandler('intermission_ended', presetRotate)
-		#Events.registerServerEventHandler('intermission_ended', onIntermEnd)
+	Commands.registerCommandHandler('nextmap', onNextMapCmd)
+else:
+	Events.registerServerEventHandler('intermission_ended', presetRotate)
+	#Events.registerServerEventHandler('intermission_ended', onIntermEnd)

@@ -136,3 +136,13 @@ class TemplateSetting(Setting):
 	def readString(self, string):
 		self.value = string
 		self.templateValue = string.Template(self.value)
+		
+class ListSetting(Setting):
+	def __init__(self, category, subcategory, symbolicName, displayName, default, writeBackDefault=None, value=NotSpecified, writeBack=NotSpecified, doc=""):
+		Setting.__init__(self, category, subcategory, symbolicName, displayName, default, writeBackDefault, value, writeBack, doc)
+		
+	def readString(self, string):
+		self.value = string.split(',')
+		
+	def writeString(self):
+		return ','.join(self.value)

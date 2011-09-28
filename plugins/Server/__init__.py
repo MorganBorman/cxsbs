@@ -5,10 +5,8 @@ class Plugin(cxsbs.Plugin.Plugin):
 		cxsbs.Plugin.Plugin.__init__(self)
 		
 	def load(self):
-		init()
-		
-	def reload(self):
-		init()
+		global server_frozen
+		server_frozen = False
 		
 	def unload(self):
 		pass
@@ -22,8 +20,18 @@ UI = cxsbs.getResource("UI")
 Events = cxsbs.getResource("Events")
 Players = cxsbs.getResource("Players")
 Commands = cxsbs.getResource("Commands")
-MessageFramework = cxsbs.getResource("MessageFramework")
+Messages = cxsbs.getResource("Messages")
 Logging = cxsbs.getResource("Logging")
+	
+Messages.addMessage	(
+						subcategory="Pause", 
+						symbolicName="set_paused", 
+						displayName="Set paused", 
+						default="The game has been ${blue}${action}${white} by ${green}${name}${white}.", 
+						doc="Message to print on pause and unpause."
+					)
+
+messager = Messages.getAccessor(subcategory="Pause")
 
 import string
 
@@ -50,7 +58,7 @@ def setPaused(val, cn=-1):
 		name = 'the server'
 		Logging.info('The server has ' + action + ' itself.')
 
-	messageModule.sendMessage('set_paused', dictionary={'action':action, 'name':name})
+	messager.sendMessage('set_paused', dictionary={'action':action, 'name':name})
 	Events.triggerServerEvent(action, (cn, ))
 	ServerCore.setPaused(val)
 
@@ -122,19 +130,10 @@ def isFrozen():
 	'''Is the currently frozen. See setFrozen(val).'''
 	return server_frozen
 	
-def init():
-	global server_frozen
-	server_frozen = False
-	
-	global messageModule
-	messageModule = MessageFramework.MessagingModule()
-	messageModule.addMessage("set_paused", "The game has been ${blue}${action}${white} by ${green}${name}${white}.", "Pause")
-	messageModule.finalize()
-	
-	@Events.eventHandler('player_pause')
-	def onPlayerPause(cn, val):
-		'''
-		@commandType
-		@allowGroups __admin__ __master__
-		'''
-		setPaused(val, cn)
+@Events.eventHandler('player_pause')
+def onPlayerPause(cn, val):
+	'''
+	@commandType
+	@allowGroups __admin__ __master__
+	'''
+	setPaused(val, cn)
