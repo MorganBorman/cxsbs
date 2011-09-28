@@ -40,10 +40,15 @@ import cxsbs
 ServerCore = cxsbs.getResource("ServerCore")
 Setting = cxsbs.getResource("Setting")
 
-configuration_path = ServerCore.instanceRoot() + instance_config_foldername
-
 import CategoryConfig
 import traceback
+import os
+
+configuration_path = ServerCore.instanceRoot() + instance_config_foldername
+try:
+	os.makedirs(os.path.abspath(configuration_path))
+except OSError:
+	pass
 	
 class Accessor:
 	'''Thin interface to the settingsManager to clean up getting/setting of settings for a particular plugin'''
@@ -130,11 +135,11 @@ class SettingsManager(object):
 		return Accessor(self, category, subcategory)
 	
 	def getValue(self, category, subcategory, symbolicName):
-		"""Self explainitory"""
+		"""Get the value of a setting by category subcategory and symbolicName"""
 		return self.categories[category][subcategory][symbolicName].getValue()
 	
 	def setValue(self, category, subcategory, symbolicName, value):
-		"""Self explainitory"""
+		"""Set the value of a setting by category subcategory and symbolicName"""
 		self.categories[category][subcategory][symbolicName].setValue(value)
 		self.categories[category][subcategory][symbolicName].setDirty(True)
 		

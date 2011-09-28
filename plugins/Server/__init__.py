@@ -14,7 +14,8 @@ class Plugin(cxsbs.Plugin.Plugin):
 		pass
 		
 import cxsbs
-Config = cxsbs.getResource("Config")
+Setting = cxsbs.getResource("Setting")
+SettingsManager = cxsbs.getResource("SettingsManager")
 ServerCore = cxsbs.getResource("ServerCore")
 Colors = cxsbs.getResource("Colors")
 UI = cxsbs.getResource("UI")

@@ -19,22 +19,22 @@ class NotSpecified:
 class Setting(object):
 	
 	def __init__(self, category, subcategory, symbolicName, displayName, default, writeBackDefault=None, value=NotSpecified, writeBack=NotSpecified, doc=""):
-		self.displayName = displayName
-		self.symbolicName = symbolicName
 		self.category = category
 		self.subcategory = subcategory
-		
-		self.writeBackDefault = writeBackDefault
-		if writeBack == NotSpecified:
-			self.writeBack = writeBackDefault
-		else:
-			self.writeBack = writeBack
+		self.symbolicName = symbolicName
+		self.displayName = displayName
 		
 		self.default = default
 		if value == NotSpecified:
 			self.value = default
 		else:
 			self.value = value
+		
+		self.writeBackDefault = writeBackDefault
+		if writeBack == NotSpecified:
+			self.writeBack = writeBackDefault
+		else:
+			self.writeBack = writeBack
 			
 		self.dirty = False
 		
@@ -105,7 +105,7 @@ class Setting(object):
 		
 class BoolSetting(Setting):
 	def __init__(self, category, subcategory, symbolicName, displayName, default, writeBackDefault=None, value=NotSpecified, writeBack=NotSpecified, doc=""):
-		Setting.__init__(self, displayName, symbolicName, category, subcategory, default, writeBackDefault, value, writeBack, doc)
+		Setting.__init__(self, category, subcategory, symbolicName, displayName, default, writeBackDefault, value, writeBack, doc)
 		
 	def readString(self, string):
 		if type(string) == bool:
@@ -117,7 +117,7 @@ class BoolSetting(Setting):
 	
 class IntSetting(Setting):
 	def __init__(self, category, subcategory, symbolicName, displayName, default, writeBackDefault=None, value=NotSpecified, writeBack=NotSpecified, doc=""):
-		Setting.__init__(self, displayName, symbolicName, category, subcategory, default, writeBackDefault, value, writeBack, doc)
+		Setting.__init__(self, category, subcategory, symbolicName, displayName, default, writeBackDefault, value, writeBack, doc)
 		
 	def readString(self, string):
 		self.value = int(string)
@@ -126,7 +126,7 @@ import string
 	
 class TemplateSetting(Setting):
 	def __init__(self, category, subcategory, symbolicName, displayName, default, writeBackDefault=None, value=NotSpecified, writeBack=NotSpecified, doc=""):
-		Setting.__init__(self, displayName, symbolicName, category, subcategory, default, writeBackDefault, value, writeBack, doc)
+		Setting.__init__(self, category, subcategory, symbolicName, displayName, default, writeBackDefault, value, writeBack, doc)
 		self.templateValue = string.Template(self.value)
 		
 	def setValue(self, string):

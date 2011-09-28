@@ -16,15 +16,18 @@ class Plugin(cxsbs.Plugin.Plugin):
 		
 import logging
 import cxsbs
-Config = cxsbs.getResource("Config")
 ServerCore = cxsbs.getResource("ServerCore")
+Setting = cxsbs.getResource("Setting")
+SettingsManager = cxsbs.getResource("SettingsManager")
 import cxsbs.Logging
 
 def init():
-	config = Config.PluginConfig('logging')
-	path = ServerCore.instanceRoot() + "/" + config.getOption('Config', 'path', 'gamelog.log')
-	level = config.getOption('Config', 'level', 'info')
-	del config
+	SettingsManager.addSetting(Setting.Setting('Logging', 'General', 'path', 'Logging path', 'gamelog.log'))
+	SettingsManager.addSetting(Setting.Setting('Logging', 'General', 'level', 'Logging level', 'info'))
+	
+	settings = SettingsManager.getAccessor("Logging", 'General')
+	
+	path = ServerCore.instanceRoot() + "/" + settings['path']
 	
 	global LEVELS
 	LEVELS = {'debug': logging.DEBUG,
@@ -33,15 +36,15 @@ def init():
 				'error': logging.ERROR,
 				'critical': logging.CRITICAL}
 	
-	cxsbs.Logging.logger.info("Game is now being logged to: " + path + " all messages of level: " + level + " or higher will be logged.")
+	cxsbs.Logging.logger.info("Game is now being logged to: " + path + " all messages of level: " + settings['level'] + " or higher will be logged.")
 	
 	global gameLogger
 	gameLogger = logging.getLogger('gameLogger')
-	gameLogger.setLevel(LEVELS[level])
+	gameLogger.setLevel(LEVELS[settings['level']])
 	
 	global gameLoggerFileHandler
 	gameLoggerFileHandler = logging.FileHandler(path)
-	gameLoggerFileHandler.setLevel(LEVELS[level])
+	gameLoggerFileHandler.setLevel(LEVELS[settings['level']])
 	
 	formatter = logging.Formatter('%(levelname)-10s %(asctime)s %(message)s')
 	gameLoggerFileHandler.setFormatter(formatter)

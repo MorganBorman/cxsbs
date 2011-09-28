@@ -3,7 +3,7 @@ Name = Message Framework
 SymbolicName = MessageFramework
 Version = 0.0.1
 Author = Chasm
-Enabled = True
+Enabled = False
 
 [Dependencies]
 Colors = 0.0.1
