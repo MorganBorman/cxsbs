@@ -1,16 +1,29 @@
-echo "Running make clean..."
-if [ -e "Makefile" ]
-then
-  make clean >/dev/null 2>/dev/null
+#!/bin/bash
+
+if [ -e "Makefile" ]; then
+	echo "Running make clean..."
+  make clean 2>&1 >/dev/null
 fi
-echo "Removing bin/ directory..."
-rm -r src/bin >/dev/null 2>/dev/null
-rm -r bin >/dev/null 2>/dev/null
-echo "Removing cmake files..."
-rm CMakeCache.txt >/dev/null 2>/dev/null
-find . -name "Makefile" -exec rm -r '{}' ';' >/dev/null 2>/dev/null
-find . -name "CMakeFiles" -exec rm -r '{}' ';' >/dev/null 2>/dev/null
-find . -name "cmake_install.cmake" -exec rm '{}' ';' >/dev/null 2>/dev/null
+
+echo -ne "Removing binary directories: "
+BIN_DIRS=( "bin" "src/bin" )
+for BIN_DIR in "${BIN_DIRS[@]}"; do
+	if [ -d "${BIN_DIR}" ]; then
+		echo -ne "${BIN_DIR} "
+		rm -r "${BIN_DIR}"
+	fi
+done
+echo -ne "\n"
+
+echo -ne "Removing make files: "
+MAKE_FILES=( "CMakeCache.txt" "Makefile"  "CMakeFiles" "cmake_install.cmake" )
+for MAKE_FILE in "${MAKE_FILES[@]}"; do
+	echo -ne "${MAKE_FILE} "
+	find . -name "${MAKE_FILE}" -print0 | xargs -0 /bin/rm -rf
+done
+echo -ne "\n"
+
 echo "Removing .pyc files..."
 find . -name "*.pyc" -exec rm '{}' ';' >/dev/null 2>/dev/null
+
 echo "Done."
