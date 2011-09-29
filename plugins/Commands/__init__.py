@@ -5,11 +5,11 @@ class Plugin(cxsbs.Plugin.Plugin):
 		cxsbs.Plugin.Plugin.__init__(self)
 		
 	def load(self):
-		init()
+		global commandManager
+		commandManager = CommandManager()
 		
-	def reload(self):
-		commandManager.command_handlers.clear()
-		init()
+		registerCommandHandler('help', onHelpCommand)
+		registerCommandHandler('listcommands', onListcommands)
 		
 	def unload(self):
 		pass
@@ -23,7 +23,51 @@ UI = cxsbs.getResource("UI")
 Players = cxsbs.getResource("Players")
 Help = cxsbs.getResource("Help")
 CommandInformation = cxsbs.getResource("CommandInformation")
-MessageFramework = cxsbs.getResource("MessageFramework")
+Messages = cxsbs.getResource("Messages")
+	
+pluginCategory = 'Commands'
+	
+Messages.addMessage	(
+						subcategory=pluginCategory, 
+						symbolicName="command_usage", 
+						displayName="Command usage", 
+						default="${info}Usage: #${command} ${usage}", 
+						doc="Command usage message template."
+					)
+	
+Messages.addMessage	(
+						subcategory=pluginCategory, 
+						symbolicName="invalid_usage", 
+						displayName="Invalid usage", 
+						default="${error}Usage Error: #${command}:", 
+						doc="Invalid command usage error message tempate."
+					)
+	
+Messages.addMessage	(
+						subcategory=pluginCategory, 
+						symbolicName="command_value_error", 
+						displayName="Command value error", 
+						default="${error}Value Error: Did you specify a valid cn?", 
+						doc="Command value error message template"
+					)
+	
+Messages.addMessage	(
+						subcategory=pluginCategory, 
+						symbolicName="command_argument_error", 
+						displayName="Command argument error", 
+						default="${error}Argument Error: ${msg}", 
+						doc="Command argument error message tempate."
+					)
+	
+Messages.addMessage	(
+						subcategory=pluginCategory, 
+						symbolicName="command_state_error", 
+						displayName="Command state error", 
+						default="${error}State Error: ${msg}", 
+						doc="Command state error message tempate"
+					)
+
+messager = Messages.getAccessor(subcategory=pluginCategory)
 
 import sys
 import traceback
@@ -69,15 +113,15 @@ def executeCommand(p, command, func, args):
 			usages = CommandInformation.getCommandInfo(command).usages
 		except KeyError:
 			usages = []
-		messageModule.sendPlayerMessage('invalid_usage', p, dictionary={'command': command})
+		messager.sendPlayerMessage('invalid_usage', p, dictionary={'command': command})
 		for usage in usages:
-			messageModule.sendPlayerMessage('command_usage', p, dictionary={'command': command, 'usage':usage})
+			messager.sendPlayerMessage('command_usage', p, dictionary={'command': command, 'usage':usage})
 	except StateError, e:
-		messageModule.sendPlayerMessage('command_state_error', p, dictionary={'msg': str(e)})
+		messager.sendPlayerMessage('command_state_error', p, dictionary={'msg': str(e)})
 	except ArgumentValueError, e:
-		messageModule.sendPlayerMessage('command_argument_error', p, dictionary={'msg': str(e)})
+		messager.sendPlayerMessage('command_argument_error', p, dictionary={'msg': str(e)})
 	except ValueError:
-		messageModule.sendPlayerMessage('command_value_error', p)
+		messager.sendPlayerMessage('command_value_error', p)
 		exceptionType, exceptionValue, exceptionTraceback = sys.exc_info()	
 		Logging.warn('Uncaught ValueError raised in command handler.')
 		Logging.warn(traceback.format_exc())
@@ -100,15 +144,15 @@ def executeCallback(p, command, func, args):
 			usages = CommandInformation.getCommandInfo(command).usages
 		except KeyError:
 			usages = []
-		messageModule.sendPlayerMessage('invalid_usage', p, dictionary={'command': command})
+		messager.sendPlayerMessage('invalid_usage', p, dictionary={'command': command})
 		for usage in usages:
-			messageModule.sendPlayerMessage('command_usage', p, dictionary={'command': command, 'usage':usage})
+			messager.sendPlayerMessage('command_usage', p, dictionary={'command': command, 'usage':usage})
 	except StateError, e:
-		messageModule.sendPlayerMessage('command_state_error', p, dictionary={'msg': str(e)})
+		messager.sendPlayerMessage('command_state_error', p, dictionary={'msg': str(e)})
 	except ArgumentValueError, e:
-		messageModule.sendPlayerMessage('command_argument_error', p, dictionary={'msg': str(e)})
+		messager.sendPlayerMessage('command_argument_error', p, dictionary={'msg': str(e)})
 	except ValueError:
-		messageModule.sendPlayerMessage('command_value_error', p)
+		messager.sendPlayerMessage('command_value_error', p)
 		exceptionType, exceptionValue, exceptionTraceback = sys.exc_info()	
 		Logging.warn('Uncaught ValueError raised in command handler.')
 		Logging.warn(traceback.format_exc())
@@ -155,7 +199,7 @@ class CommandManager:
 			for func in self.command_handlers[command]:
 					executeCommand(p, command, func, text)
 		else:
-			messageModule.sendPlayerMessage('unknown_command', p)
+			messager.sendPlayerMessage('unknown_command', p)
 	def onMsg(self, cn, text):
 		if len(text) > 0 and self.prefixes.find(text[0]) != -1:
 			cmd = text[1:].split(' ')[0]
@@ -202,19 +246,20 @@ class commandHandler(object):
 		registerCommandHandler(self.command_name, f)
 		return f
 	
-def init():
-	global commandManager
-	commandManager = CommandManager()
+def onHelpCommand(cn, args):
+	'''@description Display help information about a command
+	   @usage (command)
+	   @allowGroups __all__
+	   @doc Command to retrieve the description string and usage strings and display them to the user in-game.'''
+	Help.onHelpCommand(cn, args)
 	
-	registerCommandHandler('help', Help.onHelpCommand)
-	registerCommandHandler('listcommands', Help.listCommands)
+def onListcommands(cn, args):
+	'''@description Display all commands available to a user
+	   @usage <cn>
+	   @allowGroups __all__
+	   @allowFunctionGroup listothers
+	   @doc Command to retrieve those commands which are available to the specified client.
+	   If no client is specified then the default is to print those commands which are available to the client issuing the command.
+	   The setting listothers_allow_groups and listothers_deny_groups settings constrain who is permitted to list other clients available permissions.'''
+	Help.listCommands(cn, args)
 	
-	global messageModule
-	messageModule = MessageFramework.MessagingModule()
-	messageModule.addMessage('unknown_command', '${error}Command not found.', "Help")
-	messageModule.addMessage('command_usage', '${info}Usage: #${command} ${usage}', "Help")
-	messageModule.addMessage('invalid_usage', '${error}Usage Error: #${command}:', "Commands")
-	messageModule.addMessage('command_value_error', '${error}Value Error: Did you specify a valid cn?', "Commands")
-	messageModule.addMessage('command_argument_error', '${error}Argument Error: ${msg}', "Commands")
-	messageModule.addMessage('command_state_error', '${error}State Error: ${msg}', "Commands")
-	messageModule.finalize()

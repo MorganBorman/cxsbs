@@ -12,8 +12,6 @@ class Plugin(cxsbs.Plugin.Plugin):
 		pass
 		
 import cxsbs
-Setting = cxsbs.getResource("Setting")
-SettingsManager = cxsbs.getResource("SettingsManager")
 ServerCore = cxsbs.getResource("ServerCore")
 Colors = cxsbs.getResource("Colors")
 UI = cxsbs.getResource("UI")
@@ -43,8 +41,8 @@ def setPaused(val, cn=-1):
 	'''Pause or unpause the game'''
 	if isFrozen():
 		raise Commands.StateError('Server is currently frozen')
-	if val == ServerCore.isPaused():
-		return
+	#if val == ServerCore.isPaused():
+	#	return
 	if val:
 		action = 'paused'
 	else:
@@ -135,5 +133,6 @@ def onPlayerPause(cn, val):
 	'''
 	@commandType
 	@allowGroups __admin__ __master__
+	@doc This command type event occurs when a player issues "/pausegame <value>" from their client.
 	'''
 	setPaused(val, cn)

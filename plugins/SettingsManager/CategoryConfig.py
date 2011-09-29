@@ -16,7 +16,7 @@ class CategoryConfig:
 		self.extension = extension
 		self.read = False
 	def __configPath(self):
-		return self.path + '/' + self.category + '.' + self.extension
+		return self.path + '/' + self.category + self.extension
 	def __del__(self):
 		if self.is_modified:
 			f = open(self.__configPath(), 'w')

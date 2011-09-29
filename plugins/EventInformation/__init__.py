@@ -7,9 +7,6 @@ class Plugin(cxsbs.Plugin.Plugin):
 	def load(self):
 		init()
 		
-	def reload(self):
-		init()
-		
 	def unload(self):
 		pass
 	
@@ -52,18 +49,39 @@ class EventInfo:
 															doc="Denied groups for command type event: " + self.name
 														))
 		
-		self.settings = SettingsManager.getAccessor(category=pluginCategory, subcategory=self.name)
-		
-		self.allowGroups = self.settings["allow_groups"]
-		self.denyGroups = self.settings["deny_groups"]
-		
 		for function, groups in self.allowFunctionGroups.items():
-			self.allowFunctionGroups[function] = config.getOption(self.command, function + '_allow_groups', ' '.join(groups)).split()
+			SettingsManager.addSetting(Setting.ListSetting	(
+																category=pluginCategory, 
+																subcategory=self.name, 
+																symbolicName=function + '_allow_groups',
+																displayName="Allow Groups for " + function, 
+																default=groups,
+																doc="Allowed groups for command type event: " + self.name + " function:" + function
+															))
 		
 		for function, groups in self.denyFunctionGroups.items():
-			self.denyFunctionGroups[function] = config.getOption(self.command, function + '_deny_groups', ' '.join(groups)).split()
+			SettingsManager.addSetting(Setting.ListSetting	(
+																category=pluginCategory, 
+																subcategory=self.name, 
+																symbolicName=function + '_deny_groups',
+																displayName="Deny Groups for " + function, 
+																default=groups,
+																doc="Denied groups for command type event: " + self.name + " function:" + function
+															))
 		
-		del config
+		self.settings = SettingsManager.getAccessor(category=pluginCategory, subcategory=self.name)
+		
+	def getAllowedGroups(self):
+		return self.settings["allow_groups"]
+		
+	def getDeniedGroups(self):
+		return self.settings["deny_groups"]
+	
+	def getAllowFunctionGroups(self, functionName):
+		return self.settings[functionName + "_allow_groups"]
+		
+	def getDeniedFunctionGroups(self, functionName):
+		return self.settings[functionName + "_deny_groups"]
 		
 	def finalize(self):
 		self.configureGroups()
@@ -82,7 +100,9 @@ def loadEventHandlerInfo(event, handler):
 		for line in lines:
 			line = line.strip()
 			if len(line) > 0 or doc:
-				if line[0] == '@':
+				if doc:
+					info.documentation += line + '\n'
+				elif line[0] == '@':
 					tag = line.split(' ', 1)[0].lower()
 					text = line[len(tag)+1:]
 					if tag == '@commandtype':
@@ -116,15 +136,14 @@ def loadEventHandlerInfo(event, handler):
 					elif tag == '@doc':
 						doc = True
 						info.documentation += text + '\n'
-					elif doc:
-						info.documentaation += text + '\n'
 		
 		info.finalize()
 		
 		eventhandler_info[id(handler)] = info
 	else:
+		pass
 		#probably not a good idea to warn for this
-		cxsbs.Logging.logger.warn('No info for eventhandler: ' + event)
+		#cxsbs.Logging.logger.warn('No info for eventhandler: ' + event)
 		
 def getEventHandlerInfo(handlerFunction):
 	try:

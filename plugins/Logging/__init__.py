@@ -54,7 +54,7 @@ def init():
 				'error': logging.ERROR,
 				'critical': logging.CRITICAL}
 	
-	cxsbs.Logging.logger.info("Game is now being logged to: " + path + " all messages of level: " + settings['level'] + " or higher will be logged.")
+	cxsbs.Logging.logger.info("Game is now being logged(" + settings['level'] + " level) to: " + path)
 	
 	global gameLogger
 	gameLogger = logging.getLogger('gameLogger')

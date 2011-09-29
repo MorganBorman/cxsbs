@@ -5,17 +5,16 @@ class Plugin(cxsbs.Plugin.Plugin):
 		cxsbs.Plugin.Plugin.__init__(self)
 		
 	def load(self):
-		init()
-		
-	def reload(self):
-		init()
+		global command_info
+		command_info = {}
 		
 	def unload(self):
 		pass
 		
 import cxsbs.Logging
 import cxsbs
-Config = cxsbs.getResource("Config")
+Setting = cxsbs.getResource("Setting")
+SettingsManager = cxsbs.getResource("SettingsManager")
 
 class CommandInfo:
 	def __init__(self, command):
@@ -31,17 +30,59 @@ class CommandInfo:
 		self.usages.append(str)
 		
 	def configureGroups(self):
-		config = Config.PluginConfig('Permissions')
-		self.allowGroups = config.getOption(self.command, 'allow_groups', ' '.join(self.allowGroups)).split()
-		self.denyGroups = config.getOption(self.command, 'deny_groups', ' '.join(self.denyGroups)).split()
+		pluginCategory = 'Permissions'
+		
+		SettingsManager.addSetting(Setting.ListSetting	(
+															category=pluginCategory, 
+															subcategory=self.command, 
+															symbolicName="allow_groups",
+															displayName="Allow Groups", 
+															default=self.allowGroups,
+															doc="Allowed groups for command type event: " + self.command
+														))
+		
+		SettingsManager.addSetting(Setting.ListSetting	(
+															category=pluginCategory, 
+															subcategory=self.command, 
+															symbolicName="deny_groups",
+															displayName="Deny Groups", 
+															default=self.denyGroups,
+															doc="Denied groups for command type event: " + self.command
+														))
 		
 		for function, groups in self.allowFunctionGroups.items():
-			self.allowFunctionGroups[function] = config.getOption(self.command, function + '_allow_groups', ' '.join(groups)).split()
+			SettingsManager.addSetting(Setting.ListSetting	(
+																category=pluginCategory, 
+																subcategory=self.command, 
+																symbolicName=function + '_allow_groups',
+																displayName="Allow Groups for " + function, 
+																default=groups,
+																doc="Allowed groups for command type event: " + self.command + " function:" + function
+															))
 		
 		for function, groups in self.denyFunctionGroups.items():
-			self.denyFunctionGroups[function] = config.getOption(self.command, function + '_deny_groups', ' '.join(groups)).split()
+			SettingsManager.addSetting(Setting.ListSetting	(
+																category=pluginCategory, 
+																subcategory=self.command, 
+																symbolicName=function + '_deny_groups',
+																displayName="Deny Groups for " + function, 
+																default=groups,
+																doc="Denied groups for command type event: " + self.command + " function:" + function
+															))
 		
-		del config
+		self.settings = SettingsManager.getAccessor(category=pluginCategory, subcategory=self.command)
+		
+	def getAllowedGroups(self):
+		return self.settings["allow_groups"]
+		
+	def getDeniedGroups(self):
+		return self.settings["deny_groups"]
+	
+	def getAllowFunctionGroups(self, functionName):
+		return self.settings[functionName + "_allow_groups"]
+		
+	def getDeniedFunctionGroups(self, functionName):
+		return self.settings[functionName + "_deny_groups"]
 		
 	def finalize(self):
 		self.configureGroups()
@@ -60,7 +101,9 @@ def loadCommandInfo(command, handler):
 		for line in lines:
 			line = line.strip()
 			if len(line) > 0 or doc:
-				if line[0] == '@':
+				if doc:
+					info.documentation += line + '\n'
+				elif line[0] == '@':
 					tag = line.split(' ', 1)[0].lower()
 					text = line[len(tag)+1:]
 					if tag == '@usage':
@@ -101,9 +144,7 @@ def loadCommandInfo(command, handler):
 					elif tag == '@doc':
 						doc = True
 						info.documentation += text + '\n'
-					elif doc:
-						info.documentaation += text + '\n'
-		
+
 		info.finalize()
 		
 		command_info[command] = info
@@ -121,7 +162,3 @@ def allowCommand(cmd, p):
 	for group in playerGroups:
 		if group in cmd.allowGroups and not group in cmd.denyGroups:
 			return True
-		
-def init():
-	global command_info
-	command_info = {}

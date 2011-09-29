@@ -8,4 +8,5 @@ Enabled = True
 [Dependencies]
 ServerCore = 0.0.1
 Colors = 0.0.1
-Config = 0.0.1
+Setting = 0.0.1
+SettingsManager = 0.0.1

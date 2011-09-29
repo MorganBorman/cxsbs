@@ -83,7 +83,7 @@ class SettingsManager(object):
 	def __readSetting(self, setting):
 		"""Opens configParser and reads a setting immediately then closes it"""
 		config = CategoryConfig.CategoryConfig(configuration_path, setting.getCategory(), configuration_extension)
-		value, writeBack = config.getOption(setting.getSubcategory(), setting.getSymbolicName(), setting.getDefault(), setting.getWriteBackDefault())
+		value, writeBack = config.getOption(setting.getSubcategory(), setting.getSymbolicName(), setting.writeDefaultString(), setting.getWriteBackDefault())
 		setting.readString(value)
 		setting.setWriteBack(writeBack)
 		setting.setDirty(False)
@@ -95,7 +95,7 @@ class SettingsManager(object):
 			config = CategoryConfig.CategoryConfig(configuration_path, category, configuration_extension)
 			for subcategory, settings in subcategories.items():
 				for setting in settings.values():
-					value, writeBack = config.getOption(subcategory, setting.getSymbolicName(), setting.getDefault(), setting.getWriteBackDefault())
+					value, writeBack = config.getOption(subcategory, setting.getSymbolicName(), setting.writeDefaultString(), setting.getWriteBackDefault())
 					setting.readString(value)
 					setting.setWriteBack(writeBack)
 					setting.setDirty(False)
@@ -123,7 +123,7 @@ class SettingsManager(object):
 			cxsbs.Logging.logger.error("Attempt to add setting which is not an instance of Setting or it's subclasses.\n" + ''.join(traceback.format_stack()))
 			
 		if setting.doc == "":
-			cxsbs.Logging.logger.warning("Setting lacks documentation.\n" + ''.join(traceback.format_stack()))
+			cxsbs.Logging.logger.warning("Setting lacks documentation: " + setting.symbolicName)
 			
 		self.__checkCategories(setting.getCategory(), setting.getSubcategory())
 		self.categories[setting.getCategory()][setting.getSubcategory()][setting.getSymbolicName()] = setting

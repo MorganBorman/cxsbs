@@ -5,10 +5,7 @@ class Plugin(cxsbs.Plugin.Plugin):
 		cxsbs.Plugin.Plugin.__init__(self)
 		
 	def load(self):
-		init()
-		
-	def reload(self):
-		init()
+		pass
 		
 	def unload(self):
 		pass
@@ -88,24 +85,6 @@ settings = SettingsManager.getAccessor(category=pluginCategory, subcategory="Pre
 
 import string
 
-def notice(message):
-	return settings["notice_pre"] + message
-
-def info(message):
-	return settings["info_pre"] + message
-
-def warning(message):
-	return settings["warning_pre"] + message
-
-def error(message):
-	return settings["error_pre"] + message
-
-def help(message):
-	return settings["help_pre"] + message
-
-def denied(message):
-	return settings["denied_pre"] + message
-
 def insufficientPermissions(cn):
 	dictionary = UIDict()
 	dictionary.update(Colors.colordict)
@@ -116,12 +95,15 @@ def UIDict():
 	
 	Don't store this if you want to stay in sync with the settings if they get updated from config.
 	"""
+	dictionary = Colors.colordict
+	dictionary['space'] = ' '
+	
 	return	{
-					'notice': settings["notice_pre"],
-					'info': settings["info_pre"],
-					'warning:': settings["warning_pre"],
-					'error': settings["error_pre"],
-					'help': settings["help_pre"],
-					'denied': settings["denied_pre"],
+					'notice': settings["notice"].substitute(dictionary),
+					'info': settings["info"].substitute(dictionary),
+					'warning:': settings["warning"].substitute(dictionary),
+					'error': settings["error"].substitute(dictionary),
+					'help': settings["help"].substitute(dictionary),
+					'denied': settings["denied"].substitute(dictionary),
 					'space': ' ',
 			}

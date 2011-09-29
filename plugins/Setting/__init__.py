@@ -86,6 +86,10 @@ class Setting(object):
 	def getDefault(self):
 		"""Get the default value of the setting"""
 		return self.default
+	
+	def writeDefaultString(self):
+		"""Get the string representation of the default value"""
+		return str(self.default)
 		
 	def readString(self, string):
 		"""Read a string representation of the value and store it"""
@@ -129,17 +133,23 @@ class TemplateSetting(Setting):
 		Setting.__init__(self, category, subcategory, symbolicName, displayName, default, writeBackDefault, value, writeBack, doc)
 		self.templateValue = string.Template(self.value)
 		
-	def setValue(self, string):
-		self.value = string
+	def getValue(self):
+		return self.templateValue
+		
+	def setValue(self, stringValue):
+		self.value = stringValue
 		self.templateValue = string.Template(self.value)
 		
-	def readString(self, string):
-		self.value = string
+	def readString(self, stringValue):
+		self.value = stringValue
 		self.templateValue = string.Template(self.value)
 		
 class ListSetting(Setting):
 	def __init__(self, category, subcategory, symbolicName, displayName, default, writeBackDefault=None, value=NotSpecified, writeBack=NotSpecified, doc=""):
 		Setting.__init__(self, category, subcategory, symbolicName, displayName, default, writeBackDefault, value, writeBack, doc)
+		
+	def writeDefaultString(self):
+		return ','.join(self.default)
 		
 	def readString(self, string):
 		self.value = string.split(',')

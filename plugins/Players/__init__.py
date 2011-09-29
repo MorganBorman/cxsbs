@@ -5,10 +5,14 @@ class Plugin(cxsbs.Plugin.Plugin):
 		cxsbs.Plugin.Plugin.__init__(self)
 		
 	def load(self):
-		init()
+		#create the circular reference so that Players can be referenced later
+		#from inside Events
+		Events.bootStrapPlayersModule(cxsbs.getResource("Players"))
 		
-	def reload(self):
-		init()
+		global players
+		players = {}
+		for cn in ServerCore.clients():
+			addPlayerForCn(cn)
 		
 	def unload(self):
 		pass
@@ -256,39 +260,29 @@ def addPlayerForCn(cn):
 		pass
 	players[cn] = Player(cn)
 	
-def init():
-	#create the circular reference so that Players can be referenced later
-	#from inside Events
-	Events.bootStrapPlayersModule(cxsbs.getResource("Players"))
+@Events.eventHandler('player_connect')
+def onPlayerConnect(cn):
+	logPlayerAction(cn, 'connect')
 	
-	global players
-	players = {}
-	for cn in ServerCore.clients():
-		addPlayerForCn(cn)
-		
-	@Events.eventHandler('player_connect')
-	def onPlayerConnect(cn):
-		logPlayerAction(cn, 'connect')
-		
-	@Events.eventHandler('player_disconnect')
-	def onPlayerDisconnect(cn):
-		logPlayerAction(cn, 'disconnect')
-		
-	@Events.eventHandler('player_connect_pre')
-	def onPlayerConnectPre(cn):
-		addPlayerForCn(cn)
-		Timers.addTimer(1000, triggerConnectDelayed, (cn,))
+@Events.eventHandler('player_disconnect')
+def onPlayerDisconnect(cn):
+	logPlayerAction(cn, 'disconnect')
 	
-	@Events.eventHandler('game_bot_added')
-	def onBotConnect(cn):
-		addPlayerForCn(cn)
-		Timers.addTimer(1000, triggerConnectDelayed, (cn,))
-		
-	@Events.eventHandler('player_disconnect_post')
-	@Events.eventHandler('game_bot_removed')
-	def playerDisconnect(cn):
-		try:
-			del players[cn]
-		except KeyError:
-			Logging.error('Player disconnected but does not have player class instance!')
+@Events.eventHandler('player_connect_pre')
+def onPlayerConnectPre(cn):
+	addPlayerForCn(cn)
+	Timers.addTimer(1000, triggerConnectDelayed, (cn,))
+
+@Events.eventHandler('game_bot_added')
+def onBotConnect(cn):
+	addPlayerForCn(cn)
+	Timers.addTimer(1000, triggerConnectDelayed, (cn,))
+	
+@Events.eventHandler('player_disconnect_post')
+@Events.eventHandler('game_bot_removed')
+def playerDisconnect(cn):
+	try:
+		del players[cn]
+	except KeyError:
+		Logging.error('Player disconnected but does not have player class instance!')
 		

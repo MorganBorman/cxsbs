@@ -43,9 +43,9 @@ settings = SettingsManager.getAccessor(category=pluginCategory, subcategory="Gen
 
 @Events.eventHandler("player_connect")
 def onConnect(cn):
-	if settings["autoAuth"]:
+	if settings["automatically_request_auth"]:
 		p = Players.player(cn)
-		p.requestAuth(settings["authDesc"])
+		p.requestAuth(settings["automatic_request_description"])
 
 def genKeyPair(keySeed):
 	newSeed = ""

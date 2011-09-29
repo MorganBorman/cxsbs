@@ -8,9 +8,6 @@ class Plugin(cxsbs.Plugin.Plugin):
 		global messagesManager
 		messagesManager = MessagesManager(SettingsManager.settingsManager)
 		
-	def reload(self):
-		pass
-		
 	def unload(self):
 		pass
 	
@@ -41,10 +38,19 @@ class MessagesManager:
 	def __init__(self, settingsManager):
 		self.settingsManager = settingsManager
 		self.dictionary = Colors.colordict
-		self.dictionary.update(UI.UIDict)
 		
 	def addMessage(self, subcategory, symbolicName, displayName, default, doc, category="Messages"):
-		template = Setting.TemplateSetting(self, category, subcategory, symbolicName, displayName, default, writeBackDefault=None, value=Setting.NotSpecified, writeBack=Setting.NotSpecified, doc=doc)
+		template = Setting.TemplateSetting	(
+												category=category, 
+												subcategory=subcategory, 
+												symbolicName=symbolicName, 
+												displayName=displayName, 
+												default=default, 
+												writeBackDefault=None, 
+												value=Setting.NotSpecified, 
+												writeBack=Setting.NotSpecified, 
+												doc=doc,
+											)
 		self.settingsManager.addSetting(template)
 		
 	def __formMessage(self, subcategory, symbolicName, dictionary, category="Messages"):
@@ -52,9 +58,11 @@ class MessagesManager:
 			dictionary = self.dictionary
 		else:
 			dictionary.update(self.dictionary)
+			
+		dictionary.update(UI.UIDict())
 		
 		try:
-			messageTemplate = settingsManager.getValue(category, subcategory, symbolicName, dictionary)
+			messageTemplate = self.settingsManager.getValue(category, subcategory, symbolicName)
 		except KeyError:
 			exceptionType, exceptionValue, exceptionTraceback = sys.exc_info()	
 			cxsbs.Logging.logger.error('Messages Framework: Attempt to send unknown message: ' + str(name))

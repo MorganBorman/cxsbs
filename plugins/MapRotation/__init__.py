@@ -55,6 +55,8 @@ SettingsManager.addSetting(Setting.BoolSetting	(
 												doc="Use a new map when the first player joins again after the server has been empty."
 											))
 
+settings = SettingsManager.getAccessor(category=pluginCategory, subcategory="General")
+
 for modeName, rotationParams in DefaultMapRotation.defaultMapModeLists.items():
 	mapNames = rotationParams[0].split()
 	SettingsManager.addSetting(Setting.ListSetting	(
@@ -66,7 +68,7 @@ for modeName, rotationParams in DefaultMapRotation.defaultMapModeLists.items():
 														doc=rotationParams[2]
 													))
 	
-rotationSettings = SettingsManager.getAccessor(category=pluginCategory, subcategory="Rotation")
+rotations = SettingsManager.getAccessor(category=pluginCategory, subcategory="Rotation")
 
 Messages.addMessage	(
 						subcategory=pluginCategory, 
@@ -93,7 +95,7 @@ class Map:
 
 def getSuccessor(mode_num, map):
 	try:
-		maps = modeMapLists[Game.modes[mode_num]]
+		maps = rotations[Game.modes[mode_num]]
 		if map == '':
 			return maps[0]
 		else:
@@ -115,7 +117,7 @@ def clientReloadRotate():
 	
 def isRotationMap(mapName):
 	for modeName in Game.modes:
-		mapNames = rotationSettings[modeName]
+		mapNames = rotations[modeName]
 		if mapName in mapNames:
 			return True
 	return False
@@ -136,9 +138,12 @@ def presetRotate():
 			Logging.warning('Preset rotation tried to change the map while server was frozen.')
 
 def onNextMapCmd(cn, args):
-	'''@description Display next map
-	   @usage
-	   @allowGroups __all__'''
+	'''
+	@description Display next map
+	@usage
+	@allowGroups __all__
+	@doc Command to retrieve the name of the next map in the rotation for this mode.
+	'''
 	if args != '':
 		raise Commands.UsageError()
 	else:
@@ -149,14 +154,14 @@ def onNextMapCmd(cn, args):
 			messager.sendPlayerMessage('nextmap_unknown', p)
 
 def onServerStart(*args):
-		startMapName = modeMapLists[settings['start_mode']][0]
+		startMapName = rotations[settings['start_mode']][0]
 		startModeNumber = Game.modeNumber(settings['start_mode'])
 		try:
 			Game.setMap(startMapName, startModeNumber)
 		except Commands.StateError:
 			Logging.warning('Start server map set tried to change the map while server was frozen.')
 
-if settings['preset_rotation']:
+if settings['use_preset_rotation']:
 	Events.registerServerEventHandler('intermission_ended', presetRotate)
 	Events.registerServerEventHandler('server_start', onServerStart)
 	
