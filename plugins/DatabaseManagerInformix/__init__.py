@@ -15,7 +15,35 @@ class Plugin(cxsbs.Plugin.Plugin):
 		
 import cxsbs
 DatabaseManagerBase = cxsbs.getResource("DatabaseManagerBase")
-Config = cxsbs.getResource("Config")
+Setting = cxsbs.getResource("Setting")
+SettingsManager = cxsbs.getResource("SettingsManager")
+
+SettingsManager.addSetting(Setting.Setting	(
+												category=DatabaseManagerBase.databaseConfigurationFilename, 
+												subcategory="Informix", 
+												symbolicName="database", 
+												displayName="Database", 
+												default="cxsbs", 
+												doc="Name of the database to connect to.",
+											))
+
+SettingsManager.addSetting(Setting.Setting	(
+												category=DatabaseManagerBase.databaseConfigurationFilename, 
+												subcategory="Informix",
+												symbolicName="user", 
+												displayName="User", 
+												default="", 
+												doc="Name of the user to connect to the database as.",
+											))
+
+SettingsManager.addSetting(Setting.Setting	(
+												category=DatabaseManagerBase.databaseConfigurationFilename, 
+												subcategory="Informix",
+												symbolicName="password", 
+												displayName="Password", 
+												default="", 
+												doc="Password of the user to connect to the database as.",
+											))
 
 from sqlalchemy import create_engine
 from sqlalchemy.pool import NullPool, SingletonThreadPool
@@ -63,9 +91,9 @@ class DatabaseManagerBackend(DatabaseManagerBase.DatabaseManagerBackend):
 		return None
 
 	def readConfiguration(self):
-		config = Config.PluginConfig(DatabaseManagerBase.databaseConfigurationFilename)
+		settings = SettingsManager.getAccessor(category=DatabaseManagerBase.databaseConfigurationFilename, subcategory="Informix")
+		
 		self.protocol = "informix:///"
-		self.database = config.getOption('Config', 'database', 'instances/xsbs')
-		self.user = config.getOption('Config', 'user', '')
-		self.password = config.getOption('Config', 'password', '')
-		del config
+		self.database = settings['database']
+		self.user = settings['user']
+		self.password = settings['password']

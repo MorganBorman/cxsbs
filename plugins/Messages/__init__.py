@@ -29,7 +29,7 @@ class Accessor:
 		print "<"+"MessagesManager['"+self.category+"']['"+self.subcategory+"'] Accessor>"
 	
 	def sendMessage(self, symbolicName, group=None, dictionary=None):
-		self.messagesManager.sendMessage(self.subcategory, symbolicName, group, dictionary, category)
+		self.messagesManager.sendMessage(self.subcategory, symbolicName, group, dictionary, self.category)
 		
 	def sendPlayerMessage(self, symbolicName, p, dictionary=None):
 		self.messagesManager.sendPlayerMessage(self.subcategory, symbolicName, p, dictionary, self.category)

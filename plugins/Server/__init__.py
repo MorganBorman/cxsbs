@@ -41,8 +41,8 @@ def setPaused(val, cn=-1):
 	'''Pause or unpause the game'''
 	if isFrozen():
 		raise Commands.StateError('Server is currently frozen')
-	#if val == ServerCore.isPaused():
-	#	return
+	if val == ServerCore.isPaused():
+		return
 	if val:
 		action = 'paused'
 	else:

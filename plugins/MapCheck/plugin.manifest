@@ -6,7 +6,8 @@ Author = Chasm
 Enabled = True
 
 [Dependencies]
-Config = 0.0.1
+Setting = 0.0.1
+SettingsManager = 0.0.1
 ServerCore = 0.0.1
 Colors = 0.0.1
 UI = 0.0.1
@@ -15,4 +16,4 @@ Players = 0.0.1
 Net = 0.0.1
 Server = 0.0.1
 Commands = 0.0.1
-MessageFramework = 0.0.1
+Messages = 0.0.1

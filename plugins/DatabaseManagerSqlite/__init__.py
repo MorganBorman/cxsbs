@@ -12,15 +12,21 @@ class Plugin(cxsbs.Plugin.Plugin):
 		
 	def unload(self):
 		pass
-		
-def setConfigurationFilename(filename):
-	global databaseConfigurationFilename
-	databaseConfigurationFilename = 'db'
 
 import cxsbs
 DatabaseManagerBase = cxsbs.getResource("DatabaseManagerBase")
 ServerCore = cxsbs.getResource("ServerCore")
-Config = cxsbs.getResource("Config")
+Setting = cxsbs.getResource("Setting")
+SettingsManager = cxsbs.getResource("SettingsManager")
+
+SettingsManager.addSetting(Setting.Setting	(
+												category=DatabaseManagerBase.databaseConfigurationFilename, 
+												subcategory="Sqlite", 
+												symbolicName="database", 
+												displayName="Database", 
+												default="cxsbs.db", 
+												doc="Path of the database to connect to.",
+											))
 
 from sqlalchemy import create_engine
 from sqlalchemy.pool import NullPool
@@ -34,7 +40,7 @@ class DatabaseManagerBackend(DatabaseManagerBase.DatabaseManagerBackend):
 		self.engine = create_engine(self.protocol + self.database, echo=False, poolclass=NullPool)
 		
 	def readConfiguration(self):
-		config = Config.PluginConfig(DatabaseManagerBase.databaseConfigurationFilename)
+		settings = SettingsManager.getAccessor(DatabaseManagerBase.databaseConfigurationFilename, subcategory="Sqlite")
+		
 		self.protocol = "sqlite:///"
-		self.database = ServerCore.instanceRoot() + "/" + config.getOption('Config', 'database', 'cxsbs.db')
-		del config
+		self.database = ServerCore.instanceRoot() + "/" + settings['database']

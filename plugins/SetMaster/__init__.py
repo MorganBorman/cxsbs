@@ -1,5 +1,4 @@
 import cxsbs.Plugin
-from orca.settings_manager import SettingsManager
 
 class Plugin(cxsbs.Plugin.Plugin):
 	def __init__(self):
@@ -103,9 +102,8 @@ messager = Messages.getAccessor(subcategory=pluginCategory)
 
 def setSimpleMaster(cn, auth=False):
 	p = Players.player(cn)
-	if not settings["publicServer"] and not auth:
+	if not settings["public_server"] and not auth:
 		messager.sendPlayerMessage('not_open_server', p)
-		
 		return
 	elif Players.currentMaster() != None and not auth:
 		messager.sendPlayerMessage('already_master', p)

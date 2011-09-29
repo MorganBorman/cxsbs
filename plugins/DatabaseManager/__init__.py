@@ -5,10 +5,9 @@ class Plugin(cxsbs.Plugin.Plugin):
 		cxsbs.Plugin.Plugin.__init__(self)
 		
 	def load(self):
-		init()
-		
-	def reload(self):
-		init()
+		global dbmanager
+		dbmanager = initializeDatabaseManager()
+		dbmanager.connect()
 		
 	def unload(self):
 		pass
@@ -18,6 +17,9 @@ DatabaseManagerBase = cxsbs.getResource("DatabaseManagerBase")
 
 import sys
 from contextlib import contextmanager
+
+def getDbSettingsCategory():
+	return DatabaseManagerBase.databaseConfigurationFilename
 
 def initializeDatabaseManager():
 	"""returns the correct DatabaseManager instance"""
@@ -42,7 +44,3 @@ def dbsession():
 	finally:
 		session.close()
 
-def init():
-	global dbmanager
-	dbmanager = initializeDatabaseManager()
-	dbmanager.connect()

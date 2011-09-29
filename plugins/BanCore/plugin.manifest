@@ -1,6 +1,6 @@
 [Plugin]
-Name = Clan Tags
-SymbolicName = ClanTags
+Name = Ban Core
+SymbolicName = BanCore
 Version = 0.0.1
 Author = Chasm
 Enabled = True
@@ -8,9 +8,9 @@ Enabled = True
 [Dependencies]
 Players = 0.0.1
 DatabaseManager = 0.0.1
-BanCore = 0.0.1
-Colors = 0.0.1
 Events = 0.0.1
 Timers = 0.0.1
-Config = 0.0.1
-MessageFramework = 0.0.1
+ServerCore = 0.0.1
+SettingsManager = 0.0.1
+Setting = 0.0.1
+Net = 0.0.1

@@ -168,15 +168,16 @@ def isPermitted(playerGroups, allowGroups, denyGroups):
 			permitted = True
 	return permitted
 
-def whenSetMap(p, startMapName, startModeNumber):
+def whenSetMap(p, mapName, modeNumber):
 		try:
-			Game.setMap(startMapName, startModeNumber)
+			Game.setMap(mapName, modeNumber)
+			p.logAction('changed map', mode=Game.modes[modeNumber], map=mapName)
 			messager.sendMessage('map_changed', dictionary={'name': p.name()})
 		except Commands.StateError:
 			Logging.warning('Start server map set tried to change the map while server was frozen.')
 	
 @Events.eventHandler('player_map_vote')
-def onMapVote(cn, mapname, mapmode):
+def onMapVote(cn, mapName, modeNumber):
 	p = Players.player(cn)
 	
 	playerGroups = p.groups()
@@ -186,19 +187,19 @@ def onMapVote(cn, mapname, mapmode):
 		messager.sendPlayerMessage('denied_change_map', p)
 		return
 	
-	if mapmode != ServerCore.gameMode():
+	if modeNumber != ServerCore.gameMode():
 		#check whether players group can change mode
 		if not isPermitted(playerGroups, groupSettings["allow_groups_change_mode"], groupSettings["deny_groups_change_mode"]):
 			messager.sendPlayerMessage('denied_change_mode', p)
 			return
 	
-		if not mapname in MapRotation.allRotationMaps:
+		if not MapRotation.isRotationMap(mapName=mapName):
 			#check whether players group can transcend rotation
 			if not isPermitted(playerGroups, groupSettings["allow_groups_transcend_rotation"], groupSettings["deny_groups_transcend_rotation"]):
 				messager.sendPlayerMessage('denied_transcend_rotation', p)
 				return
 	else:
-		if not mapname in MapRotation.modeMapLists[Game.modes[mapmode]]:
+		if not MapRotation.isRotationMap(mapName=mapName, modeName=Game.modes[modeNumber]):
 			#check whether players group can transcend rotation
 			if not isPermitted(playerGroups, groupSettings["allow_groups_transcend_rotation"], groupSettings["deny_groups_transcend_rotation"]):
 				messager.sendPlayerMessage('denied_transcend_rotation', p)
@@ -211,7 +212,7 @@ def onMapVote(cn, mapname, mapmode):
 			return
 	
 	if not settings["map_change_delay"] <= 0:
-		messager.sendMessage('map_changing', dictionary={'map': mapname, 'mode': Game.modes[mapmode], 'time': settings["map_change_delay"]})
-		Timers.addTimer(settings["map_change_delay"]*1000, whenSetMap, (p, mapname, mapmode))
+		messager.sendMessage('map_changing', dictionary={'map': mapName, 'mode': Game.modes[modeNumber], 'time': settings["map_change_delay"]})
+		Timers.addTimer(settings["map_change_delay"]*1000, whenSetMap, (p, mapName, modeNumber))
 	else:
-		whenSetMap(p, mapname, mapmode)
+		whenSetMap(p, mapName, modeNumber)

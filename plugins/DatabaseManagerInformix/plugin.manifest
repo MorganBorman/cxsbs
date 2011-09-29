@@ -8,5 +8,5 @@ Enabled = False
 
 [Dependencies]
 DatabaseManagerBase = 0.0.1
-DatabaseSession = 0.0.1
-Config = 0.0.1
+Setting = 0.0.1
+SettingsManager = 0.0.1

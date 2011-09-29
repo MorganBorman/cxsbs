@@ -1077,7 +1077,7 @@ namespace server
     {
         SbPy::triggerEvent("sync_map_changed_pre", 0);
         stopdemo();
-        pausegame(false);
+        //pausegame(false);
         if(smode) smode->reset(false);
         aiman::clearai();
 

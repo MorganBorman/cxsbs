@@ -5,7 +5,14 @@ class Plugin(cxsbs.Plugin.Plugin):
 		cxsbs.Plugin.Plugin.__init__(self)
 		
 	def load(self):
-		pass
+		global rotationLoaded
+		rotationLoaded = False
+		
+		if settings['use_preset_rotation']:
+			Events.registerServerEventHandler('intermission_ended', presetRotate)
+			Commands.registerCommandHandler('nextmap', onNextMapCmd)
+		else:
+			Events.registerServerEventHandler('intermission_ended', presetRotate)
 		
 	def unload(self):
 		pass
@@ -49,8 +56,8 @@ SettingsManager.addSetting(Setting.Setting	(
 SettingsManager.addSetting(Setting.BoolSetting	(
 												category=pluginCategory, 
 												subcategory="General", 
-												symbolicName="newmap_on_empty", 
-												displayName="New map on empty", 
+												symbolicName="newmap_on_first_client", 
+												displayName="New map on first client", 
 												default=True, 
 												doc="Use a new map when the first player joins again after the server has been empty."
 											))
@@ -115,12 +122,18 @@ def clientReloadRotate():
 	Events.triggerServerEvent('reload_map_selection', ())
 	ServerCore.sendMapReload()
 	
-def isRotationMap(mapName):
-	for modeName in Game.modes:
-		mapNames = rotations[modeName]
-		if mapName in mapNames:
-			return True
-	return False
+All = object()
+	
+def isRotationMap(mapName, modeName=All):
+	if modeName != All:
+		if modeName in Game.modes:
+			return mapName in rotations[modeName]
+	else:
+		for modeName in Game.modes:
+			mapNames = rotations[modeName]
+			if mapName in mapNames:
+				return True
+		return False
 
 def presetRotate():
 	try:
@@ -153,22 +166,19 @@ def onNextMapCmd(cn, args):
 		except (KeyError, ValueError):
 			messager.sendPlayerMessage('nextmap_unknown', p)
 
-def onServerStart(*args):
+def onFirstEverClient():
 		startMapName = rotations[settings['start_mode']][0]
 		startModeNumber = Game.modeNumber(settings['start_mode'])
 		try:
 			Game.setMap(startMapName, startModeNumber)
 		except Commands.StateError:
 			Logging.warning('Start server map set tried to change the map while server was frozen.')
-
-if settings['use_preset_rotation']:
-	Events.registerServerEventHandler('intermission_ended', presetRotate)
-	Events.registerServerEventHandler('server_start', onServerStart)
-	
-	if settings['newmap_on_empty']:
-		Events.registerServerEventHandler('no_clients', presetRotate)
-	
-	Commands.registerCommandHandler('nextmap', onNextMapCmd)
-else:
-	Events.registerServerEventHandler('intermission_ended', presetRotate)
-	#Events.registerServerEventHandler('intermission_ended', onIntermEnd)
+			
+@Events.eventHandler('player_connect')
+def onConnect(cn):
+	if not rotationLoaded:
+		onFirstEverClient()
+		
+	elif settings['use_preset_rotation']:
+		if Server.clientCount() == 0 and settings['newmap_on_first_client']:
+			presetRotate()

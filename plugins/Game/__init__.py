@@ -42,7 +42,7 @@ def teamNumber(teamname):
 modes = [
 	'ffa',
 	'coop',
-	'team',
+	'teamplay',
 	'insta',
 	'instateam',
 	'effic',
