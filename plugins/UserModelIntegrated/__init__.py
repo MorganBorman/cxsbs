@@ -277,7 +277,7 @@ class Model(UserModelBase.Model):
 												initiatedTime=verification.time,
 												)
 			except:
-				pass
+				print "Create Account: Error sending instructions email."
 			
 			user = User(verification.name, verification.email, keypair[1])
 			session.delete(verification)
@@ -458,7 +458,7 @@ class Model(UserModelBase.Model):
 									initiatedTime=verificationTime,
 									)
 		except:
-			pass
+			print "Create Account: Error sending email."
 		
 		session = DatabaseManager.dbmanager.session()
 		try:

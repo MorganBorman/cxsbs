@@ -22,7 +22,7 @@ def send_email(receiver, subject, body, sender=None):
 	if sender == None:
 		sender = settings['send_email_from']
 	msg = ("From: %s\r\nTo: %s\r\nSubject: %s\r\n\r\n%s" %(sender, receiver, subject, body))
-	print (sender, [receiver], msg)
+	#print (sender, [receiver], msg)
 	s = smtplib.SMTP('localhost')
 	s.sendmail(sender, [receiver], msg)
 	s.quit()
