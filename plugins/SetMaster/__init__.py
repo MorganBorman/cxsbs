@@ -112,7 +112,10 @@ def setSimpleMaster(cn, auth=False):
 		messager.sendPlayerMessage('already_admin', p)
 		return
 	else:
-		messager.sendMessage('claimed_master', dictionary={"name": p.name()})
+		if not p.isInvisible():
+			messager.sendMessage('claimed_master', dictionary={"name": p.name()})
+		else:
+			messager.sendMessage('claimed_master', group=Players.SeeInvisibleGroup, dictionary={"name": p.name()})
 		p.logAction('claimed master')
 		ServerCore.setMaster(cn)
 	
@@ -129,7 +132,10 @@ def onSetMaster(cn, givenhash):
 	p = Players.player(cn)
 	adminhash = ServerCore.hashPassword(cn, settings["admin_password"])
 	if givenhash == adminhash:
-		messager.sendMessage('claimed_admin', dictionary={"name": p.name()})
+		if not p.isInvisible():
+			messager.sendMessage('claimed_admin', dictionary={"name": p.name()})
+		else:
+			messager.sendMessage('claimed_admin', group=Players.SeeInvisibleGroup, dictionary={"name": p.name()})
 		p.logAction('claimed admin')
 		ServerCore.setAdmin(cn)
 	else:
@@ -146,10 +152,16 @@ def onSetMasterOff(cn):
 	p = Players.player(cn)
 	groups = p.groups()
 	if "__admin__" in groups:
-		messager.sendMessage('relinquished_admin', dictionary={"name": p.name()})
+		if not p.isInvisible():
+			messager.sendMessage('relinquished_admin', dictionary={"name": p.name()})
+		else:
+			messager.sendMessage('relinquished_admin', group=Players.SeeInvisibleGroup, dictionary={"name": p.name()})
 		p.logAction('relinquished admin')
 	elif "__master__" in groups:
-		messager.sendMessage('relinquished_master', dictionary={"name": p.name()})
+		if not p.isInvisible():
+			messager.sendMessage('relinquished_master', dictionary={"name": p.name()})
+		else:
+			messager.sendMessage('relinquished_master', group=Players.SeeInvisibleGroup, dictionary={"name": p.name()})
 		p.logAction('relinquished master')
 	else:
 		return

@@ -36,7 +36,7 @@ SettingsManager.addSetting(Setting.Setting	(
 												subcategory=pluginCategory, 
 												symbolicName="table_name", 
 												displayName="Table name", 
-												default="clantags",
+												default="bancore",
 												doc="Table name for storing the clantag-group associations."
 											))
 

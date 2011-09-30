@@ -24,6 +24,31 @@ Timers = cxsbs.getResource("Timers")
 ServerCore = cxsbs.getResource("ServerCore")
 Logging = cxsbs.getResource("Logging")
 Net = cxsbs.getResource("Net")
+Setting = cxsbs.getResource("Setting")
+SettingsManager = cxsbs.getResource("SettingsManager")
+
+permissionsCategory = 'Permissions'
+pluginSubcategory = 'Invisibility'
+
+SettingsManager.addSetting(Setting.ListSetting	(
+													category=permissionsCategory, 
+													subcategory=pluginSubcategory, 
+													symbolicName="allow_groups_see_invisible",
+													displayName="Allow groups see invisible", 
+													default=['__admin__', '__invisible__'],
+													doc="Groups which are permitted to see messages regarding invisible players.",
+												))
+
+SettingsManager.addSetting(Setting.ListSetting	(
+													category=permissionsCategory, 
+													subcategory=pluginSubcategory, 
+													symbolicName="deny_groups_see_invisible",
+													displayName="Deny groups see invisible", 
+													default=[],
+													doc="Groups which are not permitted to see messages regarding invisible players.",
+												))
+
+settings = SettingsManager.getAccessor(category=permissionsCategory, subcategory=pluginSubcategory)
 
 import math
 
@@ -74,6 +99,9 @@ class Player:
 		playerPriv = ServerCore.playerPrivilege(self.cn)
 		groups = []
 		groups.append("__all__")
+		
+		if self.isInvisible():
+			groups.append("__invisible__")
 		
 		if playerPriv == 1:
 			groups.append("__master__")
@@ -170,6 +198,22 @@ def all():
 	'''Get list of all clients'''
 	return players.values()
 
+def seeInvisible():
+	'''Get a list of those players who are permitted to see messages concerning invisible players'''
+	listing = []
+	for p in all():
+		denied = False
+		allowed = False
+		for g in p.groups():
+			if g in settings["allow_groups_see_invisible"]:
+				allowed = True
+			if g in settings["deny_groups_see_invisible"]:
+				denied = True
+		if allowed and not denied:
+			listing.append(p)
+	return listing
+		
+SeeInvisibleGroup = DynamicGroup(Player, seeInvisible)
 AllPlayersGroup = DynamicGroup(Player, all)
 EmptyPlayersGroup = Group(Player, [])
 
@@ -177,7 +221,7 @@ def cnsToPlayers(cns):
 	'''Turn list of cn's into list of Player's'''
 	ps = []
 	for cn in cns:
-		ps.append(player(cn))
+		ps.append(players[cn])
 	return ps
 
 def clientCount():
@@ -259,6 +303,33 @@ def addPlayerForCn(cn):
 	except KeyError:
 		pass
 	players[cn] = Player(cn)
+	
+def updatePlayerObject(pObject):
+	'''Update a player's class. Facility primarily used to changing a Player to a User.'''
+	if not isinstance(pObject, Player):
+		raise Exception("Cannot update player object with an object of a class not derived from Player.")
+	cn = pObject.cn
+	try:
+		p = players[cn]
+		players[cn] = pObject
+	except IndexError:
+		raise Exception("Attempt to update player class for a player who does not exist.")
+	
+def revertPlayerObject(pObject):
+	'''Revert a player's class. Facility primarily used to revert a player back to a regular Player after logging out'''
+	if not isinstance(pObject, Player):
+		raise Exception("Cannot revert player object from a object of a class not derived from Player.")
+	try:
+		cn = pObject.cn
+		try:
+			gamevars = pObject.gamevars
+		except:
+			gamevars = {}
+		players[cn] = Player(players[cn])
+		players[cn].gamevars = gamevars
+	except (IndexError, KeyError):
+		pass
+		#raise Exception("Attempt to revert player class for a player who does not exist.")
 	
 @Events.eventHandler('player_connect')
 def onPlayerConnect(cn):

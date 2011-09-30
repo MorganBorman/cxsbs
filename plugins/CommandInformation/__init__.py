@@ -124,23 +124,29 @@ def loadCommandInfo(command, handler):
 					elif tag == '@allowfunctiongroup':
 						args = text.split()
 						
-						function = args[0]
-						groups = args[1:]
-						
-						if not function in info.allowFunctionGroups.keys():
-							info.allowFunctionGroups[function] = []
-						
-						info.allowFunctionGroups[function] += groups
+						if len(args) > 0:
+							function = args[0]
+							groups = args[1:]
+							
+							if not function in info.allowFunctionGroups.keys():
+								info.allowFunctionGroups[function] = []
+							
+							info.allowFunctionGroups[function] += groups
+						else:
+							cxsbs.Logging.logger.warn("allowfunctiongroup without specified function in command declaration: " + info.command)
 					elif tag == '@denyfunctiongroup':
 						args = text.split()
 						
-						function = args[0]
-						groups = args[1:]
-						
-						if not function in info.denyFunctionGroups.keys():
-							info.denyFunctionGroups[function] = []
-						
-						info.denyFunctionGroups[function] += groups
+						if len(args) > 0:
+							function = args[0]
+							groups = args[1:]
+							
+							if not function in info.denyFunctionGroups.keys():
+								info.denyFunctionGroups[function] = []
+							
+							info.denyFunctionGroups[function] += groups
+						else:
+							cxsbs.Logging.logger.warn("denyfunctiongroup without specified function in command declaration: " + info.command)
 					elif tag == '@doc':
 						doc = True
 						info.documentation += text + '\n'

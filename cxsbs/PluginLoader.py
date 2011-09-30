@@ -66,16 +66,14 @@ class PluginLoader:
 	def unloadAll(self):
 		if not self.unloaded:
 			for pluginName, pluginObject in self.pluginObjects.items():
-				pluginObject.unload()
-				logger.info("Unloaded plugin: " + pluginName)
+				try:
+					pluginObject.unload()
+					logger.info("Unloaded plugin: " + pluginName)
+				except:
+					exceptionType, exceptionValue, exceptionTraceback = sys.exc_info()
+					logger.error("Uncaught exception occurred while unloading plugin: " + traceback.format_exc())
+				
 			self.unloaded = True
-			
-	def reloadAll(self):
-		if not self.unloaded:
-			for symbolicName in self.reloadOrder:
-				pluginObject = self.pluginObjects[symbolicName]
-				pluginObject.reload()
-				logger.info("reloaded plugin: " + symbolicName)
 		
 	def loadDependencies(self, manifest, dependList):
 		for dependency in manifest.Dependencies:

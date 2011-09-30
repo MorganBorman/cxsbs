@@ -17,6 +17,8 @@ SettingsManager = cxsbs.getResource("SettingsManager")
 UI = cxsbs.getResource("UI")
 Colors = cxsbs.getResource("Colors")
 Players = cxsbs.getResource("Players")
+
+import sys, traceback
 	
 class Accessor:
 	'''Thin interface to the settingsManager to clean up sending of messages for a particular plugin'''
@@ -33,6 +35,9 @@ class Accessor:
 		
 	def sendPlayerMessage(self, symbolicName, p, dictionary=None):
 		self.messagesManager.sendPlayerMessage(self.subcategory, symbolicName, p, dictionary, self.category)
+		
+	def printMessage(self, symbolicName, group=None, dictionary=None):
+		self.messagesManager.printMessage(self.subcategory, symbolicName, dictionary, self.category)
 	
 class MessagesManager:
 	def __init__(self, settingsManager):
@@ -60,15 +65,13 @@ class MessagesManager:
 			dictionary.update(self.dictionary)
 			
 		dictionary.update(UI.UIDict())
-		
 		try:
 			messageTemplate = self.settingsManager.getValue(category, subcategory, symbolicName)
+			return messageTemplate.substitute(dictionary)
 		except KeyError:
 			exceptionType, exceptionValue, exceptionTraceback = sys.exc_info()	
-			cxsbs.Logging.logger.error('Messages Framework: Attempt to send unknown message: ' + str(name))
+			cxsbs.Logging.logger.error('Messages Framework: Attempt to send unknown message: ' + str(symbolicName) + ' from category: ' + str(category) + ' and subcategory: ' + str(subcategory))
 			cxsbs.Logging.logger.error(traceback.format_exc())
-			
-		return messageTemplate.substitute(dictionary)
 	
 	def getAccessor(self, category="Messages", subcategory="General"):
 		return Accessor(self, category, subcategory)
@@ -77,14 +80,22 @@ class MessagesManager:
 		if group == None:
 			group = Players.AllPlayersGroup
 			
-			message = self.__formMessage(category=category, subcategory=subcategory, symbolicName=symbolicName, dictionary=dictionary)
-			if message == '':
-				return
+		message = self.__formMessage(category=category, subcategory=subcategory, symbolicName=symbolicName, dictionary=dictionary)
+		
+		if message == '' or message == None:
+			return
+		
 		group.action("message", (message,))
+		
+	def printMessage(self, subcategory, symbolicName, dictionary=None, category="Messages"):
+		message = self.__formMessage(category=category, subcategory=subcategory, symbolicName=symbolicName, dictionary=dictionary)
+		if message == '' or message == None:
+			return
+		print repr(message)
 		
 	def sendPlayerMessage(self, subcategory, symbolicName, p, dictionary=None, category="Messages"):
 		message = self.__formMessage(category=category, subcategory=subcategory, symbolicName=symbolicName, dictionary=dictionary)
-		if message == '':
+		if message == '' or message == None:
 			return
 		p.message(message)
 		

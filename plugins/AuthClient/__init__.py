@@ -13,7 +13,6 @@ class Plugin(cxsbs.Plugin.Plugin):
 	def unload(self):
 		registerRepeater.stop()
 		registerRepeater._reschedule()
-		reactor.stop()
 		
 import cxsbs
 ServerCore = cxsbs.getResource("ServerCore")
@@ -228,9 +227,12 @@ def onAuthSuccess(cn, name):
 	p = Players.player(cn)
 	p.logAction('successful auth', authname=name)
 	if Players.currentAdmin() != None:
-		messageModule.sendPlayerMessage('admin_present', p)
+		messager.sendPlayerMessage('admin_present', p)
 		return
-	messageModule.sendMessage('auth_success', dictionary={'authname': name, 'name':p.name()})
+	if not p.isInvisible():
+		messager.sendMessage('auth_success', dictionary={'authname': name, 'name':p.name()})
+	else:
+		messager.sendMessage('auth_success', group=Players.SeeInvisibleGroup, dictionary={'authname': name, 'name':p.name()})
 	SetMaster.setSimpleMaster(cn, auth=True)
 	
 @Events.eventHandler('player_auth_request')
@@ -245,4 +247,9 @@ def authRequest(cn, name, desc):
 
 @Events.eventHandler('player_auth_challenge_response')
 def authChallengeResponse(cn, id, response):
+	try:
+		if Players.player(cn).pendingAuthLogin:
+			return
+	except:
+		pass
 	factory.send('confauth %i %s' % (id, response))

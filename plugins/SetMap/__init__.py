@@ -172,7 +172,10 @@ def whenSetMap(p, mapName, modeNumber):
 		try:
 			Game.setMap(mapName, modeNumber)
 			p.logAction('changed map', mode=Game.modes[modeNumber], map=mapName)
-			messager.sendMessage('map_changed', dictionary={'name': p.name()})
+			if not p.isInvisible():
+				messager.sendMessage('map_changed', dictionary={'name': p.name()})
+			else:
+				messager.sendMessage('map_changed', group=Players.SeeInvisibleGroup, dictionary={'name': p.name()})
 		except Commands.StateError:
 			Logging.warning('Start server map set tried to change the map while server was frozen.')
 	

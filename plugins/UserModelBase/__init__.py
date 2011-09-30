@@ -7,9 +7,6 @@ class Plugin(cxsbs.Plugin.Plugin):
 	def load(self):
 		pass
 		
-	def reload(self):
-		pass
-		
 	def unload(self):
 		pass
 	
@@ -76,15 +73,13 @@ class Model(object):
 		pass
 	
 	@abc.abstractmethod
-	def login(self, userId, serverId, authenticationToken):
+	def login(self, userId, serverId):
 		"""to be called when user logs in to a server
 		
 		userId: the unique id of the user
 		serverId: the unique id of the server that this is being called from
-		authenticationToken: the users authentication token
 		
 		raises InvalidUserId if the user does not exist
-		raises InvalidCredentials if the userId and authentication token to not match
 		does not validate serverId. This is the responsibility of the calling api
 		
 		returns (loginSuccessfulBoolean, loginMessage)
@@ -126,6 +121,18 @@ class Model(object):
 		raises InvalidUserName if the name does not relate to an account
 		
 		Returns the userId"""
+		pass
+	
+	@abc.abstractmethod
+	def getUserPublicKey(self, userId):
+		"""Get the users public key
+		
+		userId: the unique user identifier
+		
+		raises InvalidUserId if the user does not exist
+		
+		Returns the public key as a string
+		"""
 		pass
 	
 	@abc.abstractmethod
@@ -189,8 +196,6 @@ class Model(object):
 		userId: the unique id of the user
 		
 		raises InvalidUserId if the user does not exist
-		raises InvalidAuthenticationTokenSeed if the authentication token seed is not canonical
-		raises ReadOnlyViolation if the user model is read only
 		
 		no return value
 		"""
@@ -319,6 +324,11 @@ class InvalidUserId(Exception):
 		Exception.__init__(self, value)
 		
 class InvalidUserName(Exception):
+	'''...'''
+	def __init__(self, value=''):
+		Exception.__init__(self, value)
+		
+class InvalidEmail(Exception):
 	'''...'''
 	def __init__(self, value=''):
 		Exception.__init__(self, value)

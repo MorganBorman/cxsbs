@@ -15,6 +15,7 @@ Setting = cxsbs.getResource("Setting")
 SettingsManager = cxsbs.getResource("SettingsManager")
 ServerCore = cxsbs.getResource("ServerCore")
 Events = cxsbs.getResource("Events")
+Logging = cxsbs.getResource("Logging")
 	
 import ppwgen
 
@@ -44,5 +45,9 @@ settings = SettingsManager.getAccessor(category=pluginCategory, subcategory="Gen
 def connectInvisible(cn, pwd):
 	if not settings["allow"]:
 		return False
-	
-	return pwd == ServerCore.hashPassword(cn, settings["password"])
+	if pwd == ServerCore.hashPassword(cn, settings["password"]):
+		cxsbs.AsyncronousExecutor.dispatch(ServerCore.playerMessage, time=1, args=(cn, "You have connected invisibly. Please behave and act responsibly."))
+		Logging.info("Client connected invisibly")
+		return True
+	else:
+		return False

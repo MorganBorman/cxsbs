@@ -807,6 +807,32 @@ void *genchallenge(void *pubkey, const void *seed, int seedlen, vector<char> &ch
     return new gfield(answer.x);
 }
 
+void genchallengestr(void *pubkey, const void *seed, int seedlen, vector<char> &challengestr, vector<char> &answerstr)
+{
+    tiger::hashval hash;
+    tiger::hash((const uchar *)seed, sizeof(seed), hash);
+    gfint challenge;
+    memcpy(challenge.digits, hash.bytes, sizeof(challenge.digits));
+    challenge.len = 8*sizeof(hash.bytes)/BI_DIGIT_BITS;
+    challenge.shrink();
+
+    ecjacobian answer(*(ecjacobian *)pubkey);
+    answer.mul(challenge);
+    answer.normalize();
+
+    ecjacobian secret(ecjacobian::base);
+    secret.mul(challenge);
+    secret.normalize();
+
+    secret.print(challengestr);
+    challengestr.add('\0');
+
+    answer.x.printdigits(answerstr);
+    answerstr.add('\0');
+
+    return;
+}
+
 void freechallenge(void *answer)
 {
     delete (gfint *)answer;

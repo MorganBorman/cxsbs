@@ -588,7 +588,7 @@ void rundedicatedserver()
     #ifdef WIN32
     SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
     #endif
-    puts("dedicated server started...\nCtrl-C to exit\n\n");
+    //puts("dedicated server started...\nCtrl-C to exit\n\n");
     SbPy::triggerEvent("server_start", 0);
     for(;rundedicated;) serverslice(true, 4);
 }

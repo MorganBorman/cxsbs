@@ -7,8 +7,8 @@ executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
 def queue(func, *args, **kwargs):
 	executor.submit(func, *args, **kwargs)
 	
-def dispatch(func, *args, **kwargs):
-	twisted.internet.reactor.callLater(0, func, *args)
+def dispatch(func, args, time=0, **kwargs):
+	twisted.internet.reactor.callLater(time, func, *args)
 	
 import time
 	

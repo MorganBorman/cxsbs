@@ -19,6 +19,7 @@
 
 #include "servermodule.h"
 #include "server.h"
+#include "tools.h"
 
 #include <iostream>
 
@@ -328,6 +329,36 @@ static PyObject *requestPlayerAuth(PyObject *self, PyObject *args)
 	sendf(ci->clientnum, 1, "ris", N_REQAUTH, desc);
 	Py_INCREF(Py_None);
 	return Py_None;
+}
+
+static PyObject *sendAuthChallenge(PyObject *self, PyObject *args)
+{
+	//cn, domain, reqid, publicKey
+	//return address of answer as integer
+	int cn;
+	char *domain;
+	uint id;
+	char *publicKey;
+	server::clientinfo *ci;
+	if(!PyArg_ParseTuple(args, "isIs", &cn, &domain, &id, &publicKey))
+		return 0;
+	ci = server::getinfo(cn);
+	if(!ci)
+	{
+		PyErr_SetString(PyExc_ValueError, "Invalid cn specified");
+		return 0;
+	}
+
+    uint seed[3] = { randomMT(), randomMT(), randomMT() };
+    vector<char> challengeBuf;
+    vector<char> answerBuf;
+    void *parsedKey = parsepubkey(publicKey);
+    genchallengestr(parsedKey, seed, sizeof(seed), challengeBuf, answerBuf);
+
+    freepubkey(parsedKey);
+    sendf(ci->clientnum, 1, "risis", N_AUTHCHAL, domain, id, challengeBuf.getbuf());
+
+    return Py_BuildValue("s", answerBuf.getbuf());
 }
 
 static PyObject *playerFrags(PyObject *self, PyObject *args)
@@ -1125,6 +1156,7 @@ static PyMethodDef ModuleMethods[] = {
 	{"setBotLimit", setBotLimit, METH_VARARGS, "Set server bot limit."},
 	{"hashPassword", hashPass, METH_VARARGS, "Return hash for user + password"},
 	{"genAuthKey", genAuthKey, METH_VARARGS, "Create auth key pair as a tuple (priv, pub)."},
+	{"sendAuthChallenge", sendAuthChallenge, METH_VARARGS, "given (cn, serverDesc, id, pubkey) sends challenge to client and returns correct answer."},
 	{"setMaster", setMaster, METH_VARARGS, "Set cn to master."},
 	{"setAdmin", setAdmin, METH_VARARGS, "Set cn to admin."},
 	{"resetPrivilege", resetPrivilege, METH_VARARGS, "Set cn to non-privileged."},

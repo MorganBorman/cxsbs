@@ -346,6 +346,7 @@ extern void answerchallenge(const char *privstr, const char *challenge, vector<c
 extern void *parsepubkey(const char *pubstr);
 extern void freepubkey(void *pubkey);
 extern void *genchallenge(void *pubkey, const void *seed, int seedlen, vector<char> &challengestr);
+extern void genchallengestr(void *pubkey, const void *seed, int seedlen, vector<char> &challengestr, vector<char> &answerstr);
 extern void freechallenge(void *answer);
 extern bool checkchallenge(const char *answerstr, void *correct);
 

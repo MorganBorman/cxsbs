@@ -10,7 +10,7 @@ class Plugin(cxsbs.Plugin.Plugin):
 		refreshTags = False
 		
 		tagsUpdater = LoopingCall(updateTags)
-		tagsUpdater.start(60)
+		tagsUpdater.start(1)
 		
 		refreshTags = True
 		
@@ -23,7 +23,7 @@ from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
 from twisted.internet.task import LoopingCall
 
-import string
+import string, time
 
 Base = declarative_base()
 
@@ -128,9 +128,18 @@ def updateTags():
 	if not refreshTags:
 		return
 	global tags
-	tags['[FD]'] = ["__admin__", "__master__"]
+	tags.clear()
+	session = DatabaseManager.dbmanager.session()
+	try:
+		groupTags = session.query(ClanTag).all()
+		for tag in groupTags:
+			if not tag.tag in tags.keys():
+				tags[tag.tag] = []
+			tags[tag.tag].append(tag.group)
+	finally:
+		session.close()
 
-def warnTagReserved(cn, count, startTime=None):
+def warnTagsReserved(cn, count, startTime=None):
 	try:
 		p = Players.player(cn)
 	except ValueError:
@@ -138,9 +147,11 @@ def warnTagReserved(cn, count, startTime=None):
 	
 	if startTime == None:
 		startTime = time.time()
-		p.tagWarningStartTime = startTime
+		p.gamevars['tagWarningStartTime'] = startTime
+	elif not 'tagWarningStartTime' in p.gamevars.keys():
+		p.gamevars['tagWarningStartTime'] = startTime
 		
-	if startTime != p.tagWarningStartTime:
+	if startTime != p.gamevars['tagWarningStartTime']:
 		return
 	
 	playerGroups = p.groups()
@@ -156,11 +167,11 @@ def warnTagReserved(cn, count, startTime=None):
 		if not allowed:
 			disallowedTags.append(tag)
 	
-	if len(disallowTags) < 1:
+	if len(disallowedTags) < 1:
 		return
 	
-	if count > settings["max_warnings"]:
-		BanCore.addBan(cn, 0, 'Use of reserved clan tag', -1)
+	if count >= settings["max_warnings"]:
+		BanCore.addBan(cn, 30, 'Use of reserved clan tag', -1)
 		return
 	
 	remaining = (settings["max_warnings"]*settings["warning_interval"]) - (count*settings["warning_interval"])
@@ -168,5 +179,5 @@ def warnTagReserved(cn, count, startTime=None):
 		messager.sendMessage('clantags_reserved', dictionary={'tag':', '.join(disallowedTags), 'remaining':remaining})
 	else:
 		messager.sendMessage('clantag_reserved', dictionary={'tag':disallowedTags[0], 'remaining':remaining})
-	Timers.addTimer(settings["warning_interval"]*1000, warnTagReserved, (cn, count+1, startTime))
+	Timers.addTimer(settings["warning_interval"]*1000, warnTagsReserved, (cn, count+1, startTime))
 	

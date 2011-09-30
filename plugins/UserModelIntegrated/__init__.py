@@ -13,31 +13,85 @@ class Plugin(cxsbs.Plugin.Plugin):
 	def unload(self):
 		pass
 	
-import ppwgen
+from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
+from sqlalchemy.orm import relation, mapper
+from sqlalchemy.schema import UniqueConstraint
+	
+Base = declarative_base()
+	
+import ppwgen, time
 
 import cxsbs
 UserModelBase = cxsbs.getResource("UserModelBase")
-Config = cxsbs.getResource("Config")
+Setting = cxsbs.getResource("Setting")
+SettingsManager = cxsbs.getResource("SettingsManager")
+DatabaseManager = cxsbs.getResource("DatabaseManager")
+Auth = cxsbs.getResource("Auth")
 
-config = Config.PluginConfig('dbtables')
-usertable = config.getOption('User Manager', 'users_tablename', 'usermanager_users')
-nicktable = config.getOption('User Manager', 'linked_names_table', 'usermanager_nickaccounts')
-grouptable = config.getOption('User Manager', 'groups_table', 'usermanager_groups')
-groupmemberstable = config.getOption('User Manager', 'group_members_table', 'usermanager_group_members')
-del config
+pluginCategory = 'Users'
+
+SettingsManager.addSetting(Setting.Setting	(
+												category=DatabaseManager.getDbSettingsCategory(),
+												subcategory=pluginCategory, 
+												symbolicName="user_table", 
+												displayName="User table", 
+												default="usermanager_users",
+												doc="Table name for storing the users."
+											))
+
+SettingsManager.addSetting(Setting.Setting	(
+												category=DatabaseManager.getDbSettingsCategory(),
+												subcategory=pluginCategory, 
+												symbolicName="user_verifications_table", 
+												displayName="User verifications table", 
+												default="usermanager_user_verifications",
+												doc="Table name for storing the pending user verifications."
+											))
+
+SettingsManager.addSetting(Setting.Setting	(
+												category=DatabaseManager.getDbSettingsCategory(),
+												subcategory=pluginCategory, 
+												symbolicName="linked_names_table", 
+												displayName="Linked names table", 
+												default="usermanager_nickaccounts",
+												doc="Table name for storing the user's linked names."
+											))
+
+SettingsManager.addSetting(Setting.Setting	(
+												category=DatabaseManager.getDbSettingsCategory(),
+												subcategory=pluginCategory, 
+												symbolicName="groups_table", 
+												displayName="Groups table", 
+												default="usermanager_groups",
+												doc="Table name for storing the user groups."
+											))
+
+SettingsManager.addSetting(Setting.Setting	(
+												category=DatabaseManager.getDbSettingsCategory(),
+												subcategory=pluginCategory, 
+												symbolicName="group_members_table", 
+												displayName="Group members table", 
+												default="usermanager_group_members",
+												doc="Table name for storing the user-group associations."
+											))
+
+tableSettings = SettingsManager.getAccessor(DatabaseManager.getDbSettingsCategory(), pluginCategory)
 
 class User(Base):
-	__tablename__ = usertable
+	__tablename__ = tableSettings["user_table"]
 	id = Column(Integer, primary_key=True)
 	name = Column(String(16), index=True)
 	email = Column(String(64), nullable=False)
-	password = Column(String(16), index=True)
+	publicToken = Column(String(16), index=True)
 	def __init__(self, name, email, publicToken):
 		self.name = name
 		self.email = email
 		self.publicToken = publicToken
 		
 class Verification(Base):
+	__tablename__ = tableSettings["user_verifications_table"]
 	id = Column(Integer, primary_key=True)
 	name = Column(String(16), index=True)
 	verificationCode = Column(String(32), index=True)
@@ -56,32 +110,34 @@ class Verification(Base):
 		self.tokenSeed = tokenSeed
 
 class NickAccount(Base):
-	__tablename__ = nicktable
+	__tablename__ = tableSettings["linked_names_table"]
 	id = Column(Integer, primary_key=True)
 	name = Column(String(16), index=True)
-	userId = Column(Integer, ForeignKey(usertable + '.id'))
+	userId = Column(Integer, ForeignKey(tableSettings["user_table"] + '.id'))
 	user = relation(User, primaryjoin=userId==User.id)
 	def __init__(self, name, userId):
 		self.name = name
 		self.userId = userId
 		
 class Group(Base):
-	__tablename__ = grouptable
+	__tablename__ = tableSettings["groups_table"]
 	id = Column(Integer, primary_key=True)
 	name = Column(String(16), index=True)
 	def __init__(self, name):
 		self.name = name
 		
 class UserGroup(Base):
-	__tablename__ = groupmemberstable
-	userId = Column(Integer, ForeignKey(usertable + '.id'))
-	groupId = Column(Integer, ForeignKey(grouptable + '.id'))
+	__tablename__ = tableSettings["group_members_table"]
+	userId = Column(Integer, ForeignKey(tableSettings["user_table"] + '.id'))
+	groupId = Column(Integer, ForeignKey(tableSettings["groups_table"] + '.id'))
 	user = relation(User, primaryjoin=userId==User.id)
 	UniqueConstraint('ip', 'name', name='uq_user_ip_ip_name')
 	__mapper_args__ = {'primary_key':[userId, groupId]}
 	def __init__(self, userId, groupId):
 		self.userId = userId
 		self.groupId = groupId
+		
+Base.metadata.create_all(DatabaseManager.dbmanager.engine)
 	
 class Model(UserModelBase.Model):
 	def __init__(self, readOnly, usernameValidator, authenticationTokenValidator, groupValidator, maxNicks):
@@ -95,15 +151,27 @@ class Model(UserModelBase.Model):
 		
 		Returns whether or not a name is reserved
 		"""
-		session = dbmanager.session()
+		session = DatabaseManager.dbmanager.session()
+		try:
+			userAccount = session.query(User).filter(User.name==userName).one()
+			if userAccount.id != userId:
+				return False
+		except NoResultFound:
+			pass
+		finally:
+			session.close()
+		
+		session = DatabaseManager.dbmanager.session()
 		try:
 			nickAccount = session.query(NickAccount).filter(NickAccount.name==userName).one()
+			if nickAccount.userId != userId:
+				return False
 		except NoResultFound:
-			return True
+			pass
 		finally:
 			session.close()
 			
-		return nickAccount.userId == userId
+		return True
 	
 	def associateNick(self, userName, userId):
 		"""associate additional names with a user account
@@ -129,7 +197,10 @@ class Model(UserModelBase.Model):
 		if self.maxNicks <= 1:
 			raise SingleNickSystem()
 		
-		session = dbmanager.session()
+		if not self.isNickAllowed(userName, userId):
+			raise NameConflict()
+		
+		session = DatabaseManager.dbmanager.session()
 		try:
 			nickAccounts = session.query(NickAccount).filter(NickAccount.id==userId).all()
 			if len(nickAccounts)+1 > self.maxNicks:
@@ -140,7 +211,7 @@ class Model(UserModelBase.Model):
 		if not (self.usernameValidator(userName)):
 			raise InvalidUserName()
 		
-		session = dbmanager.session()
+		session = DatabaseManager.dbmanager.session()
 		try:
 			session.query(NickAccount).filter(NickAccount.name==userName).one()
 			raise NameConflict()
@@ -166,7 +237,7 @@ class Model(UserModelBase.Model):
 		
 		no return value
 		"""
-		session = dbmanager.session()
+		session = DatabaseManager.dbmanager.session()
 		try:
 			verification = session.query(Verification).filter(Verification.name==userName).filter(Verification.verificationCode==verificationCode).one()
 		except NoResultFound:
@@ -189,13 +260,15 @@ class Model(UserModelBase.Model):
 			raise InvalidState("unkown verification type: " + verification.type)
 		
 	def __createFinalize(self, verification):
-		session = dbmanager.session()
+		session = DatabaseManager.dbmanager.session()
 		try:
 			keypair = Auth.genKeyPair(verification.tokenSeed)
-			
+			print "\n" + keypair[0] + ">>"
 			user = User(verification.name, verification.email, keypair[1])
-			session.add(nickAccount)
+			session.delete(verification)
+			session.add(user)
 			session.commit()
+			
 		finally:
 			session.close()
 	
@@ -205,21 +278,21 @@ class Model(UserModelBase.Model):
 	def __changeFinalize(self, verification):
 		pass
 	
-	def login(self, userId, serverId, authenticationToken):
+	def login(self, userId, serverId):
 		"""to be called when user logs in to a server
 		
 		userId: the unique id of the user
 		serverId: the unique id of the server that this is being called from
-		authenticationToken: the users authentication token
 		
 		raises InvalidUserId if the user does not exist
-		raises InvalidCredentials if the userId and authentication token to not match
 		does not validate serverId. This is the responsibility of the calling api
 		
 		returns (loginSuccessfulBoolean, loginMessage)
 		"""
 		#validate the userId
 		self.isUser(userId)
+		
+		return (True, "Welcome")
 		
 	def logout(self, userId, serverId):
 		"""to be called when user logs out of a server
@@ -234,6 +307,8 @@ class Model(UserModelBase.Model):
 		"""
 		#validate the userId
 		self.isUser(userId)
+		
+		return (True, "Goodbye")
 	
 	def isUser(self, userId):
 		"""Check whether a userId is valid
@@ -244,7 +319,7 @@ class Model(UserModelBase.Model):
 		
 		no return value
 		"""
-		session = dbmanager.session()
+		session = DatabaseManager.dbmanager.session()
 		try:
 			session.query(User).filter(User.id==userId).one()
 		except:
@@ -253,7 +328,7 @@ class Model(UserModelBase.Model):
 			session.close()
 		
 	def getUser(self, userName):
-		"""Get the user id of a user
+		"""Get the user id of a user by primary username
 		
 		userName: username to check
 		
@@ -261,12 +336,31 @@ class Model(UserModelBase.Model):
 		
 		Returns the userId
 		"""
-		session = dbmanager.session()
+		session = DatabaseManager.dbmanager.session()
 		try:
 			user = session.query(User).filter(User.name==userName).one()
 			return user.id
 		except:
 			raise InvalidUserName(userName)
+		finally:
+			session.close()
+	
+	def getUserPublicKey(self, userId):
+		"""Get the users public key
+		
+		userId: the unique user identifier
+		
+		raises InvalidUserId if the user does not exist
+		
+		Returns the public key as a string
+		"""
+		
+		session = DatabaseManager.dbmanager.session()
+		try:
+			user = session.query(User).filter(User.id==userId).one()
+			return user.publicToken
+		except:
+			raise InvalidUserId(userId)
 		finally:
 			session.close()
 	
@@ -280,7 +374,7 @@ class Model(UserModelBase.Model):
 		Returns the email address as a string
 		"""
 		
-		session = dbmanager.session()
+		session = DatabaseManager.dbmanager.session()
 		try:
 			user = session.query(User).filter(User.id==userId).one()
 			return user.email
@@ -300,7 +394,7 @@ class Model(UserModelBase.Model):
 		"""
 		names = []
 		
-		session = dbmanager.session()
+		session = DatabaseManager.dbmanager.session()
 		try:
 			user = session.query(User).filter(User.id==userId).one()
 			names.append(user.name)
@@ -309,7 +403,7 @@ class Model(UserModelBase.Model):
 		finally:
 			session.close()
 		
-		session = dbmanager.session()
+		session = DatabaseManager.dbmanager.session()
 		try:
 			nickAccounts = session.query(NickAccount).filter(NickAccount.id==userId).all()
 			for nickAccount in nickAccounts:
@@ -337,7 +431,7 @@ class Model(UserModelBase.Model):
 		
 		verificationCode = ppwgen.generatePassword()
 		
-		session = dbmanager.session()
+		session = DatabaseManager.dbmanager.session()
 		try:
 			verification = Verification(userName, verificationCode, email, "createAccount", time.time(), None, authenticationTokenSeed)
 			session.add(verification)
@@ -364,7 +458,7 @@ class Model(UserModelBase.Model):
 		verificationCode = ppwgen.generatePassword()
 		email = self.getUserEmail(userId)
 		
-		session = dbmanager.session()
+		session = DatabaseManager.dbmanager.session()
 		try:
 			verification = Verification(None , verificationCode, email, "deleteAccount", time.time(), userId, None)
 			session.add(verification)
@@ -392,7 +486,7 @@ class Model(UserModelBase.Model):
 		verificationCode = ppwgen.generatePassword()
 		email = self.getUserEmail(userId)
 		
-		session = dbmanager.session()
+		session = DatabaseManager.dbmanager.session()
 		try:
 			verification = Verification(None , verificationCode, email, "deleteAccount", time.time(), userId, authenticationTokenSeed)
 			session.add(verification)
@@ -424,7 +518,7 @@ class Model(UserModelBase.Model):
 		
 		no return value
 		"""
-		session = dbmanager.session()
+		session = DatabaseManager.dbmanager.session()
 		try:
 			session.query(Group).filter(Group.id==groupId).one()
 		except:
@@ -441,7 +535,7 @@ class Model(UserModelBase.Model):
 		
 		returns the groupId
 		"""
-		session = dbmanager.session()
+		session = DatabaseManager.dbmanager.session()
 		try:
 			group = session.query(Group).filter(Group.name==groupName).one()
 			return group.id
@@ -459,7 +553,14 @@ class Model(UserModelBase.Model):
 		
 		Returns the group name corresponding to the given id
 		"""
-		pass
+		session = DatabaseManager.dbmanager.session()
+		try:
+			group = session.query(Group).filter(Group.id==groupId).one()
+			return group.name
+		except:
+			raise InvalidGroupId(groupId)
+		finally:
+			session.close()
 	
 	def createGroup(self, groupName):
 		"""Create a group of the given name and return the groupId
@@ -498,6 +599,18 @@ class Model(UserModelBase.Model):
 		
 		#validate the userId
 		self.isUser(userId)
+		
+		groups = []
+		
+		session = DatabaseManager.dbmanager.session()
+		try:
+			userGroups = session.query(UserGroup).filter(UserGroup.userId==userId).all()
+			for user_group in userGroups:
+				groups.append(self.getGroupName(user_group.groupId))
+		finally:
+			session.close()
+			
+		return groups
 		
 	def addToGroup(self, userId, groupId):
 		"""Adds the given user to a particular group

@@ -68,6 +68,7 @@ Messages.addMessage	(
 					)
 
 messager = Messages.getAccessor(subcategory=pluginCategory)
+helpMessager = Messages.getAccessor(subcategory='Help')
 
 import sys
 import traceback
@@ -199,7 +200,7 @@ class CommandManager:
 			for func in self.command_handlers[command]:
 					executeCommand(p, command, func, text)
 		else:
-			messager.sendPlayerMessage('unknown_command', p)
+			helpMessager.sendPlayerMessage('unknown_command', p)
 	def onMsg(self, cn, text):
 		if len(text) > 0 and self.prefixes.find(text[0]) != -1:
 			cmd = text[1:].split(' ')[0]
@@ -257,7 +258,8 @@ def onListcommands(cn, args):
 	'''@description Display all commands available to a user
 	   @usage <cn>
 	   @allowGroups __all__
-	   @allowFunctionGroup listothers
+	   @allowFunctionGroup listothers __admin__
+	   @denyFunctionGroup listothers
 	   @doc Command to retrieve those commands which are available to the specified client.
 	   If no client is specified then the default is to print those commands which are available to the client issuing the command.
 	   The setting listothers_allow_groups and listothers_deny_groups settings constrain who is permitted to list other clients available permissions.'''

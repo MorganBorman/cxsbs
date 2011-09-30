@@ -2428,7 +2428,8 @@ namespace server
                 getstring(desc, p, sizeof(desc)); // unused for now
                 uint id = (uint)getint(p);
                 getstring(ans, p, sizeof(ans));
-                if(!desc[0]) answerchallenge(ci, id, ans);
+                //if(!desc[0]) answerchallenge(ci, id, ans);
+                SbPy::triggerEventIntIntString("player_auth_challenge_response", ci->clientnum, id, ans);
                 break;
             }
 

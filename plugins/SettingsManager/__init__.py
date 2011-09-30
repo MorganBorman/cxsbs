@@ -148,10 +148,10 @@ class SettingsManager(object):
 		
 		write: If false, re-reads all settings from the configs regardless of writeBack property of the various settings.
 		'''
-		self.__writeSettings()
-		
 		if write:
-			self.__readSettings()
+			self.__writeSettings()
+		
+		self.__readSettings()
 
 def addSetting(setting):
 	"""Add a setting to the manager and read it's current value from the filesystem."""
@@ -164,7 +164,9 @@ def getAccessor(category, subcategory):
 def restoreSettings():
 	"""Reread configuration from filesystem."""
 	settingsManager.synchronize(False)
+	print "Settings were loaded from filesystem."
 	
 def syncronizeSettings():
 	"""Syncronize those modified writeBack settings with the filesystem and re-read everything"""
 	settingsManager.synchronize(True)
+	print "Settings have been syncronized with filesystem."

@@ -6,6 +6,8 @@ Author = Chasm
 Enabled = True
 
 [Dependencies]
+Setting = 0.0.1
+SettingsManager = 0.0.1
 UserModelBase = 0.0.1
 
 [Requests]

@@ -18,9 +18,8 @@ class Plugin(cxsbs.Plugin.Plugin):
 		eventManager = EventManager.EventManager()
 		policyEventManager = PolicyEventManager.PolicyEventManager()
 		
-	def reload(self):
-		eventManager.events.clear()
-		policyEventManager.events.clear()
+		#eventManager.events.clear()
+		#policyEventManager.events.clear()
 		
 	def unload(self):
 		global dont_iterate

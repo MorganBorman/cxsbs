@@ -31,7 +31,7 @@ Messages.addMessage	(
 
 Messages.addMessage	(
 						subcategory="Help", 
-						symbolicName="unkown_command", 
+						symbolicName="unknown_command", 
 						displayName="Unknown command", 
 						default="${error}Command not found.",
 						doc="Command not found error message.",
@@ -49,9 +49,8 @@ messager = Messages.getAccessor(subcategory="Help")
 
 def msgHelpText(cn, cmd):
 	p = Players.player(cn)
-	try:
-		helpinfo = CommandInformation.getCommandInfo(cmd)
-	except KeyError:
+	helpinfo = CommandInformation.getCommandInfo(cmd)
+	if helpinfo == None:
 		messager.sendPlayerMessage('unknown_command', p)
 	else:
 		msgs = []

@@ -68,7 +68,8 @@ messager = Messages.getAccessor(subcategory=pluginCategory)
 @Events.eventHandler('player_modified_map')
 def onMapModified(cn):
 	p = Players.player(cn)
-	messager.messagePlayer('map_modified', p, dictionary={'name':p.name()})
+	if not p.isInvisible():
+		messager.messagePlayer('map_modified', p, dictionary={'name':p.name()})
 	p.gamevars['modified_map'] = True
 	if not onUnspectate(cn, cn):
 		p.spectate()

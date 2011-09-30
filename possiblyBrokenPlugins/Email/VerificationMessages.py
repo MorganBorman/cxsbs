@@ -62,3 +62,14 @@ Please let us know how we could have improved the ${serverClusterName} servers.
 We will never sell, trade or otherwise distribute your information without prior consent.
 Contact ${administrativeEmail} with questions or concerns.
 """
+
+verificationMessages = {
+					'create_verification_subject': ('Create verification subject', create_verification_subject, 'Subject of create account verification email.'),
+					'create_verification_body': ('Create verification body', reate_verification_body, 'Body of create account verification email.'),
+					'change_verification_subject': ('Change verification subject', change_verification_subject, 'Subject of key change verification email.'),
+					'change_verification_body': ('Change verification body', change_verification_body, 'Body of key change verification email.'),
+					'login_instructions_subject': ('Login instructions subject', login_instructions_subject, 'Subject of login instructions email.'),
+					'login_instructions_body': ('Login instructions body', login_instructions_body, 'Body of login instructions email.'),
+					'delete_verification_subject': ('Delete verification subject', delete_verification_subject, 'Subject of delete account verification email.'),
+					'delete_verification_body': ('Delete verification body', delete_verification_body, 'Body of delete account verification email.'),
+					}

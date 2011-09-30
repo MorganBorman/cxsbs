@@ -4,3 +4,9 @@ SymbolicName = UserModelIntegrated
 Version = 0.0.1
 Author = Chasm
 Enabled = True
+
+[Dependencies]
+UserModelBase = 0.0.1
+Setting = 0.0.1
+SettingsManager = 0.0.1
+Auth = 0.0.1

@@ -101,7 +101,7 @@ def UIDict():
 	return	{
 					'notice': settings["notice"].substitute(dictionary),
 					'info': settings["info"].substitute(dictionary),
-					'warning:': settings["warning"].substitute(dictionary),
+					'warning': settings["warning"].substitute(dictionary),
 					'error': settings["error"].substitute(dictionary),
 					'help': settings["help"].substitute(dictionary),
 					'denied': settings["denied"].substitute(dictionary),

@@ -19,7 +19,7 @@ class Group:
 	def checkCongruity(self, memberList):
 		"""Check whether the items in the members are all congruous."""
 		for item in memberList:
-			if item.__class__ != self.memberClass():
+			if not isinstance(item, self.memberClass()):
 				raise NonCongruentGroup()
 		
 	def memberClass(self):
@@ -41,12 +41,12 @@ class Group:
 	def append(self, *others):
 		"""Returns a group with the given group or members appended onto the current ones"""
 		def appendTo(copy, item):
-			if item.__class__ == copy.memberClass():
+			if isinstance(item, copy.memberClass()):
 				copy.memberList.append(item)
 			elif isinstance(item, collections.Iterable):
 				for it in item:
 					appendTo(copy, it)
-			elif item.__class__ == Group:
+			elif isinstance(item, Group):
 				members = item.members()
 				for member in members:
 					appendTo(copy, it)
