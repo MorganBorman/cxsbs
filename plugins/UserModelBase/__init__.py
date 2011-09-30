@@ -172,7 +172,7 @@ class Model(object):
 		raises InvalidAuthenticationToken if the authentication token seed is not canonical
 		raises ReadOnlyViolation if user model is read only
 		
-		returns the userId
+		returns (verificationType, verificationDict)
 		"""
 		pass
 	
@@ -185,7 +185,7 @@ class Model(object):
 		raises InvalidUserId if the user does not exist
 		raises ReadOnlyViolation if the user model is read only
 		
-		no return value
+		returns (verificationType, verificationDict)
 		"""
 		pass
 	
@@ -197,7 +197,7 @@ class Model(object):
 		
 		raises InvalidUserId if the user does not exist
 		
-		no return value
+		returns (verificationType, verificationDict)
 		"""
 		pass
 	

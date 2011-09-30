@@ -139,7 +139,11 @@ def onRegisterCommand(cn, args):
 	authenticationTokenSeed = args[2]
 	
 	try:
-		UserModel.model.createUser(userName, email, authenticationTokenSeed)
+		verificationType, verificationDict = UserModel.model.createUser(userName, email, authenticationTokenSeed)
+		
+		
+		
+		
 	except UserModelBase.NameConflict:
 		raise Commands.StateError('That name is not available.')
 	except UserModelBase.InvalidUserName:
@@ -162,7 +166,11 @@ def onUnregisterCommand(cn, args):
 	user = Players.player(cn)
 	name = ClanTags.stripTags(user.name())
 	try:
-		UserModel.model.deleteUser(user.userId)
+		verificationType, verificationDict = UserModel.model.deleteUser(user.userId)
+		
+		
+		
+		
 	except UserModelBase.InvalidUserId:
 		raise Commands.StateError('You must be logged in to link a name to your account.')
 	except UserModelBase.ReadOnlyViolation:
@@ -231,7 +239,11 @@ def onChangeKeyCommand(cn, args):
 		raise Commands.StateError('You must be logged in to change your authentication key.')
 	user = Players.player(cn)
 	try:
-		UserModel.model.changeUserAuthenticationToken(user.userId, args)
+		verificationType, verificationDict = UserModel.model.changeUserAuthenticationToken(user.userId, args)
+		
+		
+		
+		
 	except UserModelBase.InvalidUserId:
 		raise Commands.StateError('You must be logged in to change your authentication key.')
 		

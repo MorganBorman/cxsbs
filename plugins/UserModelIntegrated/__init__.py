@@ -427,7 +427,7 @@ class Model(UserModelBase.Model):
 			session.close()
 		return names
 		
-	def createUser(self, userName, email, authenticationTokenSeed):
+	def createUser(self, userName, userEmail, authenticationTokenSeed):
 		"""Queues a createAccountVerification for the given userName
 		
 		userName: desired user name
@@ -439,34 +439,33 @@ class Model(UserModelBase.Model):
 		raises InvalidAuthenticationToken if the authentication token seed is not canonical
 		raises ReadOnlyViolation if user model is read only
 		
-		no return value
+		returns (verificationType, verificationDict)
 		"""
 		if self.readOnly:
 			raise ReadOnlyViolation()
 		
+		verificationType = "createAccount"
 		verificationCode = ppwgen.generatePassword()
-		
 		verificationTime = time.time()
-		try:
-			Email.send_templated_email	(
-									symbolicName='create_verification', 
-									email=email, 
-									userName=userName,
-									verificationCode=verificationCode,
-									administrativeEmail=Email.settings['administrative_email'],
-									serverClusterName="Forgotten Dream",
-									initiatedTime=verificationTime,
-									)
-		except:
-			print "Create Account: Error sending email."
+		userId = None
 		
 		session = DatabaseManager.dbmanager.session()
 		try:
-			verification = Verification(userName, verificationCode, email, "createAccount", verificationTime, None, authenticationTokenSeed)
+			verification = Verification(userName, verificationCode, userEmail, verificationType, verificationTime, userId, authenticationTokenSeed)
 			session.add(verification)
 			session.commit()
 		finally:
 			session.close()
+			
+		verificationDict = {
+								'verificationType':verificationType, 
+								'userName':userName, 
+								'userEmail':email, 
+								'verificationCode':verificationCode, 
+								'verificationTime':verificationTime
+							}
+			
+		return verificationDict
 	
 	def deleteUser(self, userId):
 		"""Queues a deleteAccountValidation the given user
@@ -476,7 +475,7 @@ class Model(UserModelBase.Model):
 		raises InvalidUserId if the user does not exist
 		raises ReadOnlyViolation if the user model is read only
 		
-		no return value
+		returns (verificationType, verificationDict)
 		"""
 		if self.readOnly:
 			raise ReadOnlyViolation()
@@ -484,16 +483,28 @@ class Model(UserModelBase.Model):
 		#validate the userId
 		self.isUser(userId)
 		
+		verificationType = "deleteAccount"
 		verificationCode = ppwgen.generatePassword()
-		email = self.getUserEmail(userId)
+		verificationTime = time.time()
+		userEmail = self.getUserEmail(userId)
 		
 		session = DatabaseManager.dbmanager.session()
 		try:
-			verification = Verification(None , verificationCode, email, "deleteAccount", time.time(), userId, None)
+			verification = Verification(userName, verificationCode, userEmail, verificationType, verificationTime, userId, None)
 			session.add(verification)
 			session.commit()
 		finally:
 			session.close()
+			
+		verificationDict = {
+								'verificationType':verificationType, 
+								'userName':userName, 
+								'userEmail':email, 
+								'verificationCode':verificationCode, 
+								'verificationTime':verificationTime
+							}
+			
+		return verificationDict
 	
 	def changeUserAuthenticationToken(self, userId, authenticationTokenSeed):
 		"""Queues an authenticationTokenChangeVerification for the given user
@@ -504,7 +515,7 @@ class Model(UserModelBase.Model):
 		raises InvalidAuthenticationTokenSeed if the authentication token seed is not canonical
 		raises ReadOnlyViolation if the user model is read only
 		
-		no return value
+		returns (verificationType, verificationDict)
 		"""
 		if self.readOnly:
 			raise ReadOnlyViolation()
