@@ -22,10 +22,15 @@ def send_email(receiver, subject, body, sender=None):
 	if sender == None:
 		sender = settings['send_email_from']
 	msg = ("From: %s\r\nTo: %s\r\nSubject: %s\r\n\r\n%s" %(sender, receiver, subject, body))
-	#print (sender, [receiver], msg)
-	s = smtplib.SMTP('localhost')
-	s.sendmail(sender, [receiver], msg)
-	s.quit()
+	
+	connectString = settings['smtp_host'] + ":" + str(settings['smtp_port'])
+	
+	server = smtplib.SMTP(connectString)
+	if settings['smtp_use_tls']:
+		server.starttls()  
+	server.login(settings['smtp_username'],settings['smtp_password'])
+	server.sendmail(sender, [receiver], msg)
+	server.quit() 
 	
 def isValidEmail(email):
 	if len(email) > 7:
@@ -37,12 +42,59 @@ def send_templated_email(symbolicName, email, **kwargs):
 	template_subject = emailTemplates[symbolicName + "_subject"]
 	template_body = emailTemplates[symbolicName + "_body"]
 	
+	kwargs.update({'newline':"\n"})
+	
 	subject = template_subject.substitute(kwargs)
 	body = template_body.substitute(kwargs)
 	
 	send_email(email, subject, body)
 
 pluginCategory = 'Email'
+		
+SettingsManager.addSetting(Setting.Setting	(
+												category=pluginCategory,
+												subcategory="General", 
+												symbolicName="smtp_username", 
+												displayName="Smtp username", 
+												default="mygmailUser",
+												doc="Username to connect to smtp server with."
+											))
+
+SettingsManager.addSetting(Setting.Setting	(
+												category=pluginCategory,
+												subcategory="General", 
+												symbolicName="smtp_password", 
+												displayName="Smtp password", 
+												default="mygmailPass",
+												doc="Password to connect to smtp server with."
+											))
+		
+SettingsManager.addSetting(Setting.Setting	(
+												category=pluginCategory,
+												subcategory="General", 
+												symbolicName="smtp_host", 
+												displayName="Smtp host", 
+												default="smtp.gmail.com",
+												doc="Smtp server to send email through."
+											))
+
+SettingsManager.addSetting(Setting.IntSetting	(
+												category=pluginCategory,
+												subcategory="General", 
+												symbolicName="smtp_port", 
+												displayName="Smtp port", 
+												default=587,
+												doc="Smtp server port to send email through."
+											))
+
+SettingsManager.addSetting(Setting.BoolSetting	(
+												category=pluginCategory,
+												subcategory="General", 
+												symbolicName="smtp_use_tls", 
+												displayName="Smtp use tls", 
+												default=True,
+												doc="Should we use tls to connect to the smtp server."
+											))
 		
 SettingsManager.addSetting(Setting.Setting	(
 												category=pluginCategory,

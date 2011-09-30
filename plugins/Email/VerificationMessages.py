@@ -25,9 +25,9 @@ To confirm this action issue the following command on any ${serverClusterName} s
 	
 If you didn't request this action, then this email may be safely ignored. The verification will timeout at ${expirationTime}.
 However, you probably should track down how your account was compromised.
-
+${newline}
 Please let us know how we can improve the ${serverClusterName} servers.
-
+${newline}
 We will never sell, trade or otherwise distribute your information without prior consent.
 Contact ${administrativeEmail} with questions or concerns.
 """
@@ -36,15 +36,15 @@ login_instructions_subject = "Login Instructions"
 login_instructions_body = """
 You are receiving this email because you or someone logged in as you.
 Has successfully changed the login auth key to the account tied to this email at ${initiatedTime}.
-
+${newline}
 You will be automatically logged in on any ${serverClusterName} server if you place the following in your auth.cfg file;
 authkey ${userName} ${privateKey} ${domain}
 And place the following in your autoexec.cfg file;
 autoauth 1
-
+${newline}
 Your public auth key is below and should be kept for your records.
 ${publicKey}
-
+${newline}
 We will never sell, trade or otherwise distribute your information without prior consent.
 Contact ${administrativeEmail} with questions or concerns.
 """
@@ -53,15 +53,15 @@ delete_verification_subject = "Verify account deletion"
 delete_verification_body = """
 You are receiving this email because you or someone logged in as you.
 Issued the #unregister command on ${serverName} at ${initiatedTime}
-
+${newline}
 To confirm this action issue the following command on any ${serverClusterName} server.
 #validate ${userName} ${verificationCode}
-
+${newline}
 If you didn't request this action, then this email may be safely ignored. The verification will timeout at ${expirationTime}.
 However, you probably should track down how your account was compromised.
-
+${newline}
 Please let us know how we could have improved the ${serverClusterName} servers.
-
+${newline}
 We will never sell, trade or otherwise distribute your information without prior consent.
 Contact ${administrativeEmail} with questions or concerns.
 """
