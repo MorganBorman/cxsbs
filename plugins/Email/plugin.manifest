@@ -6,4 +6,5 @@ Author = Chasm
 Enabled = True
 
 [Dependencies]
-Config = 0.0.1
+SettingsManager = 0.0.1
+Setting = 0.0.1

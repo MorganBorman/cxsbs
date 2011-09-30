@@ -1,12 +1,12 @@
 create_verification_subject = "Verify account creation"
 create_verification_body = """
 You are receiving this email because this email was used to register a new account on the ${serverClusterName} servers.
-Issued the #register command on ${serverName} at ${initiatedTime}
+Issued the #register command on serverName at ${initiatedTime}.
 
 To confirm this action issue the following command on any of the ${serverClusterName} servers.
-#validate ${userName} ${verificationCode}
+#verify ${userName} ${verificationCode}
 
-If you didn't request this action, then this email may be safely ignored. The verification will timeout at ${expirationTime}.
+If you didn't request this action, then this email may be safely ignored. The verification will timeout at expirationTime.
 However, you probably should track down who is using your email to register for stuff.
 
 Welcome to the ${serverClusterName} servers.
@@ -35,12 +35,15 @@ Contact ${administrativeEmail} with questions or concerns.
 login_instructions_subject = "Login Instructions"
 login_instructions_body = """
 You are receiving this email because you or someone logged in as you.
-Has successfully changed the login auth key on ${serverName} at ${initiatedTime}.
+Has successfully changed the login auth key to the account tied to this email at ${initiatedTime}.
 
-You can now login on any ${serverClusterName} server by placing the following .
-#validate ${userName} ${verificationCode}
+You will be automatically logged in on any ${serverClusterName} server if you place the following in your auth.cfg file;
+authkey ${userName} ${privateKey} ${domain}
+And place the following in your autoexec.cfg file;
+autoauth 1
 
-
+Your public auth key is below and should be kept for your records.
+${publicKey}
 
 We will never sell, trade or otherwise distribute your information without prior consent.
 Contact ${administrativeEmail} with questions or concerns.
@@ -65,7 +68,7 @@ Contact ${administrativeEmail} with questions or concerns.
 
 verificationMessages = {
 					'create_verification_subject': ('Create verification subject', create_verification_subject, 'Subject of create account verification email.'),
-					'create_verification_body': ('Create verification body', reate_verification_body, 'Body of create account verification email.'),
+					'create_verification_body': ('Create verification body', create_verification_body, 'Body of create account verification email.'),
 					'change_verification_subject': ('Change verification subject', change_verification_subject, 'Subject of key change verification email.'),
 					'change_verification_body': ('Change verification body', change_verification_body, 'Body of key change verification email.'),
 					'login_instructions_subject': ('Login instructions subject', login_instructions_subject, 'Subject of login instructions email.'),

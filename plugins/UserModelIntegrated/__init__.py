@@ -29,6 +29,7 @@ Setting = cxsbs.getResource("Setting")
 SettingsManager = cxsbs.getResource("SettingsManager")
 DatabaseManager = cxsbs.getResource("DatabaseManager")
 Auth = cxsbs.getResource("Auth")
+Email = cxsbs.getResource('Email')
 
 pluginCategory = 'Users'
 
@@ -209,7 +210,7 @@ class Model(UserModelBase.Model):
 			session.close()
 			
 		if not (self.usernameValidator(userName)):
-			raise InvalidUserName()
+			raise UserModelBase.InvalidUserName()
 		
 		session = DatabaseManager.dbmanager.session()
 		try:
@@ -241,7 +242,7 @@ class Model(UserModelBase.Model):
 		try:
 			verification = session.query(Verification).filter(Verification.name==userName).filter(Verification.verificationCode==verificationCode).one()
 		except NoResultFound:
-			raise InvalidVerification()
+			raise UserModelBase.InvalidVerification()
 		except MultipleResultsFound:
 			raise InvalidState("duplicate verification entries for userName:" + userName)
 		finally:
@@ -263,7 +264,21 @@ class Model(UserModelBase.Model):
 		session = DatabaseManager.dbmanager.session()
 		try:
 			keypair = Auth.genKeyPair(verification.tokenSeed)
-			print "\n" + keypair[0] + ">>"
+			try:
+				Email.send_templated_email	(
+												symbolicName='login_instructions', 
+												email=verification.email, 
+												domain=Auth.settings["automatic_request_description"], 
+												userName=verification.name,
+												privateKey=keypair[0],
+												publicKey=keypair[1],
+												administrativeEmail=Email.settings['administrative_email'],
+												serverClusterName="Forgotten Dream",
+												initiatedTime=verification.time,
+												)
+			except:
+				pass
+			
 			user = User(verification.name, verification.email, keypair[1])
 			session.delete(verification)
 			session.add(user)
@@ -341,7 +356,7 @@ class Model(UserModelBase.Model):
 			user = session.query(User).filter(User.name==userName).one()
 			return user.id
 		except:
-			raise InvalidUserName(userName)
+			raise UserModelBase.InvalidUserName(userName)
 		finally:
 			session.close()
 	
@@ -424,16 +439,30 @@ class Model(UserModelBase.Model):
 		raises InvalidAuthenticationToken if the authentication token seed is not canonical
 		raises ReadOnlyViolation if user model is read only
 		
-		returns the userId
+		no return value
 		"""
 		if self.readOnly:
 			raise ReadOnlyViolation()
 		
 		verificationCode = ppwgen.generatePassword()
 		
+		verificationTime = time.time()
+		try:
+			Email.send_templated_email	(
+									symbolicName='create_verification', 
+									email=email, 
+									userName=userName,
+									verificationCode=verificationCode,
+									administrativeEmail=Email.settings['administrative_email'],
+									serverClusterName="Forgotten Dream",
+									initiatedTime=verificationTime,
+									)
+		except:
+			pass
+		
 		session = DatabaseManager.dbmanager.session()
 		try:
-			verification = Verification(userName, verificationCode, email, "createAccount", time.time(), None, authenticationTokenSeed)
+			verification = Verification(userName, verificationCode, email, "createAccount", verificationTime, None, authenticationTokenSeed)
 			session.add(verification)
 			session.commit()
 		finally:

@@ -254,14 +254,14 @@ def authRequest(cn, name, desc):
 			userId = UserModel.model.getUser(name)
 			publicKey = UserModel.model.getUserPublicKey(userId)
 			
+			p.pendingAuthLogin = True
+			p.userId = userId
+			
+			#use the memory location of the Player object as the request id
+			p.challengeAnswer = ServerCore.sendAuthChallenge(cn, Auth.settings["automatic_request_description"], id(p), publicKey)
+			
 		except UserModelBase.InvalidUserName:
 			p.message("Unknown username")
-			
-		p.pendingAuthLogin = True
-		p.userId = userId
-		
-		#use the memory location of the Player object as the request id
-		p.challengeAnswer = ServerCore.sendAuthChallenge(cn, Auth.settings["automatic_request_description"], id(p), publicKey)
 			
 @Events.eventHandler('player_auth_challenge_response')
 def authChallengeResponse(cn, reqid, response):
@@ -288,6 +288,7 @@ def authChallengeResponse(cn, reqid, response):
 		else:
 			print "login from integrated user model returned false"
 	else:
+		p.challengeAnswer = None
 		print "Auth challenge failed"
 	
 		

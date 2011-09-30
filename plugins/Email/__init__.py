@@ -20,8 +20,9 @@ Setting = cxsbs.getResource("Setting")
 
 def send_email(receiver, subject, body, sender=None):
 	if sender == None:
-		sender = send_email_from
+		sender = settings['send_email_from']
 	msg = ("From: %s\r\nTo: %s\r\nSubject: %s\r\n\r\n%s" %(sender, receiver, subject, body))
+	print (sender, [receiver], msg)
 	s = smtplib.SMTP('localhost')
 	s.sendmail(sender, [receiver], msg)
 	s.quit()
@@ -32,11 +33,14 @@ def isValidEmail(email):
 			return True
 	return False
 
-def send_tempated_email(symbolicName, email, serverName, initiatedTime, serverClusterName, verificationCode, administrativeEmail):
-	try:
-		template = emailTempates[symbolicName]
-	except:
-		template.substitute()
+def send_templated_email(symbolicName, email, **kwargs):
+	template_subject = emailTemplates[symbolicName + "_subject"]
+	template_body = emailTemplates[symbolicName + "_body"]
+	
+	subject = template_subject.substitute(kwargs)
+	body = template_body.substitute(kwargs)
+	
+	send_email(email, subject, body)
 
 pluginCategory = 'Email'
 		
@@ -60,7 +64,7 @@ SettingsManager.addSetting(Setting.Setting	(
 
 settings = SettingsManager.getAccessor(pluginCategory, "General")
 
-for key, details in verificationMessages.values():
+for key, details in verificationMessages.items():
 	SettingsManager.addSetting(Setting.TemplateSetting	(
 															category=pluginCategory,
 															subcategory="Email Templates", 
@@ -70,4 +74,4 @@ for key, details in verificationMessages.values():
 															doc=details[2]
 														))
 	
-emailTempates = SettingsManager.getAccessor(pluginCategory, "Email Templates")
+emailTemplates = SettingsManager.getAccessor(pluginCategory, "Email Templates")
