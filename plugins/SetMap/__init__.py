@@ -159,15 +159,6 @@ Messages.addMessage	(
 
 messager = Messages.getAccessor(subcategory=pluginCategory)
 
-def isPermitted(playerGroups, allowGroups, denyGroups):
-	permitted = False
-	for group in playerGroups:
-		if group in denyGroups:
-			return False
-		if group in allowGroups:
-			permitted = True
-	return permitted
-
 def whenSetMap(p, mapName, modeNumber):
 		try:
 			Game.setMap(mapName, modeNumber)
@@ -186,31 +177,31 @@ def onMapVote(cn, mapName, modeNumber):
 	playerGroups = p.groups()
 	
 	#check if players group can actually change map at all
-	if not isPermitted(playerGroups, groupSettings["allow_groups_change_map"], groupSettings["deny_groups_change_map"]):
+	if not p.isPermitted(groupSettings["allow_groups_change_map"], groupSettings["deny_groups_change_map"]):
 		messager.sendPlayerMessage('denied_change_map', p)
 		return
 	
 	if modeNumber != ServerCore.gameMode():
 		#check whether players group can change mode
-		if not isPermitted(playerGroups, groupSettings["allow_groups_change_mode"], groupSettings["deny_groups_change_mode"]):
+		if not p.isPermitted(groupSettings["allow_groups_change_mode"], groupSettings["deny_groups_change_mode"]):
 			messager.sendPlayerMessage('denied_change_mode', p)
 			return
 	
 		if not MapRotation.isRotationMap(mapName=mapName):
 			#check whether players group can transcend rotation
-			if not isPermitted(playerGroups, groupSettings["allow_groups_transcend_rotation"], groupSettings["deny_groups_transcend_rotation"]):
+			if not p.isPermitted(groupSettings["allow_groups_transcend_rotation"], groupSettings["deny_groups_transcend_rotation"]):
 				messager.sendPlayerMessage('denied_transcend_rotation', p)
 				return
 	else:
 		if not MapRotation.isRotationMap(mapName=mapName, modeName=Game.modes[modeNumber]):
 			#check whether players group can transcend rotation
-			if not isPermitted(playerGroups, groupSettings["allow_groups_transcend_rotation"], groupSettings["deny_groups_transcend_rotation"]):
+			if not p.isPermitted(groupSettings["allow_groups_transcend_rotation"], groupSettings["deny_groups_transcend_rotation"]):
 				messager.sendPlayerMessage('denied_transcend_rotation', p)
 				return
 	
 	if not ServerCore.masterMode() > 0:
 		#check whether players group can change mode
-		if not isPermitted(playerGroups, groupSettings["allow_groups_change_without_veto"], groupSettings["deny_groups_change_without_veto"]):
+		if not p.isPermitted(groupSettings["allow_groups_change_without_veto"], groupSettings["deny_groups_change_without_veto"]):
 			messager.sendPlayerMessage('denied_change_on_open', p)
 			return
 	

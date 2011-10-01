@@ -153,15 +153,17 @@ static PyObject *playerMessage(PyObject *self, PyObject *args)
 	return Py_None;
 }
 
-/* Never got the normal messages to work correctly
 static PyObject *playerMessageTeam(PyObject *self, PyObject *args)
 {
 	int cn;
+	int tcn;
 	char *text;
 	server::clientinfo *ci;
-	if(!PyArg_ParseTuple(args, "is", &cn, &text))
+	server::clientinfo *tci;
+	if(!PyArg_ParseTuple(args, "iis", &cn, &tcn, &text))
 		return 0;
 	ci = server::getinfo(cn);
+	tci = server::getinfo(tcn);
 	
 	if(!ci)
 	{
@@ -169,50 +171,47 @@ static PyObject *playerMessageTeam(PyObject *self, PyObject *args)
 		return 0;
 	}
 	
-	loopv(server::clients)
+	if(!tci)
 	{
-		server::clientinfo *t = server::clients[i];
-		if(t==ci || t->state.state==CS_SPECTATOR || t->state.aitype != AI_NONE || strcmp(ci->team, t->team)) continue;
-		sendf(t->clientnum, 1, "riis", N_SAYTEAM, ci->clientnum, text);
+		PyErr_SetString(PyExc_ValueError, "Invalid cn specified");
+		return 0;
 	}
 	
+	sendf(tci->clientnum, 1, "riis", N_SAYTEAM, ci->clientnum, text);
+
 	Py_INCREF(Py_None);
 	return Py_None;
 }
-
 
 static PyObject *playerMessageAll(PyObject *self, PyObject *args)
 {
 	int cn;
+	int tcn;
 	char *text;
-	int len;
 	server::clientinfo *ci;
-	if(!PyArg_ParseTuple(args, "is", &cn, &text))
+	server::clientinfo *tci;
+	if(!PyArg_ParseTuple(args, "iis", &cn, &tcn, &text))
 		return 0;
 	ci = server::getinfo(cn);
-	
+	tci = server::getinfo(tcn);
+
 	if(!ci)
 	{
 		PyErr_SetString(PyExc_ValueError, "Invalid cn specified");
 		return 0;
 	}
-	
-	//len = 0;
-	len = strlen(text);
-	
-	sendf(-1, 1, "riiis", N_TEXT, ci->clientnum, len, text);
-	
-	//loopv(server::clients)
-	//{
-	//	server::clientinfo *t = server::clients[i];
-	//	if(t==ci || t->state.state==CS_SPECTATOR || t->state.aitype != AI_NONE) continue;
-	//	sendf(t->clientnum, 1, "riiis", N_TEXT, ci->clientnum, len, text);
-	//}
-	
+
+	if(!tci)
+	{
+		PyErr_SetString(PyExc_ValueError, "Invalid cn specified");
+		return 0;
+	}
+
+	sendf(tci->clientnum, 1, "riiiis", N_CLIENT, ci->clientnum, strlen(text)+2, N_TEXT, text);
+
 	Py_INCREF(Py_None);
 	return Py_None;
 }
-*/
 
 static PyObject *playerName(PyObject *self, PyObject *args)
 {
@@ -334,7 +333,7 @@ static PyObject *requestPlayerAuth(PyObject *self, PyObject *args)
 static PyObject *sendAuthChallenge(PyObject *self, PyObject *args)
 {
 	//cn, domain, reqid, publicKey
-	//return address of answer as integer
+	//return answer to challenge
 	int cn;
 	char *domain;
 	uint id;
@@ -1127,8 +1126,8 @@ static PyMethodDef ModuleMethods[] = {
 	{"players", players, METH_VARARGS, "List of client numbers of active clients."},
 	{"spectators", spectators, METH_VARARGS, "List of client numbers of spectating clients."},
 	{"playerMessage", playerMessage, METH_VARARGS, "Send a message to player."},
-//	{"playerMessageAll", playerMessageAll, METH_VARARGS, "Broadcast a message as a player."},
-//	{"playerMessageTeam", playerMessageTeam, METH_VARARGS, "Broadcast a team message as a player."},
+	{"playerMessageAll", playerMessageAll, METH_VARARGS, "Send a message as a player(from, to, text)."},
+	{"playerMessageTeam", playerMessageTeam, METH_VARARGS, "Send a team message as a player(from, to, text)."},
 	{"playerName", playerName, METH_VARARGS, "Get name of player from cn."},
 	{"playerSessionId", playerSessionId, METH_VARARGS, "Session ID of player."},
 	{"playerIpLong", playerIpLong, METH_VARARGS, "Get IP of player from cn."},

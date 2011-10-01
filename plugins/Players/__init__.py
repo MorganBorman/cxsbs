@@ -116,6 +116,16 @@ class Player:
 			groups.append("__player__")
 			
 		return groups
+	
+	def isPermitted(self, allowGroups, denyGroups):
+		'''Check whether this player is permitted based on the given allowGroups and denyGroups'''
+		permitted = False
+		for group in self.groups():
+			if group in denyGroups:
+				return False
+			if group in allowGroups:
+				permitted = True
+		return permitted
 		
 	def requestPlayerAuth(self, desc):
 		'''Request the players auth entry matching the given description'''
@@ -123,6 +133,12 @@ class Player:
 	def frags(self):
 		'''Frags by client in current game'''
 		return ServerCore.playerFrags(self.cn)
+	def say(self, tcn, message):
+		'''Send a message as this player to another player'''
+		ServerCore.playerMessageAll(self.cn, tcn, message)
+	def sayteam(self, tcn, message):
+		'''Send a team message as this player to another player'''
+		ServerCore.playerMessageTeam(self.cn, tcn, message)
 	def teamkills(self):
 		'''Team kills by client in current game'''
 		return ServerCore.playerTeamkills(self.cn)

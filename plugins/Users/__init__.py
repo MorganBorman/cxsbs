@@ -5,7 +5,11 @@ class Plugin(cxsbs.Plugin.Plugin):
 		cxsbs.Plugin.Plugin.__init__(self)
 		
 	def load(self):
-		pass
+		global nextRequestId
+		nextRequestId = int(time.time())
+		
+		global requestIdTable
+		requestIdTable = {}
 		
 	def unload(self):
 		pass
@@ -268,25 +272,29 @@ def authRequest(cn, name, desc):
 			p.pendingAuthLogin = True
 			p.userId = userId
 			
+			global nextRequestId
+			requestId = nextRequestId
+			
+			nextRequestId -= 1
+			
+			requestIdTable[cn] = requestId
+			
 			#use the memory location of the Player object as the request id
-			p.challengeAnswer = ServerCore.sendAuthChallenge(cn, Auth.settings["automatic_request_description"], id(p), publicKey)
+			p.challengeAnswer = ServerCore.sendAuthChallenge(cn, Auth.settings["automatic_request_description"], requestId, publicKey)
 			
 		except UserModelBase.InvalidEmail:
 			messager.sendPlayerMessage('authlogin_unsuccessful', p)
 			
 @Events.eventHandler('player_auth_challenge_response')
 def authChallengeResponse(cn, reqid, response):
+	#print "Request id from table:", type(requestIdTable[cn]), requestIdTable[cn]
+	#print "Request id from event:", type(reqid), reqid
 	p = Players.player(cn)
-	if not id(p) == reqid:
-		print "returned because id(p) != reqid"
+	if not reqid == requestIdTable[cn]:
+		print "returned because request id did not match that in table."
 		return
-	try:
-		if not p.pendingAuthLogin:
-			print "returned because p is not pending auth login"
-			return
-	except:
-		print "some other exception"
-		return
+	else:
+		del requestIdTable[cn]
 	
 	serverId = "wooooh"
 	
