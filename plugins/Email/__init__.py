@@ -39,10 +39,12 @@ def isValidEmail(email):
 	return False
 
 def send_templated_email(symbolicName, email, **kwargs):
+	#print kwargs
+	
 	template_subject = emailTemplates[symbolicName + "_subject"]
 	template_body = emailTemplates[symbolicName + "_body"]
 	
-	kwargs.update({'newline':"\n"})
+	kwargs.update({'newline':"\n", 'administrativeEmail': settings['administrative_email']})
 	
 	subject = template_subject.substitute(kwargs)
 	body = template_body.substitute(kwargs)
@@ -116,7 +118,7 @@ SettingsManager.addSetting(Setting.Setting	(
 
 settings = SettingsManager.getAccessor(pluginCategory, "General")
 
-for key, details in verificationMessages.items():
+for key, details in AccountMessages.items():
 	SettingsManager.addSetting(Setting.TemplateSetting	(
 															category=pluginCategory,
 															subcategory="Email Templates", 

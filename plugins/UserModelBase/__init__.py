@@ -15,63 +15,6 @@ import abc
 class Model(object):
 	__metaclass__ = abc.ABCMeta
 	
-	def __init__(self, readOnly, usernameValidator, authenticationTokenValidator, groupValidator, maxNicks):
-		#whether or not this model is read only
-		self.readOnly = readOnly
-		#boolean function to validate username naming rules
-		self.usernameValidator = usernameValidator
-		#boolean function to validate authentication token strength rules
-		self.authenticationTokenValidator = authenticationTokenValidator
-		#boolean function to validate group naming rules
-		self.groupValidator = groupValidator
-		#max number of nicks including primary nick
-		self.maxNicks = maxNicks
-		
-	@abc.abstractmethod
-	def isNickAllowed(self, userName, userId=None):
-		"""Check if a name may be used by an individual
-		
-		userName: username to check
-		userId: the unique id of the user (None if not logged in)
-		
-		Returns whether or not a name is reserved
-		"""
-		pass
-	
-	@abc.abstractmethod
-	def associateNick(self, userName, userId):
-		"""associate additional names with a user account
-		
-		userName: username to associate
-		userId: the unique id of the user
-		
-		raises InvalidUserId if the user does not exist
-		raises NameConflict when logical
-		raises SingleNickSystem if this model does not support multiple nicks
-		raises NickLimitExceeded if the limit on the number of nicks has been exceeded
-		raises InvalidUserName if the name is not canonical
-		raises ReadOnlyViolation if user model is read only
-		
-		no return value
-		"""
-		pass
-	
-	@abc.abstractmethod
-	def validate(self, userName, verificationCode):
-		"""called to finalize an action requiring email verification
-		
-		actions:
-			validate a users account, generate authkeys, and email the private authkey + instructions to the user
-			validate account deletion, and send successful deletion email
-			validate password change, generate authkeys and email the private authkey + instructions to the user
-		
-		raises InvalidUserName if the name does not relate to a pending validation
-		raises InvalidVerification if the verificationCode was incorrect
-		
-		no return value
-		"""
-		pass
-	
 	@abc.abstractmethod
 	def login(self, userId, serverId):
 		"""to be called when user logs in to a server
@@ -80,7 +23,7 @@ class Model(object):
 		serverId: the unique id of the server that this is being called from
 		
 		raises InvalidUserId if the user does not exist
-		does not validate serverId. This is the responsibility of the calling api
+		does not verify serverId. This is the responsibility of the calling api
 		
 		returns (loginSuccessfulBoolean, loginMessage)
 		"""
@@ -101,7 +44,7 @@ class Model(object):
 		pass
 	
 	@abc.abstractmethod
-	def isUser(self, userId):
+	def __isUser(self, userId):
 		"""Check whether a userId is valid
 		
 		userId: the unique user identifier to check
@@ -111,20 +54,43 @@ class Model(object):
 		no return value
 		"""
 		pass
+	
+	def isUser(self, userId):
+		"""Check whether a userId is valid
+		
+		userId: the unique user identifier to check
+		
+		returns a boolean
+		"""
+		try:
+			self.__isUser(self, userId)
+			return True
+		except InvalidUserId:
+			return False
 		
 	@abc.abstractmethod
-	def getUser(self, userName):
-		"""Get the user id of a user
+	def __getUser(self, userId):
+		"""Get a user orm object by userId
 		
-		userName: username to check
+		userId: the unique user identifier to search by
 		
-		raises InvalidUserName if the name does not relate to an account
+		returns an object of class "Users"
+		"""
+		pass
+		
+	@abc.abstractmethod
+	def getUserId(self, userEmail):
+		"""Get a users id by their email
+		
+		userEmail: email to search by
+		
+		raises InvalidEmail if the email given does not relate to an account
 		
 		Returns the userId"""
 		pass
 	
 	@abc.abstractmethod
-	def getUserPublicKey(self, userId):
+	def getUserKey(self, userId):
 		"""Get the users public key
 		
 		userId: the unique user identifier
@@ -148,29 +114,29 @@ class Model(object):
 		pass
 	
 	@abc.abstractmethod
-	def getUserNames(self, userId):
-		"""Get the users names
+	def verify(self, userEmail, verificationCode):
+		"""called to finalize an action requiring email verification
 		
-		userId: the unique user identifier
+		actions:
+			verify a users account, generate authkeys, and email the private authkey + instructions to the user
+			verify account deletion, and send successful deletion email
+			verify password change, generate authkeys and email the private authkey + instructions to the user
 		
-		raises InvalidUserId if the user does not exist
+		raises InvalidEmail if the email does not relate to a pending validation
+		raises InvalidVerification if the verificationCode was incorrect
 		
-		Returns a list with all the users names in it
+		no return value
 		"""
 		pass
 		
 	@abc.abstractmethod
-	def createUser(self, userName, email, authenticationTokenSeed):
-		"""Queues a createAccountVerification for the given userName
+	def createUser(self, userEmail, authenticationTokenSeed):
+		"""Queues a createAccountVerification for the given Email
 		
-		userName: desired user name
+		userEmail: email to link to new account and to email verification to
 		authenticationTokenSeed: desired authentication token
 		
-		raises NameConflict when logical
-		raises InvalidUserName if the name is not canonical
 		raises InvalidEmail if the email is not canonical
-		raises InvalidAuthenticationToken if the authentication token seed is not canonical
-		raises ReadOnlyViolation if user model is read only
 		
 		returns (verificationType, verificationDict)
 		"""
@@ -183,14 +149,13 @@ class Model(object):
 		userId: the unique id of the user
 		
 		raises InvalidUserId if the user does not exist
-		raises ReadOnlyViolation if the user model is read only
 		
 		returns (verificationType, verificationDict)
 		"""
 		pass
 	
 	@abc.abstractmethod
-	def changeUserAuthenticationToken(self, userId, authenticationTokenSeed):
+	def changeUserKey(self, userId, seed):
 		"""Queues an authenticationTokenChangeVerification for the given user
 		
 		userId: the unique id of the user
@@ -216,19 +181,44 @@ class Model(object):
 		pass
 		
 	@abc.abstractmethod
-	def isGroup(self, groupId):
+	def __isGroup(self, groupId):
 		"""Check whether a groupId is valid
 		
 		groupId: the unique group identifier to check
 		
-		raises InvalidGroupId if the user does not exist
+		raises InvalidGroupId if the group does not exist
 		
 		no return value
 		"""
 		pass
 	
+	def isGroup(self, groupId):
+		"""Check whether a groupId is valid
+		
+		groupId: the unique group identifier to check
+		
+		raises InvalidGroupId if the group does not exist
+		
+		returns a boolean
+		"""
+		try:
+			self.__isGroup(groupId)
+			return True
+		except InvalidGroupId:
+			return False
+	
 	@abc.abstractmethod
-	def getGroup(self, groupName):
+	def __getGroup(self, groupId):
+		"""Get the Group orm object
+		
+		raises InvalidGroupId if the group does not exist
+		
+		returns Group orm object
+		"""
+		pass
+	
+	@abc.abstractmethod
+	def getGroupId(self, groupName):
 		"""get the group of the given name
 		
 		groupName: the name of the group

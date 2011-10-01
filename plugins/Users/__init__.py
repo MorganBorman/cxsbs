@@ -5,10 +5,7 @@ class Plugin(cxsbs.Plugin.Plugin):
 		cxsbs.Plugin.Plugin.__init__(self)
 		
 	def load(self):
-		if not UserModel.model.readOnly:
-			Commands.registerCommandHandler('register', onRegisterCommand)
-			Commands.registerCommandHandler('linkname', onLinkNameCommand)
-			Commands.registerCommandHandler('changeKey', onChangeKeyCommand)
+		pass
 		
 	def unload(self):
 		pass
@@ -28,6 +25,7 @@ Events = cxsbs.getResource("Events")
 Timers = cxsbs.getResource("Timers")
 Auth = cxsbs.getResource("Auth")
 ServerCore = cxsbs.getResource("ServerCore")
+Email = cxsbs.getResource("Email")
 
 pluginCategory = 'Users'
 pluginSubcategory = 'Reserved Name'
@@ -89,6 +87,7 @@ def isLoggedIn(cn):
 	except:
 		return False 
 
+"""
 def warnNickReserved(cn, count, startTime=None):
 	try:
 		p = Players.player(cn)
@@ -121,40 +120,39 @@ def warnNickReserved(cn, count, startTime=None):
 	remaining = (settings["max_warnings"]*settings["warning_interval"]) - (count*settings["warning_interval"])
 	messager.sendMessage('name_reserved', dictionary={'name':playerNick, 'remaining':remaining})
 	Timers.addTimer(settings["warning_interval"]*1000, warnNickReserved, (cn, count+1, startTime))
+"""
 		
+@Commands.commandHandler('register')
 def onRegisterCommand(cn, args):
 	'''
 	@description Register account with server
-	@usage <username> <email> <token seed>
+	@usage <email> <token seed>
 	@allowGroups __all__
-	@denyGroups 
+	@denyGroups __user__
 	@doc
 	'''
 	args = args.split(' ')
-	if len(args) != 3:
+	if len(args) != 2:
 		raise Commands.UsageError()
 	
-	userName = args[0]
-	email = args[1]
-	authenticationTokenSeed = args[2]
+	email = args[0]
+	authenticationTokenSeed = args[1]
+	
+	if len(authenticationTokenSeed) < 5:
+		raise Commands.UsageError("Please provide a tokenSeed with a length greater than 5")
 	
 	try:
-		verificationType, verificationDict = UserModel.model.createUser(userName, email, authenticationTokenSeed)
+		verificationDict = UserModel.model.createUser(email, authenticationTokenSeed)
 		
+		Email.send_templated_email(verificationDict['verificationType'], verificationDict['userEmail'], **verificationDict)
 		
+		p = Players.player(cn)
+		messager.sendPlayerMessage('registration_successfull', p)
 		
-		
-	except UserModelBase.NameConflict:
-		raise Commands.StateError('That name is not available.')
-	except UserModelBase.InvalidUserName:
-		raise Commands.StateError('The name you provided is not valid.')
 	except UserModelBase.InvalidEmail:
 		raise Commands.StateError('The email you provided is not valid.')
-	except UserModelBase.InvalidAuthenticationToken:
-		raise Commands.StateError('The token seed you provided is not valid.')
-	except UserModelBase.ReadOnlyViolation:
-		raise Commands.StateError('Registration is not permitted.')
 	
+@Commands.commandHandler('unregister')
 def onUnregisterCommand(cn, args):
 	'''
 	@description Unregister this account with server
@@ -164,17 +162,16 @@ def onUnregisterCommand(cn, args):
 	@doc 
 	'''
 	user = Players.player(cn)
-	name = ClanTags.stripTags(user.name())
 	try:
-		verificationType, verificationDict = UserModel.model.deleteUser(user.userId)
+		verificationDict = UserModel.model.deleteUser(user.userId)
 		
+		Email.send_templated_email(verificationDict['verificationType'], verificationDict['userEmail'], **verificationDict)
 		
-		
+		p = Players.player(cn)
+		messager.sendPlayerMessage('unregistration_successfull', p)
 		
 	except UserModelBase.InvalidUserId:
 		raise Commands.StateError('You must be logged in to link a name to your account.')
-	except UserModelBase.ReadOnlyViolation:
-		raise Commands.StateError('Unregistering is not permitted.')
 	
 @Commands.commandHandler('verify')
 def onVerifyCommand(cn, args):
@@ -189,12 +186,17 @@ def onVerifyCommand(cn, args):
 	if len(args) != 2:
 		raise Commands.UsageError()
 	try:
-		UserModel.model.validate(args[0], args[1])
+		verificationDict = UserModel.model.verify(args[0], args[1])
+
+		Email.send_templated_email(verificationDict['verificationType'], verificationDict['userEmail'], **verificationDict)
+		
 		p = Players.player(cn)
-		p.message("Verification successful.")
+		messager.sendPlayerMessage('verification_successfull', p)
+
 	except (UserModelBase.InvalidUserName, UserModelBase.InvalidVerification):
 		raise Commands.StateError('Verification unsuccessful.')
 		
+"""
 def onLinkNameCommand(cn, args):
 	'''
 	@description Link name to server account, and reserve name.
@@ -224,7 +226,9 @@ def onLinkNameCommand(cn, args):
 	except UserModelBase.ReadOnlyViolation:
 		raise Commands.StateError('Linking of names is not permitted.')
 	#except UserModelBase.:
+"""
 
+@Commands.commandHandler('changekey')
 def onChangeKeyCommand(cn, args):
 	'''
 	@description change account password
@@ -239,32 +243,23 @@ def onChangeKeyCommand(cn, args):
 		raise Commands.StateError('You must be logged in to change your authentication key.')
 	user = Players.player(cn)
 	try:
-		verificationType, verificationDict = UserModel.model.changeUserAuthenticationToken(user.userId, args)
+		verificationDict = UserModel.model.changeUserKey(user.userId, args)
 		
+		Email.send_templated_email(verificationDict['verificationType'], verificationDict['userEmail'], **verificationDict)
 		
-		
+		p = Players.player(cn)
+		messager.sendPlayerMessage('keychange_successfull', p)
 		
 	except UserModelBase.InvalidUserId:
 		raise Commands.StateError('You must be logged in to change your authentication key.')
-		
-	
-@Events.eventHandler('player_name_changed')	
-@Events.eventHandler('player_connect_delayed')
-def onPlayerActive(*args):
-	"""Trigger checks on both names and tags to see whether the player must validate to use them."""
-	if len(args) < 1:
-		return
-	cn = args[0]
-	Timers.addTimer(2*1000, warnNickReserved, (cn, 0))
-	Timers.addTimer(2*1000, ClanTags.warnTagsReserved, (cn, 0))
 	
 @Events.eventHandler('player_auth_request')
 def authRequest(cn, name, desc):
 	p = Players.player(cn)
 	if Auth.settings["automatic_request_description"]:
 		try:
-			userId = UserModel.model.getUser(name)
-			publicKey = UserModel.model.getUserPublicKey(userId)
+			userId = UserModel.model.getUserId(name)
+			publicKey = UserModel.model.getUserKey(userId)
 			
 			p.pendingAuthLogin = True
 			p.userId = userId
@@ -272,8 +267,8 @@ def authRequest(cn, name, desc):
 			#use the memory location of the Player object as the request id
 			p.challengeAnswer = ServerCore.sendAuthChallenge(cn, Auth.settings["automatic_request_description"], id(p), publicKey)
 			
-		except UserModelBase.InvalidUserName:
-			p.message("Unknown username")
+		except UserModelBase.InvalidEmail:
+			messager.sendPlayerMessage('authlogin_unsuccessful', p)
 			
 @Events.eventHandler('player_auth_challenge_response')
 def authChallengeResponse(cn, reqid, response):

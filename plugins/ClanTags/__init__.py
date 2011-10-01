@@ -181,3 +181,12 @@ def warnTagsReserved(cn, count, startTime=None):
 		messager.sendMessage('clantag_reserved', dictionary={'tag':disallowedTags[0], 'remaining':remaining})
 	Timers.addTimer(settings["warning_interval"]*1000, warnTagsReserved, (cn, count+1, startTime))
 	
+@Events.eventHandler('player_name_changed')	
+@Events.eventHandler('player_connect_delayed')
+def onPlayerActive(*args):
+	"""Trigger checks on tags to see whether the player must validate to use them."""
+	if len(args) < 1:
+		return
+	cn = args[0]
+	Timers.addTimer(2*1000, warnTagsReserved, (cn, 0))
+	

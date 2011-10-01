@@ -117,7 +117,7 @@ def setMaxClients(num_clients):
 	return ServerCore.setMaxClients(num_clients)
 
 def setFrozen(val):
-	'''Sets wether the server state is frozen.
+	'''Sets whether the server state is frozen.
 	   This value is recognized by many of the server
 	   commands (such as pause/unpause) and setting this
 	   to true will keep them from functioning.'''

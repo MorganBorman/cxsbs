@@ -24,7 +24,7 @@ class Plugin(cxsbs.Plugin.Plugin):
 		groupValidator = lambda x: re.match(settings['invalid_group_expression'], x)
 		
 		global model
-		model = modelClass(settings['read_only'], usernameValidator, authenticationTokenValidator, groupValidator, settings['max_nicks'])
+		model = modelClass()
 		
 	def unload(self):
 		pass

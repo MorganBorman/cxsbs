@@ -9,5 +9,5 @@ Enabled = True
 UserModelBase = 0.0.1
 Setting = 0.0.1
 SettingsManager = 0.0.1
+DatabaseManager = 0.0.1
 Auth = 0.0.1
-Email = 0.0.1
