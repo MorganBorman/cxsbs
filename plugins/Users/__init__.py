@@ -147,7 +147,8 @@ def onRegisterCommand(cn, args):
 		Email.send_templated_email(verificationDict['verificationType'], verificationDict['userEmail'], **verificationDict)
 		
 		p = Players.player(cn)
-		messager.sendPlayerMessage('registration_successfull', p)
+		#messager.sendPlayerMessage('registration_successfull', p)
+		p.message("registration successful")
 		
 	except UserModelBase.InvalidEmail:
 		raise Commands.StateError('The email you provided is not valid.')
@@ -168,7 +169,8 @@ def onUnregisterCommand(cn, args):
 		Email.send_templated_email(verificationDict['verificationType'], verificationDict['userEmail'], **verificationDict)
 		
 		p = Players.player(cn)
-		messager.sendPlayerMessage('unregistration_successfull', p)
+		#messager.sendPlayerMessage('unregistration_successfull', p)
+		p.message("unregistration successful")
 		
 	except UserModelBase.InvalidUserId:
 		raise Commands.StateError('You must be logged in to link a name to your account.')
@@ -191,7 +193,8 @@ def onVerifyCommand(cn, args):
 		Email.send_templated_email(verificationDict['verificationType'], verificationDict['userEmail'], **verificationDict)
 		
 		p = Players.player(cn)
-		messager.sendPlayerMessage('verification_successfull', p)
+		#messager.sendPlayerMessage('verification_successfull', p)
+		p.message("verification successful")
 
 	except (UserModelBase.InvalidUserName, UserModelBase.InvalidVerification):
 		raise Commands.StateError('Verification unsuccessful.')
@@ -248,7 +251,8 @@ def onChangeKeyCommand(cn, args):
 		Email.send_templated_email(verificationDict['verificationType'], verificationDict['userEmail'], **verificationDict)
 		
 		p = Players.player(cn)
-		messager.sendPlayerMessage('keychange_successfull', p)
+		#messager.sendPlayerMessage('keychange_successfull', p)
+		p.message("keychange successful")
 		
 	except UserModelBase.InvalidUserId:
 		raise Commands.StateError('You must be logged in to change your authentication key.')
