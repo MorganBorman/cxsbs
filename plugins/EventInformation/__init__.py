@@ -136,8 +136,8 @@ def loadEventHandlerInfo(event, handler):
 					elif tag == '@doc':
 						doc = True
 						info.documentation += text + '\n'
-		
-		info.finalize()
+		if info.isCommandType:
+			info.finalize()
 		
 		eventhandler_info[id(handler)] = info
 	else:

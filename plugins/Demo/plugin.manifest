@@ -1,0 +1,16 @@
+[Plugin]
+Name = Demo
+SymbolicName = Demo
+Version = 0.0.1
+Author = Chasm
+Enabled = True
+
+[Dependencies]
+ServerCore = 0.0.1
+Events = 0.0.1
+UI = 0.0.1
+Setting = 0.0.1
+SettingsManager = 0.0.1
+Players = 0.0.1
+Commands = 0.0.1
+Messages = 0.0.1

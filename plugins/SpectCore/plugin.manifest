@@ -1,0 +1,16 @@
+[Plugin]
+Name = Spect Core
+SymbolicName = SpectCore
+Version = 0.0.1
+Author = Chasm
+Enabled = True
+
+[Dependencies]
+Players = 0.0.1
+DatabaseManager = 0.0.1
+Events = 0.0.1
+Timers = 0.0.1
+ServerCore = 0.0.1
+SettingsManager = 0.0.1
+Setting = 0.0.1
+Net = 0.0.1

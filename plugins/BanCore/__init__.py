@@ -37,7 +37,7 @@ SettingsManager.addSetting(Setting.Setting	(
 												symbolicName="table_name", 
 												displayName="Table name", 
 												default="bancore",
-												doc="Table name for storing the clantag-group associations."
+												doc="Table name for storing the bans."
 											))
 
 tableSettings = SettingsManager.getAccessor(DatabaseManager.getDbSettingsCategory(), pluginCategory)
@@ -51,17 +51,17 @@ class Ban(Base):
 	expiration = Column(Integer, index=True) # Epoch seconds
 	reason = Column(String(length=64))
 	name = Column(String(length=16))
-	banner_ip = Column(Integer)
-	banner_nick = Column(String(length=16))
+	responsible_ip = Column(Integer)
+	responsible_nick= Column(String(length=16))
 	time = Column(Integer)
-	def __init__(self, ip, mask, expiration, reason, name, banner_ip, banner_nick, time):
+	def __init__(self, ip, mask, expiration, reason, name, responsible_ip, banner_nick, time):
 		self.ip = ip
 		self.mask = mask
 		self.expiration = expiration
 		self.reason = reason
 		self.name = name
-		self.banner_ip = banner_ip
-		self.banner_nick = banner_nick
+		self.responsible_ip = responsible_ip
+		self.responsible_nick= banner_nick
 		self.time = time
 	def isExpired(self):
 		return self.expiration <= time.time()
@@ -91,17 +91,17 @@ def addBan(cn, seconds, reason, banner_cn, cidr=32):
 	nick = ServerCore.playerName(cn)
 	
 	if banner_cn != -1:
-		banner_ip = ServerCore.playerIpLong(banner_cn)
-		banner_nick = ServerCore.playerName(banner_cn)
+		responsible_ip = ServerCore.playerIpLong(banner_cn)
+		responsible_nick= ServerCore.playerName(banner_cn)
 	else:
-		banner_ip = 0
-		banner_nick = 'the server'
+		responsible_ip = 0
+		responsible_nick= 'the server'
 		
 	theTime = time.time()
 	
 	mask = Net.makeMask(cidr)
 		
-	newban = Ban(ip, mask, expiration, reason, nick, banner_ip, banner_nick, theTime)
+	newban = Ban(ip, mask, expiration, reason, nick, responsible_ip, banner_nick, theTime)
 
 	session = DatabaseManager.dbmanager.session()
 	try:
@@ -111,7 +111,7 @@ def addBan(cn, seconds, reason, banner_cn, cidr=32):
 		session.close()
 	
 	Timers.addTimer(200, ServerCore.playerKick, (cn,))
-	Events.triggerServerEvent("player_banned", (Net.ipLongToString(ip)+ "/" + str(cidr), seconds, expiration, reason, nick, banner_ip, banner_nick, theTime))
+	Events.triggerServerEvent("player_banned", (Net.ipLongToString(ip)+ "/" + str(cidr), seconds, expiration, reason, nick, responsible_ip, banner_nick, theTime))
 	
 @Events.policyHandler('connect_kick')
 def allowClient(cn, pwd):
