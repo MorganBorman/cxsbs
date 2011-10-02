@@ -39,7 +39,7 @@ class Select(Filter):
 			if keep:
 				destination.append(item)
 				
-		return xsbs.groups.Group(origin.memberClass(), destination)
+		return groups.Group(origin.memberClass(), destination)
 		
 class Cull(Filter):
 	"""
@@ -74,7 +74,7 @@ class Cull(Filter):
 			if keep:
 				destination.append(item)
 				
-		return xsbs.groups.Group(origin.memberClass(), destination)
+		return groups.Group(origin.memberClass(), destination)
 	
 
 class Order(Filter):
@@ -134,7 +134,7 @@ class Intersection(Filter):
 			if keep:
 				destination.append(item)
 					
-		return xsbs.groups.Group(origin.memberClass(), destination)
+		return groups.Group(origin.memberClass(), destination)
 		
 class Difference(Filter):
 	"""A filter type which returns those elements which are in the origin but not in the supplied queries or groups."""
@@ -164,4 +164,4 @@ class Difference(Filter):
 			if keep:
 				destination.append(item)
 					
-		return xsbs.groups.Group(origin.memberClass(), destination)
+		return groups.Group(origin.memberClass(), destination)

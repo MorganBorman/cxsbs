@@ -5,7 +5,14 @@ class Plugin(cxsbs.Plugin.Plugin):
 		cxsbs.Plugin.Plugin.__init__(self)
 		
 	def load(self):
-		pass
+		global clanWarManager
+		clanWarManager = ClanWarManager()
+		
+		Events.registerServerEventHandler('map_changed', clanWarManager.onMapChange)
+		Events.registerServerEventHandler('player_disconnect', clanWarManager.onDisconnect)
+		Events.registerServerEventHandler('player_spectated', clanWarManager.onSpectate)
+		Events.registerServerEventHandler('player_unspectated', clanWarManager.onUnspectate)
+		Events.registerServerEventHandler('intermission_begin', clanWarManager.onIntermission)
 		
 	def unload(self):
 		pass
@@ -34,7 +41,7 @@ Messages.addMessage	(
 						subcategory=pluginCategory, 
 						symbolicName="count_down", 
 						displayName="Count down", 
-						default="Clan war starts in ${green}${count}${white}.", 
+						default="Battle starts in ${green}${count}${white}.", 
 						doc="Message to print for count down at the start of the clanwar."
 					)
 
@@ -51,28 +58,57 @@ Messages.addMessage	(
 						symbolicName="interclan_war_initiated", 
 						displayName="Interclan war initiated", 
 						default="A bitter feud has sprung up between ${blue}${clan1}${white} and ${red}${clan2}${white}. Event now, final battle preparations are underway, please wait while they are finished.", 
-						doc="Message to print  clanwar."
+						doc="Message to print at the start of a clanwar between two clans."
+					)
+
+Messages.addMessage	(
+						subcategory=pluginCategory, 
+						symbolicName="intraclan_war_initiated", 
+						displayName="Intraclan war initiated", 
+						default="Hard times foment discontent and unrest within ${blue}${clan}${white}. Soon a bitter conflict shall flare up, please wait while the final preparations are made.", 
+						doc="Message to print at the start of an internal clanwar."
+					)
+
+Messages.addMessage	(
+						subcategory=pluginCategory, 
+						symbolicName="generic_war_initiated", 
+						displayName="generic_war_initiated", 
+						default="Hard times foment discontent. Please await the impending conflict.", 
+						doc="Message to print at the start of a generic clanwar."
+					)
+
+Messages.addMessage	(
+						subcategory=pluginCategory, 
+						symbolicName="intermission", 
+						displayName="Intermission", 
+						default="An eerie calm has descended on this plain of destruction. Will the tired and wounded combatants resume their quarrel?", 
+						doc="Message to print inbetween the games of a clanwar."
+					)
+
+Messages.addMessage	(
+						subcategory=pluginCategory, 
+						symbolicName="interruption", 
+						displayName="Interruption", 
+						default="The balance of the force has been disrupted. Please check teams and use \"/pausegame 0\" to resume.", 
+						doc="Message to print when someone leaves or otherwise changes the opposing forces."
+					)
+
+Messages.addMessage	(
+						subcategory=pluginCategory, 
+						symbolicName="clanwar_ended", 
+						displayName="Clanwar_ended", 
+						default="A peace has returned to the land now that the clanwar has ended.", 
+						doc="Message to print when the clanwar has ended."
 					)
 
 messager = Messages.getAccessor(subcategory=pluginCategory)
 
-messageModule = MessagingModule("clanwar")
-messageModule.addMessage("count_down", "Clan war starts in ${green}${count}${white}.")
-messageModule.addMessage("count_ended", "Fight!")
-messageModule.addMessage("interclan_war_initiated", "A bitter feud has sprung up between ${blue}${clan1}${white} and ${red}${clan2}${white}. Event now, final battle preparations are underway, please wait while they are finished.")
-messageModule.addMessage("intraclan_war_initiated", "Hard times foment discontent and unrest within ${blue}${clan}${white}. Soon a bitter conflict shall flare up, please wait while the final preparations are made.")
-messageModule.addMessage("generic_war_initiated", "Hard times foment discontent. Please await the impending conflict.")
-messageModule.addMessage("intermission", "An eerie calm has descended on this plain of destruction. Will the tired and wounded combatants resume their quarrel?")
-messageModule.addMessage("interruption", "The balance of the force has been disrupted. Please check teams and use #resume.")
-messageModule.addMessage("clanwar_ended", "A peace has returned to the land now that the clanwar has ended.")
-messageModule.finalize()
-
 def clanWarTimer(count):
-	while count > 0:
-		messageModule.sendMessage("count_down", dictionary={"count": count})
-		time.sleep(1)
-		count -= 1
-	messageModule.sendMessage("count_ended")
+	if count > 0:
+		messager.sendMessage("count_down", dictionary={"count": count})
+		Timers.addTimer(1000, clanWarTimer, (count-1,))
+	else:
+		messager.sendMessage("count_ended")
 	
 class ClanWar:
 	def __init__(self, clan1=None, clan2=None):
@@ -83,20 +119,18 @@ class ClanWar:
 		ServerCore.setPersistentIntermission(True)
 		ServerCore.setMinsRemaining(0)
 		
-		time.sleep(1)
-		
-		if clan1 != None and clan2 != None:
-			messageModule.sendMessage("interclan_war_initiated", dictionary={"clan1": clan1, "clan2": clan2})
-		elif clan1 !=None:
-			messageModule.sendMessage("intraclan_war_initiated", dictionary={"clan": clan1})
-		else:
-			messageModule.sendMessage("generic_war_initiated")
-		
 		self.restoreMasterMode = ServerCore.masterMode()
 		self.restoreTeamMode = Teams.getTeamMode()
 		
 		Server.setMasterMode(2)
-		Teams.setTeamMode('+r+l+s')
+		Teams.setTeamMode('+l+s')
+		
+		if clan1 != None and clan2 != None:
+			Timers.addTimer(1000, messager.sendMessage, ("interclan_war_initiated",), {'dictionary':{"clan1": clan1, "clan2": clan2}})
+		elif clan1 !=None:
+			Timers.addTimer(1000, messager.sendMessage, ("intraclan_war_initiated",), {'dictionary':{"clan": clan1}})
+		else:
+			Timers.addTimer(1000, messager.sendMessage, ("generic_war_initiated",))
 	
 		if clan1 != None:
 			self.clan1 = Players.AllPlayersGroup.query(Select(name=Contains(clan1)))
@@ -140,16 +174,16 @@ class ClanWar:
 	def onMapChange(self, gameMap, gameMode):
 		self.isIntermission = False
 		self.saveCombatants()
-		self.start()
+		Timers.addTimer(1, self.start, ())
 			
 	def onDisconnect(self, cn): #make on disconnect events sync_
 		p = Players.player(cn)
 		if not p.isSpectator() and not self.isIntermission:
-			messageModule.sendMessage("interruption")
+			messager.sendMessage("interruption")
 			Server.setPaused(True, -1)
 			
 	def onSpectate(self, cn):
-		messageModule.sendMessage("interruption")
+		messager.sendMessage("interruption")
 		Server.setPaused(True, -1)
 		
 	def onUnspectate(self, cn):
@@ -158,8 +192,8 @@ class ClanWar:
 	def onIntermission(self):
 		self.isIntermission = True
 		if not self.firstIntermission:
-			messageModule.sendMessage("intermission")
-		
+			messager.sendMessage("intermission")
+	"""	
 	def start(self):
 		ServerCore.setAllowShooting(False)
 		
@@ -172,13 +206,26 @@ class ClanWar:
 		Server.setPaused(False)
 		
 		time.sleep(.75)
-		ServerCore.setAllowShooting(True)
+		ServerCore.setAllowShooting(True)"""
+		
+	def start(self):
+		ServerCore.setAllowShooting(False)
+		
+		Server.setPaused(True, -1)
+		Server.setFrozen(True)
+		
+		clanWarTimer(10)
+		
+		Timers.addTimer(10000, Server.setFrozen, (False,))
+		Timers.addTimer(10000, Server.setPaused, (False,))
+		
+		Timers.addTimer(10750, ServerCore.setAllowShooting, (True,))
 		
 	def end(self):
 		Server.setMasterMode(self.restoreMasterMode)
 		Teams.setTeamMode(self.restoreTeamMode)
 		ServerCore.setPersistentIntermission(False)
-		messageModule.sendMessage("clanwar_ended")
+		messager.sendMessage("clanwar_ended")
 
 class ClanWarManager:
 	def __init__(self):
@@ -215,45 +262,33 @@ class ClanWarManager:
 	def onIntermission(self):
 		if self.enabled():
 			self.activeClanwar.onIntermission()
-	
-clanWarManager = ClanWarManager()
 
-Events.registerServerEventHandler('map_changed', clanWarManager.onMapChange)
-Events.registerServerEventHandler('player_disconnect', clanWarManager.onDisconnect)
-Events.registerServerEventHandler('player_spectated', clanWarManager.onSpectate)
-Events.registerServerEventHandler('player_unspectated', clanWarManager.onUnspectate)
-Events.registerServerEventHandler('intermission_begin', clanWarManager.onIntermission)
-
-@Commands.commandHandler('clanwar')
+@Commands.threadedCommandHandler('clanwar')
 def clanWar(cn, args):
-	'''@description Enter clanwar mode
-	   @usage <clantag1> (clantag2)'''
+	'''
+	@description Toggle clanwar mode
+	@usage <clantag1> (clantag2)
+	@usage
+	@allowGroups __master__ __admin__
+	@denyGroups
+	@doc This command is used to put the server into a special clanwar mode
+	'''
 	if Server.isFrozen():
 		raise Commands.StateError('Server is currently frozen')
 	
 	if clanWarManager.enabled():
-		raise Commands.StateError('There is already a clanwar in progress. Use #endclanwar')
-	
-	clan1 = None
-	clan2 = None
-	if args == '':
-		pass
+		clanWarManager.end()
 	else:
-		args = args.split(' ')
-		if len(args) == 1:
-			clan1 = args
-		elif len(args) >= 2:
-			clan1 = args[0]
-			clan2 = args[1]
-			
-	clanWarManager.initiate(clan1, clan2)
-
-@Commands.commandHandler('endclanwar')
-def endClanWar(cn, args):
-	'''@description Leave clanwar mode
-	   @usage'''
-	
-	if not clanWarManager.enabled():
-		raise Commands.StateError('There is no clanwar in progress.')
-	
-	clanWarManager.end()
+		clan1 = None
+		clan2 = None
+		if args == '':
+			pass
+		else:
+			args = args.split()
+			if len(args) == 1:
+				clan1 = args[0]
+			elif len(args) >= 2:
+				clan1 = args[0]
+				clan2 = args[1]
+				
+		clanWarManager.initiate(clan1, clan2)

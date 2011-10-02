@@ -7,17 +7,14 @@ class Plugin(cxsbs.Plugin.Plugin):
 	def load(self):
 		pass
 		
-	def reload(self):
-		pass
-		
 	def unload(self):
 		pass
 		
 import twisted.internet
 
-def addTimer(msecs, func, args=(), persistent=False):
+def addTimer(msecs, func, args=(), kwargs={}, persistent=False):
 	if not persistent:
-		twisted.internet.reactor.callLater(msecs / 1000, func, *args) #@UndefinedVariable
+		twisted.internet.reactor.callLater(msecs / 1000, func, *args, **kwargs) #@UndefinedVariable
 	else:
-		call = twisted.internet.task.LoopingCall(func, *args)
+		call = twisted.internet.task.LoopingCall(func, *args, **kwargs)
 		call.start(msecs / 1000)
