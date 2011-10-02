@@ -170,4 +170,7 @@ def allowCommand(cmd, p):
 		if group in cmd.allowGroups:
 			allow = True
 	for group in cmd.denyGroups:
-		
+		if group in cmd.denyGroups:
+			return False
+	return allow
+			
