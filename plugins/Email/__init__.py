@@ -10,7 +10,7 @@ class Plugin(cxsbs.Plugin.Plugin):
 	def unload(self):
 		pass
 
-import smtplib
+import smtplib, re
 
 from VerificationMessages import *
 

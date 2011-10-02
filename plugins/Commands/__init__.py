@@ -226,7 +226,7 @@ class CommandThreadQueuer:
 		self.__name__ = f.__name__
 
 	def __call__(self, *args, **kwargs):
-		cxsbs.AsyncronousExecutor.queue(self.func, *args, **kwargs)
+		cxsbs.AsyncronousExecutor.dispatch(self.func, args, time=0, **kwargs)
 		
 class threadedCommandHandler(object):
 	'''Decorator to register an event as an asyncronous command handler.'''

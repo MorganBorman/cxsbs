@@ -627,6 +627,6 @@ class Model(UserModelBase.Model):
 			session.delete(groupMembership)
 			session.commit()
 		except NoResultFound:
-			pass
+			raise UserModelBase.InvalidGroupId
 		finally:
 			session.close()

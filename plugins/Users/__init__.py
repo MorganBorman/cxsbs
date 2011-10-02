@@ -70,6 +70,70 @@ Messages.addMessage	(
 						doc="Message to print when a player has successfully logged in."
 					)
 
+Messages.addMessage	(
+						subcategory=pluginCategory, 
+						symbolicName="authlogin_unsuccessful", 
+						displayName="Authlogin unsuccessful", 
+						default="${denied}Invalid credentials.",
+						doc="Message to print when a player fails logging in."
+					)
+
+Messages.addMessage	(
+						subcategory=pluginCategory, 
+						symbolicName='registration_successful', 
+						displayName='Registration successful', 
+						default="${info}Successfully initiated ${blue}registration${white} check your email for verification details.",
+						doc="Message to print when a player initiates registration."
+					)
+
+Messages.addMessage	(
+						subcategory=pluginCategory, 
+						symbolicName='keychange_successful', 
+						displayName='Key change successful', 
+						default="${info}Successfully initiated ${blue}key change${white} check your email for verification details.",
+						doc="Message to print when a player initiates a key change."
+					)
+
+Messages.addMessage	(
+						subcategory=pluginCategory, 
+						symbolicName='unregistration_successful', 
+						displayName='unregistration successful', 
+						default="${info}Successfully initiated ${blue}unregistration${white} check your email for verification details.",
+						doc="Message to print when a player initiates unregistration."
+					)
+
+Messages.addMessage	(
+						subcategory=pluginCategory, 
+						symbolicName='verification_successful', 
+						displayName='Verification successful', 
+						default="${info}${blue}verification${white} success! Check your email for more information.",
+						doc="Message to print when a player's verification succeeds."
+					)
+
+Messages.addMessage	(
+						subcategory=pluginCategory, 
+						symbolicName='verification_unsuccessful', 
+						displayName='Verification unsuccessful', 
+						default="${error}${blue}verification${white} failed check that your email and verification code are correct.",
+						doc="Message to print when a player's verification fails."
+					)
+
+Messages.addMessage	(
+						subcategory=pluginCategory, 
+						symbolicName='group_add_success', 
+						displayName='Group add success', 
+						default="${info}${green}${name}${white} has been added to the group ${blue}${groupName}${white}.'",
+						doc="Message to print player is added to a group."
+					)
+
+Messages.addMessage	(
+						subcategory=pluginCategory, 
+						symbolicName='group_removed_success', 
+						displayName='Group removed success', 
+						default="${info}${green}${name}${white} has been removed from the group ${blue}${groupName}${white}.",
+						doc="Message to print player is removed from a group."
+					)
+
 messager = Messages.getAccessor(subcategory=pluginCategory)
 
 class User(Players.Player):
@@ -126,7 +190,7 @@ def warnNickReserved(cn, count, startTime=None):
 	Timers.addTimer(settings["warning_interval"]*1000, warnNickReserved, (cn, count+1, startTime))
 """
 		
-@Commands.commandHandler('register')
+@Commands.threadedCommandHandler('register')
 def onRegisterCommand(cn, args):
 	'''
 	@description Register account with server
@@ -140,6 +204,9 @@ def onRegisterCommand(cn, args):
 		raise Commands.UsageError()
 	
 	email = args[0]
+	if not Email.isValidEmail(email):
+		raise Commands.UsageError('The email you provided is not valid.')
+	
 	authenticationTokenSeed = args[1]
 	
 	if len(authenticationTokenSeed) < 5:
@@ -151,13 +218,12 @@ def onRegisterCommand(cn, args):
 		Email.send_templated_email(verificationDict['verificationType'], verificationDict['userEmail'], **verificationDict)
 		
 		p = Players.player(cn)
-		#messager.sendPlayerMessage('registration_successfull', p)
-		p.message("registration successful")
+		messager.sendPlayerMessage('registration_successful', p)
 		
 	except UserModelBase.InvalidEmail:
 		raise Commands.StateError('The email you provided is not valid.')
 	
-@Commands.commandHandler('unregister')
+@Commands.threadedCommandHandler('unregister')
 def onUnregisterCommand(cn, args):
 	'''
 	@description Unregister this account with server
@@ -173,13 +239,12 @@ def onUnregisterCommand(cn, args):
 		Email.send_templated_email(verificationDict['verificationType'], verificationDict['userEmail'], **verificationDict)
 		
 		p = Players.player(cn)
-		#messager.sendPlayerMessage('unregistration_successfull', p)
-		p.message("unregistration successful")
+		messager.sendPlayerMessage('unregistration_successful', p)
 		
 	except UserModelBase.InvalidUserId:
 		raise Commands.StateError('You must be logged in to link a name to your account.')
 	
-@Commands.commandHandler('verify')
+@Commands.threadedCommandHandler('verify')
 def onVerifyCommand(cn, args):
 	'''
 	@description Supply verification for a pending action
@@ -191,17 +256,18 @@ def onVerifyCommand(cn, args):
 	args = args.split(' ')
 	if len(args) != 2:
 		raise Commands.UsageError()
+	
+	p = Players.player(cn)
+	
 	try:
 		verificationDict = UserModel.model.verify(args[0], args[1])
 
 		Email.send_templated_email(verificationDict['verificationType'], verificationDict['userEmail'], **verificationDict)
 		
-		p = Players.player(cn)
-		#messager.sendPlayerMessage('verification_successfull', p)
-		p.message("verification successful")
+		messager.sendPlayerMessage('verification_successful', p)
 
 	except (UserModelBase.InvalidUserName, UserModelBase.InvalidVerification):
-		raise Commands.StateError('Verification unsuccessful.')
+		messager.sendPlayerMessage('verification_unsuccessful', p)
 		
 """
 def onLinkNameCommand(cn, args):
@@ -235,7 +301,7 @@ def onLinkNameCommand(cn, args):
 	#except UserModelBase.:
 """
 
-@Commands.commandHandler('changekey')
+@Commands.threadedCommandHandler('changekey')
 def onChangeKeyCommand(cn, args):
 	'''
 	@description change account password
@@ -245,7 +311,7 @@ def onChangeKeyCommand(cn, args):
 	@doc 
 	'''
 	if len(args) < 5:
-		raise Commands.UsageError("Please provide a tokenSeed with a length greater than 5")
+		raise Commands.UsageError("Please provide a token Seed with a length greater than 5")
 	if not isLoggedIn(cn):
 		raise Commands.StateError('You must be logged in to change your authentication key.')
 	user = Players.player(cn)
@@ -255,8 +321,7 @@ def onChangeKeyCommand(cn, args):
 		Email.send_templated_email(verificationDict['verificationType'], verificationDict['userEmail'], **verificationDict)
 		
 		p = Players.player(cn)
-		#messager.sendPlayerMessage('keychange_successfull', p)
-		p.message("keychange successful")
+		messager.sendPlayerMessage('keychange_successfull', p)
 		
 	except UserModelBase.InvalidUserId:
 		raise Commands.StateError('You must be logged in to change your authentication key.')
@@ -292,6 +357,7 @@ def authChallengeResponse(cn, reqid, response):
 	p = Players.player(cn)
 	if not reqid == requestIdTable[cn]:
 		print "returned because request id did not match that in table."
+		messager.sendPlayerMessage('authlogin_unsuccessful', p)
 		return
 	else:
 		del requestIdTable[cn]
@@ -306,15 +372,17 @@ def authChallengeResponse(cn, reqid, response):
 			messager.sendMessage('logged_in', dictionary={'name':p.name()})
 		else:
 			print "login from integrated user model returned false"
+			messager.sendPlayerMessage('authlogin_unsuccessful', p)
 	else:
 		p.challengeAnswer = None
 		print "Auth challenge failed"
+		messager.sendPlayerMessage('authlogin_unsuccessful', p)
 	
 @Commands.commandHandler('addtogroup')
 def addToGroupCommand(cn, args):
 	'''
 	@description Add a user to a group
-	@usage <email> <group name>
+	@usage <email or cn> <group name>
 	@allowGroups __admin__
 	@denyGroups
 	@doc Adds a user to a specified group, creating said group if necessary.
@@ -322,19 +390,36 @@ def addToGroupCommand(cn, args):
 	args = args.split()
 	if len(args) != 2:
 		raise Commands.UsageError()
-	email = args[0]
-	groupName = args[1]
 	
-	userId = UserModel.model.getUserId(email)
+	try:
+		cn = int(args[0])
+	except ValueError:
+		cn = None
+		
+	if cn != None:
+		if isLoggedIn(cn):
+			user = Players.player(cn)
+			userId = user.userId
+		else:
+			raise Commands.StateError("That player does not seem to be logged in.")
+	else:
+		email = args[0]
+		
+		try:
+			userId = UserModel.model.getUserId(email)
+		except UserModelBase.InvalidEmail:
+			raise Commands.StateError("That email does not correspond to an account.")
+	
+	groupName = args[1]
+		
 	try:
 		groupId = UserModel.model.getGroupId(groupName)
 	except UserModelBase.InvalidGroupName:
 		groupId = UserModel.model.createGroup(groupName)
 		
-	#try:
 	UserModel.model.addToGroup(userId, groupId)
-	#except:
-	#	pass
+	
+	messager.sendPlayerMessage('group_add_success', Players.player(cn), dictionary={'name': UserModel.model.getUserEmail(userId), 'groupName': groupName})
 	
 @Commands.commandHandler('removefromgroup')
 def removeFromGroupCommand(cn, args):
@@ -348,10 +433,30 @@ def removeFromGroupCommand(cn, args):
 	args = args.split()
 	if len(args) != 2:
 		raise Commands.UsageError()
-	email = args[0]
-	groupName = args[1]
+
+	try:
+		cn = int(args[0])
+	except ValueError:
+		cn = None
+		
+	if cn != None:
+		if isLoggedIn(cn):
+			user = Players.player(cn)
+			userId = user.userId
+		else:
+			raise Commands.StateError("That player does not seem to be logged in.")
+	else:
+		email = args[0]
+		
+		try:
+			userId = UserModel.model.getUserId(email)
+		except UserModelBase.InvalidEmail:
+			raise Commands.StateError("That email does not correspond to an account.")
 	
-	userId = UserModel.model.getUserId(email)
-	groupId = UserModel.model.getGroupId(groupName)
-	
-	UserModel.model.removeFromGroup(userId, groupId)
+	try:
+		groupName = args[1]
+		groupId = UserModel.model.getGroupId(groupName)
+		UserModel.model.removeFromGroup(userId, groupId)
+		messager.sendPlayerMessage('group_removed_success', Players.player(cn), dictionary={'name': UserModel.model.getUserEmail(userId), 'groupName': groupName})
+	except UserModelBase.InvalidGroupId:
+		raise Commands.StateError("That user is not a member of the specified group.")

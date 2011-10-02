@@ -173,7 +173,15 @@ Messages.addMessage	(
 						subcategory=pluginCategory, 
 						symbolicName="denied_team_change", 
 						displayName="Denied team change", 
-						default="${denied}You are not permitted to join team ${team} in game mode ${modeName}.", 
+						default="${denied}You are not permitted to join team ${blue}${team}${white} in game mode ${green}${modeName}${white}.", 
+						doc="Message to print when a team change is disallowed."
+					)
+
+Messages.addMessage	(
+						subcategory=pluginCategory, 
+						symbolicName="denied_team_set", 
+						displayName="Denied team set", 
+						default="${denied}You are not permitted to move players to team ${blue}${team}${white} in game mode ${green}${modeName}${white}.", 
 						doc="Message to print when a team change is disallowed."
 					)
 
@@ -246,7 +254,7 @@ def onSetTeam(cn, tcn, team):
 	if isSafeTeam(team):
 		return True
 	else:
-		messager.sendPlayerMessage('denied_team_change', p, dictionary={'team': team, 'modeName': Game.modeName(Game.currentMode())})
+		messager.sendPlayerMessage('denied_team_set', p, dictionary={'team': team, 'modeName': Game.modeName(Game.currentMode())})
 		return False
 
 class TeamManager:
