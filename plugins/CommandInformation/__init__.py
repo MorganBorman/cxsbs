@@ -169,7 +169,7 @@ def allowCommand(cmd, p):
 	for group in playerGroups:
 		if group in cmd.allowGroups:
 			allow = True
-	for group in cmd.denyGroups:
+	for group in playerGroups:
 		if group in cmd.denyGroups:
 			return False
 	return allow
