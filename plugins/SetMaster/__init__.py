@@ -31,6 +31,15 @@ SettingsManager.addSetting(Setting.Setting	(
 												doc="Password used to allow clients to use \"/setmaster <password>\" to claim admin."
 											))
 
+SettingsManager.addSetting(Setting.Setting	(
+												category=pluginCategory, 
+												subcategory="General", 
+												symbolicName="connect_password", 
+												displayName="Connect password", 
+												default=ppwgen.generatePassword(),
+												doc="Password used to allow clients to connect if kicked or server is in private."
+											))
+
 SettingsManager.addSetting(Setting.BoolSetting	(
 												category=pluginCategory, 
 												subcategory="General", 

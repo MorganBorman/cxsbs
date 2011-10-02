@@ -77,6 +77,14 @@ settings = SettingsManager.getAccessor(category=pluginCategory, subcategory="Gen
 
 Messages.addMessage	(
 						subcategory=pluginCategory, 
+						symbolicName="spectators_muted_toggled", 
+						displayName="Spectators muted toggled", 
+						default="${info}Spectators have been ${blue}${action}${white} by ${green}${name}${white}.", 
+						doc="Message to print when the status of spectators_muted gets toggled."
+					)
+
+Messages.addMessage	(
+						subcategory=pluginCategory, 
 						symbolicName="spectators_muted", 
 						displayName="Spectators muted", 
 						default="${denied}Spectators are currently ${blue}muted${white}. No one will receive your message.", 
@@ -118,6 +126,16 @@ class Mute(Base):
 		return self.expiration <= time.time()
 
 Base.metadata.create_all(DatabaseManager.dbmanager.engine)
+
+def clearByReason(reason):
+	session = DatabaseManager.dbmanager.session()
+	try:
+		mutes = session.query(Mute).filter(Mute.reason==reason).all()
+		for m in mutes:
+			session.delete(m)
+		session.commit()
+	finally:
+		session.close()
 
 def getCurrentMuteByIp(ipaddress):
 	session = DatabaseManager.dbmanager.session()
@@ -161,13 +179,13 @@ def addMute(cn, seconds, reason, responsible_cn, cidr=32):
 	finally:
 		session.close()
 	
-	Events.triggerServerEvent("player_muted", (Net.ipLongToString(ip)+ "/" + str(cidr), seconds, expiration, reason, nick, responsible_ip, responsible_nick, theTime))
+	Events.triggerServerEvent("player_punished", ("muted", Net.ipLongToString(ip)+ "/" + str(cidr), seconds, expiration, reason, nick, responsible_ip, responsible_nick, theTime))
 	
 @Events.policyHandler('allow_message_team')
 @Events.policyHandler('allow_message')
 def allowMsg(cn, text):
 	try:
-		p = player(cn)
+		p = Players.player(cn)
 		ipAddress = p.ipLong()
 		
 		if p.isPermitted(groupSettings["allow_groups_transcend_mute"], groupSettings["deny_groups_transcend_mute"]):
@@ -176,7 +194,7 @@ def allowMsg(cn, text):
 			messenger.sendPlayerMessage('spectators_muted', p)
 			return False
 		elif isIpMuted(ipAddress):
-			messenger.sendPlayerMessage('player_muted', p)
+			messager.sendPlayerMessage('player_muted', p)
 			return False
 		else:
 			return True

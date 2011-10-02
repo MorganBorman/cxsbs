@@ -115,7 +115,7 @@ def playerRecordNextMatch(cn, val):
 def persistRecordNextMatch(*args):
 	ServerCore.setRecordNextMatch(settings["persistent_recording"])
 
-@Commands.commandHandler('toggledemo')
+@Commands.commandHandler('persistdemo')
 def togglePersistantDemoRecord(cn, args):
 	'''
 	@description Toggle persistent demo

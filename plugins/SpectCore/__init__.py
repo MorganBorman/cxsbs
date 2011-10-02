@@ -68,7 +68,7 @@ Messages.addMessage	(
 						subcategory=pluginCategory, 
 						symbolicName="player_spectated", 
 						displayName="player spectated", 
-						default="${denied}You are currently ${blue}force spectated${white}. No one will receive your message.", 
+						default="${denied}You are currently ${blue}force spectated${white}. You cannot unspectate right now.", 
 						doc="Message to print when a force spectated player tries to unspectate."
 					)
 
@@ -99,6 +99,16 @@ class Spect(Base):
 		return self.expiration <= time.time()
 
 Base.metadata.create_all(DatabaseManager.dbmanager.engine)
+
+def clearByReason(reason):
+	session = DatabaseManager.dbmanager.session()
+	try:
+		spects = session.query(Spect).filter(Spect.reason==reason).all()
+		for s in spects:
+			session.delete(s)
+		session.commit()
+	finally:
+		session.close()
 
 def getCurrentSpectByIp(ipaddress):
 	session = DatabaseManager.dbmanager.session()
@@ -141,23 +151,30 @@ def addSpect(cn, seconds, reason, responsible_cn, cidr=32):
 		session.commit()
 	finally:
 		session.close()
-	
-	Events.triggerServerEvent("player_spectated", (Net.ipLongToString(ip)+ "/" + str(cidr), seconds, expiration, reason, nick, responsible_ip, responsible_nick, theTime))
-	
-@Events.policyHandler('allow_message_team')
-@Events.policyHandler('allow_message')
-def allowMsg(cn, text):
-	try:
-		p = player(cn)
-		ipAddress = p.ipLong()
 		
-		if p.isPermitted(groupSettings["allow_groups_transcend_spectate"], groupSettings["deny_groups_transcend_spectate"]):
-			return True
-		elif isIpSpectd(ipAddress):
-			messenger.sendPlayerMessage('player_spectated', p)
-			return False
-		else:
-			return True
-	except (AttributeError, ValueError):
+	ServerCore.spectate(cn)
+	Events.triggerServerEvent("player_punished", ("force spectated", Net.ipLongToString(ip)+ "/" + str(cidr), seconds, expiration, reason, nick, responsible_ip, responsible_nick, theTime))
+
+@Events.policyHandler('player_unspectate')
+def onUnspectate(cn, tcn):
+	if cn != tcn:
+				return True
+	#try:
+	p = Players.player(cn)
+	ipAddress = p.ipLong()
+	
+	if p.isPermitted(groupSettings["allow_groups_transcend_spectate"], groupSettings["deny_groups_transcend_spectate"]):
+		return True
+	elif isIpSpectd(ipAddress):
+		Timers.addTimer(200, messager.sendPlayerMessage, ('player_spectated', p))
+		return False
+	else:
+		return True
+	#except (AttributeError, ValueError):
 		pass
 	return True
+	
+@Events.eventHandler('player_active')
+def onJoin(cn):
+	if not onUnspectate(cn, cn):
+		ServerCore.spectate(cn)

@@ -20,6 +20,7 @@ ServerCore = cxsbs.getResource("ServerCore")
 SettingsManager = cxsbs.getResource("SettingsManager")
 Setting = cxsbs.getResource("Setting")
 Net = cxsbs.getResource("Net")
+SetMaster = cxsbs.getResource("SetMaster")
 
 from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
@@ -54,19 +55,29 @@ class Ban(Base):
 	responsible_ip = Column(Integer)
 	responsible_nick= Column(String(length=16))
 	time = Column(Integer)
-	def __init__(self, ip, mask, expiration, reason, name, responsible_ip, banner_nick, time):
+	def __init__(self, ip, mask, expiration, reason, name, responsible_ip, responsible_nick, time):
 		self.ip = ip
 		self.mask = mask
 		self.expiration = expiration
 		self.reason = reason
 		self.name = name
 		self.responsible_ip = responsible_ip
-		self.responsible_nick= banner_nick
+		self.responsible_nick= responsible_nick
 		self.time = time
 	def isExpired(self):
 		return self.expiration <= time.time()
 
 Base.metadata.create_all(DatabaseManager.dbmanager.engine)
+
+def clearByReason(reason):
+	session = DatabaseManager.dbmanager.session()
+	try:
+		bans = session.query(Ban).filter(Ban.reason==reason).all()
+		for b in bans:
+			session.delete(b)
+		session.commit()
+	finally:
+		session.close()
 
 def getCurrentBanByIp(ipaddress):
 	session = DatabaseManager.dbmanager.session()
@@ -84,15 +95,15 @@ def isIpBanned(ipaddress):
 	except MultipleResultsFound:
 		return True
 
-def addBan(cn, seconds, reason, banner_cn, cidr=32):
+def addBan(cn, seconds, reason, responsible_cn, cidr=32):
 
 	ip = ServerCore.playerIpLong(cn)
 	expiration = time.time() + seconds
 	nick = ServerCore.playerName(cn)
 	
-	if banner_cn != -1:
-		responsible_ip = ServerCore.playerIpLong(banner_cn)
-		responsible_nick= ServerCore.playerName(banner_cn)
+	if responsible_cn != -1:
+		responsible_ip = ServerCore.playerIpLong(responsible_cn)
+		responsible_nick= ServerCore.playerName(responsible_cn)
 	else:
 		responsible_ip = 0
 		responsible_nick= 'the server'
@@ -101,7 +112,7 @@ def addBan(cn, seconds, reason, banner_cn, cidr=32):
 	
 	mask = Net.makeMask(cidr)
 		
-	newban = Ban(ip, mask, expiration, reason, nick, responsible_ip, banner_nick, theTime)
+	newban = Ban(ip, mask, expiration, reason, nick, responsible_ip, responsible_nick, theTime)
 
 	session = DatabaseManager.dbmanager.session()
 	try:
@@ -111,10 +122,14 @@ def addBan(cn, seconds, reason, banner_cn, cidr=32):
 		session.close()
 	
 	Timers.addTimer(200, ServerCore.playerKick, (cn,))
-	Events.triggerServerEvent("player_banned", (Net.ipLongToString(ip)+ "/" + str(cidr), seconds, expiration, reason, nick, responsible_ip, banner_nick, theTime))
+	Events.triggerServerEvent("player_punished", ("banned", Net.ipLongToString(ip)+ "/" + str(cidr), seconds, expiration, reason, nick, responsible_ip, responsible_nick, theTime))
 	
 @Events.policyHandler('connect_kick')
 def allowClient(cn, pwd):
+	connecthash = ServerCore.hashPassword(cn, SetMaster.settings["connect_password"])
+	if pwd == connecthash:
+		return True
+	
 	ip = ServerCore.playerIpLong(cn)
 	return not isIpBanned(ip)
 

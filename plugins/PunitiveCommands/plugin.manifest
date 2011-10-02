@@ -1,0 +1,17 @@
+[Plugin]
+Name = Punitive Commands
+SymbolicName = PunitiveCommands
+Version = 0.0.1
+Author = Chasm
+Enabled = True
+
+[Dependencies]
+MuteCore = 0.0.1
+BanCore = 0.0.1
+SpectCore = 0.0.1
+Commands = 0.0.1
+Messages = 0.0.1
+Setting = 0.0.1
+SettingsManager = 0.0.1
+Logging = 0.0.1
+Events = 0.0.1
