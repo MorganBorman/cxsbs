@@ -11,7 +11,7 @@ class Plugin(cxsbs.Plugin.Plugin):
 		Events.registerServerEventHandler('autoteam', teamManager.autoTeam)
 		Events.registerServerEventHandler('player_switch_team', teamManager.onSwitchTeam)
 		Events.registerServerEventHandler('player_set_team', teamManager.onSetTeam)
-		Events.registerServerEventHandler('player_connect', teamManager.onDisconnect)
+		Events.registerServerEventHandler('player_connect_delayed', teamManager.onConnect)
 		Events.registerServerEventHandler('player_disconnect', teamManager.onDisconnect)
 		Events.registerServerEventHandler('player_spectated', teamManager.onSpectate)
 		Events.registerServerEventHandler('player_unspectated', teamManager.onUnspectate)
@@ -187,6 +187,14 @@ Messages.addMessage	(
 
 Messages.addMessage	(
 						subcategory=pluginCategory, 
+						symbolicName="teams_locked", 
+						displayName="Teams locked", 
+						default="${denied}The teams are ${red}locked${white}, you cannot switch.", 
+						doc="Format of message to print when user tries to switch while teams are locked."
+					)
+
+Messages.addMessage	(
+						subcategory=pluginCategory, 
 						symbolicName="team_set", 
 						displayName="Team set", 
 						default="${info}${green}${actor}${white} has been moved to team ${blue}${teamName}${white} by ${green}${director}${white}.", 
@@ -216,6 +224,11 @@ def isSafeTeam(team):
 @Events.policyHandler('player_switch_team')
 def onSwitchTeam(cn, team):
 	p = Players.player(cn)
+	
+	if not p.isPermitted(groupSettings['allow_groups_switch_teams'], groupSettings['deny_groups_switch_teams']):
+		UI.insufficientPermissions(cn)
+		return False
+	
 	if isSafeTeam(team):
 		return True
 	else:
@@ -226,12 +239,10 @@ def onSwitchTeam(cn, team):
 def onSetTeam(cn, tcn, team):
 	p = Players.player(cn)
 	
-	if tcn != cn and not p.isPermitted(groupSettings['allow_groups_set_team'], groupSettings['deny_groups_set_team']):
+	if not p.isPermitted(groupSettings['allow_groups_set_team'], groupSettings['deny_groups_set_team']):
 		UI.insufficientPermissions(cn)
 		return False
-	if tcn == cn and not p.isPermitted(groupSettings['allow_groups_switch_teams'], groupSettings['deny_groups_switch_teams']):
-		UI.insufficientPermissions(cn)
-		return False
+
 	if isSafeTeam(team):
 		return True
 	else:
@@ -254,9 +265,10 @@ class TeamManager:
 		if self.sticky:
 			for key in self.playerTeams.keys():
 				try:
+					#print key, self.playerTeams[key]
 					ServerCore.pregameSetTeam(key, self.playerTeams[key])
 				except ValueError:
-					pass
+					print "Value error in plugin Team's autoteam function."
 		
 	def allowSwitchTeam(self, cn, team):
 		"""for allow_switch_teams policy handler"""
@@ -268,6 +280,7 @@ class TeamManager:
 			elif p.isSpectator():
 				return True
 			else:
+				messager.sendPlayerMessage('teams_locked', p)
 				return False
 		else:
 			return True
@@ -302,16 +315,16 @@ class TeamManager:
 			messager.sendMessage('team_switch', dictionary={'teamName': p.team(), 'name': p.name()})
 			self.playerTeams[cn] = team
 			
-	def onSetTeam(self, tcn, cn, team):
+	def onSetTeam(self, cn, tcn, team):
 		if tcn == cn:
 			self.onSwitchTeam(cn, team)
 		elif Events.triggerPolicyEvent('player_set_team', (cn, tcn, team)):
 			p = Players.player(cn)
 			q = Players.player(tcn)
-			Events.execLater(p.suicide, ())
-			p.setTeam(team)
-			messager.sendMessage('team_set', dictionary={'teamName': p.team(), 'actor': p.name(), 'director': q.name()})
-			self.playerTeams[cn] = team
+			Events.execLater(q.suicide, ())
+			q.setTeam(team)
+			messager.sendMessage('team_set', dictionary={'teamName': q.team(), 'actor': q.name(), 'director': p.name()})
+			self.playerTeams[tcn] = team
 		
 	def onConnect(self, cn):
 		"""Maintain the self.teams data structure"""

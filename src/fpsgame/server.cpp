@@ -313,7 +313,7 @@ namespace server
         vector<clientinfo *> team[2];
         float teamrank[2] = {0, 0};
         int remaining = clients.length();
-        SbPy::triggerEvent("sync_autoteam", 0);
+        SbPy::triggerEvent("autoteam", 0);
         // We arent going to set clients already assigned a team
         clientinfo *ci;
         loopv(clients)
@@ -1075,7 +1075,7 @@ namespace server
 
     void changemap(const char *s, int mode)
     {
-        SbPy::triggerEvent("sync_map_changed_pre", 0);
+        SbPy::triggerEvent("map_changed_pre", 0);
         stopdemo();
         //pausegame(false);
         if(smode) smode->reset(false);

@@ -176,8 +176,10 @@ def onFirstEverClient():
 			
 @Events.eventHandler('player_connect')
 def onConnect(cn):
+	global rotationLoaded
 	if not rotationLoaded:
 		onFirstEverClient()
+		rotationLoaded = True
 		
 	elif settings['use_preset_rotation']:
 		if Server.clientCount() == 0 and settings['newmap_on_first_client']:

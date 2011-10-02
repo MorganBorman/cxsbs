@@ -1,0 +1,8 @@
+[Plugin]
+Name = Clan war
+SymbolicName = ClanWar
+Version = 0.0.1
+Author = Chasm
+Enabled = False
+
+[Dependencies]

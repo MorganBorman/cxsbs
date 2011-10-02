@@ -188,7 +188,7 @@ class Model(UserModelBase.Model):
 		returns a boolean
 		"""
 		try:
-			self.__isUser(self, userId)
+			self.__isUser(userId)
 			return True
 		except UserModelBase.InvalidUserId:
 			return False
@@ -207,7 +207,6 @@ class Model(UserModelBase.Model):
 			raise UserModelBase.InvalidUserId(userId)
 		finally:
 			session.close()
-		
 	
 	def getUserId(self, userEmail):
 		"""Get a users id by their email
@@ -538,7 +537,7 @@ class Model(UserModelBase.Model):
 			group = Group(groupName)
 			session.add(group)
 			session.commit()
-			return getGroupId(groupName)
+			return self.getGroupId(groupName)
 		except:
 			raise UserModelBase.InvalidGroupName(groupName)
 		finally:
@@ -578,7 +577,7 @@ class Model(UserModelBase.Model):
 			else:
 				groupMemberships = session.query(GroupMembership).filter(GroupMembership.userId==userId).all()
 				for groupMembership in groupMemberships:
-					groupNames.append(groupMembership.group.name)
+					groupNames.append(str(groupMembership.group.name))
 					
 			return groupNames
 		finally:

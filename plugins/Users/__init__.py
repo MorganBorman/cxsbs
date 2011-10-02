@@ -310,4 +310,48 @@ def authChallengeResponse(cn, reqid, response):
 		p.challengeAnswer = None
 		print "Auth challenge failed"
 	
+@Commands.commandHandler('addtogroup')
+def addToGroupCommand(cn, args):
+	'''
+	@description Add a user to a group
+	@usage <email> <group name>
+	@allowGroups __admin__
+	@denyGroups
+	@doc Adds a user to a specified group, creating said group if necessary.
+	'''
+	args = args.split()
+	if len(args) != 2:
+		raise Commands.UsageError()
+	email = args[0]
+	groupName = args[1]
+	
+	userId = UserModel.model.getUserId(email)
+	try:
+		groupId = UserModel.model.getGroupId(groupName)
+	except UserModelBase.InvalidGroupName:
+		groupId = UserModel.model.createGroup(groupName)
 		
+	#try:
+	UserModel.model.addToGroup(userId, groupId)
+	#except:
+	#	pass
+	
+@Commands.commandHandler('removefromgroup')
+def removeFromGroupCommand(cn, args):
+	'''
+	@description Remove a user from a group
+	@usage <email> <group name>
+	@allowGroups __admin__
+	@denyGroups
+	@doc Removes a user from a specified group.
+	'''
+	args = args.split()
+	if len(args) != 2:
+		raise Commands.UsageError()
+	email = args[0]
+	groupName = args[1]
+	
+	userId = UserModel.model.getUserId(email)
+	groupId = UserModel.model.getGroupId(groupName)
+	
+	UserModel.model.removeFromGroup(userId, groupId)
