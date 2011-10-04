@@ -334,10 +334,15 @@ def authRequest(cn, name, desc):
 			
 @Events.eventHandler('player_auth_challenge_response')
 def authChallengeResponse(cn, reqid, response):
-	#print "Request id from table:", type(requestIdTable[cn]), requestIdTable[cn]
-	#print "Request id from event:", type(reqid), reqid
 	p = Players.player(cn)
-	if not reqid == requestIdTable[cn]:
+	try:
+		requestId = requestIdTable[cn]
+	except KeyError:
+		#Challenge must not have been issued by the auth login functionality
+		#otherwise there would be a requestId in the table.
+		return
+	
+	if not reqid == requestId:
 		print "returned because request id did not match that in table."
 		messager.sendPlayerMessage('authlogin_unsuccessful', p)
 		return

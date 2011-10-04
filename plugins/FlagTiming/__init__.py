@@ -316,7 +316,7 @@ class FlagTimingAuthority:
 		if not Game.currentMode() in self.timedModes:
 			return
 			
-		p = player(cn)
+		p = Players.player(cn)
 		self.flagStatus[Game.teamNumber(p.team())] = "dirty"
 		self.clear(cn)
 	
@@ -348,8 +348,8 @@ class FlagTimingAuthority:
 			return
 			
 		if cn in self.activeRuns.keys():
-			p = player(cn)
-			t = player(tcn)
+			p = Players.player(cn)
+			t = Players.player(tcn)
 			
 			if p.team() != t.team():
 				self.activeRuns[cn]["frags"] += 1
