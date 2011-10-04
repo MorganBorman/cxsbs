@@ -344,7 +344,7 @@ def authChallengeResponse(cn, reqid, response):
 	else:
 		del requestIdTable[cn]
 	
-	serverId = "wooooh"
+	serverId = 0
 	
 	if response == p.challengeAnswer:
 		login = UserModel.model.login(p.userId, serverId)

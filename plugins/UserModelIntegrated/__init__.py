@@ -71,7 +71,7 @@ class User(Base):
 	__tablename__ = tableSettings["user_table"]
 	id = Column(Integer, primary_key=True)
 	email = Column(String(64), nullable=False)
-	publicKey = Column(String(16), index=True)
+	publicKey = Column(String(49), index=True)
 	serverId = Column(Integer, nullable=True)
 	def __init__(self, email, publicKey):
 		self.email = email
