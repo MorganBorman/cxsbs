@@ -1,0 +1,11 @@
+[Plugin]
+Name = Message of the day
+SymbolicName = Motd
+Version = 0.0.1
+Author = Chasm
+Enabled = True
+
+[Dependencies]
+Events = 0.0.1
+Players = 0.0.1
+Messages = 0.0.1

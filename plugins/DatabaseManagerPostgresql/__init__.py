@@ -72,7 +72,7 @@ class DatabaseManagerBackend(DatabaseManagerBase.DatabaseManagerBackend):
 
 	def initEngine(self):
 		uri = self.protocol + self.user + ":" + self.password + "@" + self.host + ":" + self.port + "/" + self.database
-		self.engine = create_engine(uri, echo=False, poolclass=NullPool)
+		self.engine = create_engine(uri, echo=False)
 		self.sessionFactory = sqlalchemy.orm.sessionmaker(bind=self.engine, autocommit=False, autoflush=False)
 
 	def readConfiguration(self):
