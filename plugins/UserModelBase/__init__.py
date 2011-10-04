@@ -313,11 +313,6 @@ class InvalidUserId(Exception):
 	def __init__(self, value=''):
 		Exception.__init__(self, value)
 		
-class InvalidUserName(Exception):
-	'''...'''
-	def __init__(self, value=''):
-		Exception.__init__(self, value)
-		
 class InvalidEmail(Exception):
 	'''...'''
 	def __init__(self, value=''):
@@ -354,6 +349,16 @@ class InvalidGroupId(Exception):
 		Exception.__init__(self, value)
 		
 class InvalidGroupName(Exception):
+	'''...'''
+	def __init__(self, value=''):
+		Exception.__init__(self, value)
+		
+class DuplicateAssociation(Exception):
+	'''...'''
+	def __init__(self, value=''):
+		Exception.__init__(self, value)
+		
+class InvalidAssociation(Exception):
 	'''...'''
 	def __init__(self, value=''):
 		Exception.__init__(self, value)

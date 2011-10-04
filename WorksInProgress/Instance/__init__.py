@@ -5,10 +5,10 @@ class Plugin(cxsbs.Plugin.Plugin):
 		cxsbs.Plugin.Plugin.__init__(self)
 		
 	def load(self):
-		init()
+		pass
 		
 	def reload(self):
-		init()
+		pass
 		
 	def unload(self):
 		pass

@@ -591,6 +591,7 @@ class Model(UserModelBase.Model):
 		
 		raises InvalidUserId if the user does not exist
 		raises InvalidGroupId if the group does not exist
+		raises DuplicateAssociation if the association already exists
 		"""
 		#validate the userId
 		self.isUser(userId)
@@ -598,6 +599,19 @@ class Model(UserModelBase.Model):
 		#validate the groupId
 		self.isGroup(groupId)
 		
+		#check whether the association already exists
+		session = DatabaseManager.dbmanager.session()
+		try:
+			groupMembership = session.query(GroupMembership).filter(GroupMembership.userId==userId).one()
+			raise UserModelBase.DuplicateAssociation()
+		except NoResultFound:
+			pass
+		except MultipleResultsFound:
+			pass
+		finally:
+			session.close()
+		
+		#actually add the association
 		session = DatabaseManager.dbmanager.session()
 		try:
 			groupMembership = GroupMembership(userId, groupId)
@@ -614,6 +628,7 @@ class Model(UserModelBase.Model):
 		
 		raises InvalidUserId if the user does not exist
 		raises InvalidGroupId if the group does not exist
+		raise InvalidAssociation if the association does not exist
 		"""
 		#validate the userId
 		self.isUser(userId)
@@ -621,10 +636,24 @@ class Model(UserModelBase.Model):
 		#validate the groupId
 		self.isGroup(groupId)
 		
+		#check whether the association already exists
 		session = DatabaseManager.dbmanager.session()
 		try:
-			groupMembership = session.query(GroupMembership).filter(GroupMembership.userId==userId).filter(GroupMembership.groupId==groupId).one()
-			session.delete(groupMembership)
+			groupMembership = session.query(GroupMembership).filter(GroupMembership.userId==userId).one()
+			pass
+		except NoResultFound:
+			raise UserModelBase.InvalidAssociation
+		except MultipleResultsFound:
+			pass
+		finally:
+			session.close()
+		
+		#actually remove the associations
+		session = DatabaseManager.dbmanager.session()
+		try:
+			groupMemberships = session.query(GroupMembership).filter(GroupMembership.userId==userId).filter(GroupMembership.groupId==groupId).all()
+			for groupMembership in groupMemberships:
+				session.delete(groupMembership)
 			session.commit()
 		except NoResultFound:
 			raise UserModelBase.InvalidGroupId

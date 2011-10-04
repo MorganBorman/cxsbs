@@ -62,7 +62,7 @@ class EventThreadQueuer:
 		self.__name__ = f.__name__
 
 	def __call__(self, *args, **kwargs):
-		cxsbs.AsyncronousExecutor.queue(self.func, *args, **kwargs)
+		cxsbs.AsyncronousExecutor.dispatch(self.func, args=args, kwargs=kwargs, time=0)
 		
 class threadedEventHandler(object):
 	'''Decorator to register an event as an asyncronous event handler.'''

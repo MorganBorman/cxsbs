@@ -69,7 +69,7 @@ messager = Messages.getAccessor(subcategory=pluginCategory)
 def onMapModified(cn):
 	p = Players.player(cn)
 	if not p.isInvisible():
-		messager.messagePlayer('map_modified', p, dictionary={'name':p.name()})
+		messager.sendPlayerMessage('map_modified', p, dictionary={'name':p.name()})
 	p.gamevars['modified_map'] = True
 	if not onUnspectate(cn, cn):
 		p.spectate()
@@ -88,7 +88,7 @@ def onUnspectate(cn, tcn):
 			return True
 		
 	if cn == tcn:
-		messager.messagePlayer('modified_unspec', p)
+		messager.sendPlayerMessage('modified_unspec', p)
 		
 	return False
 

@@ -19,7 +19,6 @@ import time
 import cxsbs
 UserModel = cxsbs.getResource("UserModel")
 Players = cxsbs.getResource("Players")
-ClanTags = cxsbs.getResource("ClanTags")
 UserModelBase = cxsbs.getResource("UserModelBase")
 Setting = cxsbs.getResource("Setting")
 SettingsManager = cxsbs.getResource("SettingsManager")
@@ -154,43 +153,8 @@ def isLoggedIn(cn):
 		return isinstance(Players.player(cn), User)
 	except:
 		return False 
-
-"""
-def warnNickReserved(cn, count, startTime=None):
-	try:
-		p = Players.player(cn)
-	except ValueError:
-		return
-	
-	if startTime == None:
-		startTime = time.time()
-		p.gamevars['nickWarningStartTime'] = startTime
-	elif not 'nickWarningStartTime' in p.gamevars.keys():
-		p.gamevars['nickWarningStartTime'] = startTime
 		
-	if startTime != p.gamevars['nickWarningStartTime']:
-		return
-	
-	try:
-		userId = p.userId
-	except:
-		userId = None
-	
-	playerNick = ClanTags.stripTags(p.name())
-	
-	if UserModel.model.isNickAllowed(playerNick, userId):
-		return
-	
-	if count > settings["max_warnings"]:
-		BanCore.addBan(cn, 0, 'Use of reserved name', -1)
-		return
-	
-	remaining = (settings["max_warnings"]*settings["warning_interval"]) - (count*settings["warning_interval"])
-	messager.sendMessage('name_reserved', dictionary={'name':playerNick, 'remaining':remaining})
-	Timers.addTimer(settings["warning_interval"]*1000, warnNickReserved, (cn, count+1, startTime))
-"""
-		
-@Commands.threadedCommandHandler('register')
+@Commands.commandHandler('register')
 def onRegisterCommand(cn, args):
 	'''
 	@description Register account with server
@@ -215,7 +179,7 @@ def onRegisterCommand(cn, args):
 	try:
 		verificationDict = UserModel.model.createUser(email, authenticationTokenSeed)
 		
-		Email.send_templated_email(verificationDict['verificationType'], verificationDict['userEmail'], **verificationDict)
+		cxsbs.AsyncronousExecutor.dispatch(Email.send_templated_email, (verificationDict['verificationType'], verificationDict['userEmail']), verificationDict)
 		
 		p = Players.player(cn)
 		messager.sendPlayerMessage('registration_successful', p)
@@ -223,7 +187,7 @@ def onRegisterCommand(cn, args):
 	except UserModelBase.InvalidEmail:
 		raise Commands.StateError('The email you provided is not valid.')
 	
-@Commands.threadedCommandHandler('unregister')
+@Commands.commandHandler('unregister')
 def onUnregisterCommand(cn, args):
 	'''
 	@description Unregister this account with server
@@ -236,7 +200,7 @@ def onUnregisterCommand(cn, args):
 	try:
 		verificationDict = UserModel.model.deleteUser(user.userId)
 		
-		Email.send_templated_email(verificationDict['verificationType'], verificationDict['userEmail'], **verificationDict)
+		cxsbs.AsyncronousExecutor.dispatch(Email.send_templated_email, (verificationDict['verificationType'], verificationDict['userEmail']), verificationDict)
 		
 		p = Players.player(cn)
 		messager.sendPlayerMessage('unregistration_successful', p)
@@ -244,7 +208,7 @@ def onUnregisterCommand(cn, args):
 	except UserModelBase.InvalidUserId:
 		raise Commands.StateError('You must be logged in to link a name to your account.')
 	
-@Commands.threadedCommandHandler('verify')
+@Commands.commandHandler('verify')
 def onVerifyCommand(cn, args):
 	'''
 	@description Supply verification for a pending action
@@ -262,7 +226,7 @@ def onVerifyCommand(cn, args):
 	try:
 		verificationDict = UserModel.model.verify(args[0], args[1])
 
-		Email.send_templated_email(verificationDict['verificationType'], verificationDict['userEmail'], **verificationDict)
+		cxsbs.AsyncronousExecutor.dispatch(Email.send_templated_email, (verificationDict['verificationType'], verificationDict['userEmail']), verificationDict)
 		
 		messager.sendPlayerMessage('verification_successful', p)
 
@@ -301,7 +265,7 @@ def onLinkNameCommand(cn, args):
 	#except UserModelBase.:
 """
 
-@Commands.threadedCommandHandler('changekey')
+@Commands.commandHandler('changekey')
 def onChangeKeyCommand(cn, args):
 	'''
 	@description change account password
@@ -318,10 +282,10 @@ def onChangeKeyCommand(cn, args):
 	try:
 		verificationDict = UserModel.model.changeUserKey(user.userId, args)
 		
-		Email.send_templated_email(verificationDict['verificationType'], verificationDict['userEmail'], **verificationDict)
+		cxsbs.AsyncronousExecutor.dispatch(Email.send_templated_email, (verificationDict['verificationType'], verificationDict['userEmail']), verificationDict)
 		
 		p = Players.player(cn)
-		messager.sendPlayerMessage('keychange_successfull', p)
+		messager.sendPlayerMessage('keychange_successful', p)
 		
 	except UserModelBase.InvalidUserId:
 		raise Commands.StateError('You must be logged in to change your authentication key.')
@@ -329,7 +293,13 @@ def onChangeKeyCommand(cn, args):
 @Events.eventHandler('player_auth_request')
 def authRequest(cn, name, desc):
 	p = Players.player(cn)
-	if Auth.settings["automatic_request_description"]:
+	if desc == Auth.settings["automatic_request_description"]:
+		try:
+			if p.pendingAuthLogin:
+				return
+		except AttributeError:
+			pass
+		
 		try:
 			userId = UserModel.model.getUserId(name)
 			publicKey = UserModel.model.getUserKey(userId)
@@ -391,24 +361,21 @@ def addToGroupCommand(cn, args):
 	if len(args) != 2:
 		raise Commands.UsageError()
 	
-	try:
-		cn = int(args[0])
-	except ValueError:
-		cn = None
-		
-	if cn != None:
-		if isLoggedIn(cn):
-			user = Players.player(cn)
-			userId = user.userId
-		else:
-			raise Commands.StateError("That player does not seem to be logged in.")
-	else:
+	if Email.isValidEmail(args[0]):
 		email = args[0]
 		
 		try:
 			userId = UserModel.model.getUserId(email)
 		except UserModelBase.InvalidEmail:
 			raise Commands.StateError("That email does not correspond to an account.")
+	else:
+		cn = int(args[0])
+		
+		if isLoggedIn(cn):
+			user = Players.player(cn)
+			userId = user.userId
+		else:
+			raise Commands.StateError("That player does not seem to be logged in.")
 	
 	groupName = args[1]
 		
@@ -417,7 +384,10 @@ def addToGroupCommand(cn, args):
 	except UserModelBase.InvalidGroupName:
 		groupId = UserModel.model.createGroup(groupName)
 		
-	UserModel.model.addToGroup(userId, groupId)
+	try:
+		UserModel.model.addToGroup(userId, groupId)
+	except UserModelBase.DuplicateAssociation:
+		raise Commands.StateError("That player already is in that group.")
 	
 	messager.sendPlayerMessage('group_add_success', Players.player(cn), dictionary={'name': UserModel.model.getUserEmail(userId), 'groupName': groupName})
 	
@@ -459,4 +429,6 @@ def removeFromGroupCommand(cn, args):
 		UserModel.model.removeFromGroup(userId, groupId)
 		messager.sendPlayerMessage('group_removed_success', Players.player(cn), dictionary={'name': UserModel.model.getUserEmail(userId), 'groupName': groupName})
 	except UserModelBase.InvalidGroupId:
+		raise Commands.StateError("That user is not a member of the specified group.")
+	except UserModelBase.InvalidAssociation:
 		raise Commands.StateError("That user is not a member of the specified group.")

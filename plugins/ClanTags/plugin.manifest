@@ -15,3 +15,5 @@ Timers = 0.0.1
 Setting = 0.0.1
 SettingsManager = 0.0.1
 Messages = 0.0.1
+Commands = 0.0.1
+Users = 0.0.1

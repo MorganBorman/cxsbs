@@ -7,9 +7,6 @@ class Plugin(cxsbs.Plugin.Plugin):
 	def load(self):
 		pass
 		
-	def reload(self):
-		pass
-		
 	def unload(self):
 		pass
 		
@@ -44,4 +41,8 @@ class SessionManager:
 		self.dbsession.commit(*args, **kwargs)
 		
 	def close(self, *args, **kwargs):
+		self.dbsession.flush()
+		self.dbsession.expire_all()
+		self.dbsession.expunge_all()
 		self.dbsession.close(*args, **kwargs)
+		del self.dbsession

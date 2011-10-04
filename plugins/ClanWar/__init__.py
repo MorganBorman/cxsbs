@@ -193,20 +193,6 @@ class ClanWar:
 		self.isIntermission = True
 		if not self.firstIntermission:
 			messager.sendMessage("intermission")
-	"""	
-	def start(self):
-		ServerCore.setAllowShooting(False)
-		
-		Server.setPaused(True, -1)
-		Server.setFrozen(True)
-		
-		clanWarTimer(10)
-		
-		Server.setFrozen(False)
-		Server.setPaused(False)
-		
-		time.sleep(.75)
-		ServerCore.setAllowShooting(True)"""
 		
 	def start(self):
 		ServerCore.setAllowShooting(False)
@@ -263,7 +249,7 @@ class ClanWarManager:
 		if self.enabled():
 			self.activeClanwar.onIntermission()
 
-@Commands.threadedCommandHandler('clanwar')
+@Commands.commandHandler('clanwar')
 def clanWar(cn, args):
 	'''
 	@description Toggle clanwar mode
