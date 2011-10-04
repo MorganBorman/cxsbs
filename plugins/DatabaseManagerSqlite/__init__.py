@@ -12,6 +12,8 @@ class Plugin(cxsbs.Plugin.Plugin):
 		
 	def unload(self):
 		pass
+	
+import sqlalchemy.orm
 
 import cxsbs
 DatabaseManagerBase = cxsbs.getResource("DatabaseManagerBase")
@@ -38,6 +40,7 @@ class DatabaseManagerBackend(DatabaseManagerBase.DatabaseManagerBackend):
 
 	def initEngine(self):
 		self.engine = create_engine(self.protocol + self.database, echo=False, poolclass=NullPool)
+		self.sessionFactory = sqlalchemy.orm.sessionmaker(bind=self.engine, autocommit=False, autoflush=False)
 		
 	def readConfiguration(self):
 		settings = SettingsManager.getAccessor(DatabaseManagerBase.databaseConfigurationFilename, subcategory="Sqlite")

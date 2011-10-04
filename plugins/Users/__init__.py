@@ -79,6 +79,14 @@ Messages.addMessage	(
 
 Messages.addMessage	(
 						subcategory=pluginCategory, 
+						symbolicName="already_logged_in", 
+						displayName="Already logged in", 
+						default="${denied}Already logged in.",
+						doc="Message to print when a player fails logging in due to already being logged in."
+					)
+
+Messages.addMessage	(
+						subcategory=pluginCategory, 
 						symbolicName='registration_successful', 
 						displayName='Registration successful', 
 						default="${info}Successfully initiated ${blue}registration${white} check your email for verification details.",
@@ -294,6 +302,10 @@ def onChangeKeyCommand(cn, args):
 def authRequest(cn, name, desc):
 	p = Players.player(cn)
 	if desc == Auth.settings["automatic_request_description"]:
+		if isLoggedIn(cn):
+			messager.sendPlayerMessage('already_logged_in', p)
+			return
+		
 		try:
 			if p.pendingAuthLogin:
 				return

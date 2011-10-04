@@ -62,6 +62,7 @@ class DatabaseManagerBackend(object):
 	@abc.abstractmethod
 	def initEngine(self):
 		self.engine = None
+		self.sessionFactory = sqlalchemy.orm.sessionmaker(bind=self.engine, autocommit=False, autoflush=False)
 	
 	def reconnect(self):
 		self.isConnected = False
@@ -69,7 +70,8 @@ class DatabaseManagerBackend(object):
 		self.connect()
 	
 	def dbsession(self):
-		return sqlalchemy.orm.sessionmaker(bind=self.engine, autocommit=False, autoflush=False)()
+		#sqlalchemy.orm.sessionmaker(bind=self.engine, autocommit=False, autoflush=False)
+		return self.sessionFactory()
 		
 	def session(self):
 		return DatabaseSession.SessionManager(self)

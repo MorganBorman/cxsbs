@@ -10,7 +10,7 @@ class Plugin(cxsbs.Plugin.Plugin):
 		refreshTags = False
 		
 		tagsUpdater = LoopingCall(updateTags)
-		tagsUpdater.start(5)
+		tagsUpdater.start(1)
 		
 		refreshTags = True
 		
@@ -61,6 +61,15 @@ SettingsManager.addSetting(Setting.IntSetting	(
 												doc="Amount of time between warnings about using a reserved clantag."
 											))
 
+SettingsManager.addSetting(Setting.BoolSetting	(
+												category=pluginCategory, 
+												subcategory="General", 
+												symbolicName="case_sensitive", 
+												displayName="Case sensitive", 
+												default=False,
+												doc="Should reservation of names be case sensitive."
+											))
+
 settings = SettingsManager.getAccessor(pluginCategory, "General")
 
 Messages.addMessage	(
@@ -107,7 +116,7 @@ Messages.addMessage	(
 						subcategory=pluginCategory, 
 						symbolicName="removed_association_many", 
 						displayName="Removed clantag associations", 
-						default="${info}Removed the clantag associations for tag ${blue}${tag}${white} and the groups ${blue}${groupName}${white}.", 
+						default="${info}Removed the clantag associations for tag ${blue}${tag}${white} and the groups ${blue}${groupNames}${white}.", 
 						doc="Message to print when a player removes several clantag-group associations."
 					)
 
@@ -204,9 +213,9 @@ def warnTagsReserved(cn, count, startTime=None):
 	
 	remaining = (settings["max_warnings"]*settings["warning_interval"]) - (count*settings["warning_interval"])
 	if len(disallowedTags) > 1:
-		messager.sendMessage('clantags_reserved', dictionary={'tag':', '.join(disallowedTags), 'remaining':remaining})
+		messager.sendPlayerMessage('clantags_reserved', p, dictionary={'tags':', '.join(disallowedTags), 'remaining':remaining})
 	else:
-		messager.sendMessage('clantag_reserved', dictionary={'tag':disallowedTags[0], 'remaining':remaining})
+		messager.sendPlayerMessage('clantag_reserved', p, dictionary={'tag':disallowedTags[0], 'remaining':remaining})
 	Timers.addTimer(settings["warning_interval"]*1000, warnTagsReserved, (cn, count+1, startTime))
 	
 @Events.eventHandler('player_name_changed')	
