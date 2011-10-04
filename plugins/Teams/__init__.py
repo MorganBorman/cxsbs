@@ -233,6 +233,9 @@ def isSafeTeam(team):
 def onSwitchTeam(cn, team):
 	p = Players.player(cn)
 	
+	if p.team() == team:
+		return False
+	
 	if not p.isPermitted(groupSettings['allow_groups_switch_teams'], groupSettings['deny_groups_switch_teams']):
 		UI.insufficientPermissions(cn)
 		return False
@@ -246,6 +249,9 @@ def onSwitchTeam(cn, team):
 @Events.policyHandler('player_set_team')
 def onSetTeam(cn, tcn, team):
 	p = Players.player(cn)
+	
+	if p.team() == team:
+		return False
 	
 	if not p.isPermitted(groupSettings['allow_groups_set_team'], groupSettings['deny_groups_set_team']):
 		UI.insufficientPermissions(cn)

@@ -5,12 +5,29 @@ class Plugin(cxsbs.Plugin.Plugin):
 		cxsbs.Plugin.Plugin.__init__(self)
 		
 	def load(self):
-		pass
+		global flagTimingAuthority
+		flagTimingAuthority = FlagTimingAuthority()
+		
+		Events.registerServerEventHandler('flag_taken', flagTimingAuthority.onTakeFlag)
+		Events.registerServerEventHandler('flag_dropped', flagTimingAuthority.onFlagDropped)
+		Events.registerServerEventHandler('flag_scored', flagTimingAuthority.onFlagScored)
+		Events.registerServerEventHandler('flag_stopped', flagTimingAuthority.onFlagStopped)
+		Events.registerServerEventHandler('flag_reset', flagTimingAuthority.onFlagReset)
+		#Events.registerServerEventHandler('flag_spawned', flagTimingAuthority.onFlagReset)
+		
+		Events.registerServerEventHandler('map_changed', flagTimingAuthority.onMapChange)
+		
+		Events.registerServerEventHandler('player_frag', flagTimingAuthority.onFrag)
+		
+		Events.registerServerEventHandler('paused', flagTimingAuthority.onPause)
+		Events.registerServerEventHandler('unpaused', flagTimingAuthority.onResume)
+		
+		Events.registerServerEventHandler('player_disconnect', flagTimingAuthority.onDisconnect)
 		
 	def unload(self):
 		pass
 	
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, func
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, func, Float
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -25,46 +42,91 @@ Timers = cxsbs.getResource("Timers")
 Setting = cxsbs.getResource("Setting")
 SettingsManager = cxsbs.getResource("SettingsManager")
 Messages = cxsbs.getResource("Messages")
-UserNames = cxsbs.getResource("UserNames")
+#UserNames = cxsbs.getResource("UserNames")
 
-from xsbs.users.displaynames import getDisplayNameByUser
-from xsbs.events import registerServerEventHandler
-from xsbs.game import currentMap, currentMode, modeName, teamNumber, teamName
-from xsbs.players import player
-from xsbs.settings import PluginConfig
+def getDisplayNameByUser(*args):
+	return "Unidentified"
+
 import time
 
-from xsbs.MessagingFramework import MessagingModule
+pluginCategory = "FlagTiming"
 
-config = PluginConfig('dbtables')
-tablename = config.getOption('FlagTiming', 'tablename', 'flagtimetrial')
-del config
+SettingsManager.addSetting(Setting.Setting	(
+												category=DatabaseManager.getDbSettingsCategory(),
+												subcategory=pluginCategory, 
+												symbolicName="table_name", 
+												displayName="Table name", 
+												default="flagruntimes",
+												doc="Table name for storing the clantag-group associations."
+											))
 
-messageModule = MessagingModule(config="flagtiming")
-messageModule.addMessage("thisRun", "Flag run ${green}completed${white} in ${blue}${recordTime}${white}")
-messageModule.addMessage("overall", "${green}${gameMode}${white} on ${orange}${gameMap}${white} as ${teamName}: ${green}${recordHolder}${white}: ${blue}${recordTime}${white}, split: ${split}")
-messageModule.addMessage("notLogged", "Please login to set records.")
+tableSettings = SettingsManager.getAccessor(DatabaseManager.getDbSettingsCategory(), pluginCategory)
 
-messageModule.addMessage("records", "${green}${gameMode}${white} on ${orange}${gameMap}${white} as ${teamName}: ${green}${recordHolder}${white}: ${blue}${recordTime}${white}")
-messageModule.addMessage("loggedRecords", "${green}${gameMode}${white} on ${orange}${gameMap}${white} as ${teamName}: ${green}${recordHolder}${white}: ${blue}${recordTime}${white}, personal: ${recordTime}")
+pluginCategory = "FlagTiming"
 
-messageModule.addMessage("interrupted", "flag run ${red}interrupted${white}, no time will be recorded.")
+Messages.addMessage	(
+						subcategory=pluginCategory, 
+						symbolicName="thisRun", 
+						displayName="This run", 
+						default="Flag run ${green}completed${white} in ${blue}${recordTime}${white}", 
+						doc="Message to print when a flag run finishes."
+					)
 
-messageModule.finalize()
+Messages.addMessage	(
+						subcategory=pluginCategory, 
+						symbolicName="overall", 
+						displayName="Overall", 
+						default="${green}${gameMode}${white} on ${orange}${gameMap}${white} as ${teamName}: ${green}${recordHolder}${white}: ${blue}${recordTime}${white}, split: ${split}", 
+						doc="Message to print when a flag run finishes, showing overall records."
+					)
+
+Messages.addMessage	(
+						subcategory=pluginCategory, 
+						symbolicName="notLogged", 
+						displayName="Not logged", 
+						default="${info}Please ${green}login${white} to set records.", 
+						doc="Message to print when a flag run starts but a player is not loggged in.",
+					)
+
+Messages.addMessage	(
+						subcategory=pluginCategory, 
+						symbolicName="records", 
+						displayName="Records", 
+						default="${green}${gameMode}${white} on ${orange}${gameMap}${white} as ${teamName}: ${green}${recordHolder}${white}: ${blue}${recordTime}${white}", 
+						doc="Message to print when a player requests the records for the map."
+					)
+
+Messages.addMessage	(
+						subcategory=pluginCategory, 
+						symbolicName="loggedRecords", 
+						displayName="Logged records", 
+						default="${green}${gameMode}${white} on ${orange}${gameMap}${white} as ${teamName}: ${green}${recordHolder}${white}: ${blue}${recordTime}${white}, personal: ${recordTime}", 
+						doc="Message to print when a player ...?."
+					)
+
+Messages.addMessage	(
+						subcategory=pluginCategory, 
+						symbolicName="interrupted", 
+						displayName="Interrupted", 
+						default="Flag run ${red}interrupted${white}, no time will be recorded.", 
+						doc="Message to print when a flag run is interrupted."
+					)
+
+messager = Messages.getAccessor(subcategory=pluginCategory)
 
 Base = declarative_base()
 
 class FlagRun(Base):
-	__tablename__= tablename
+	__tablename__= tableSettings["table_name"]
 	id = Column(Integer, primary_key=True)
 	userId = Column(Integer)
 	gameMap = Column(String(128), nullable=False)
 	gameMode = Column(Integer)
 	team = Column(Integer)
 	frags = Column(Integer)
-	start = Column(Integer)
-	end = Column(Integer)
-	time = Column(Integer)
+	start = Column(Float)
+	end = Column(Float)
+	time = Column(Float)
 	def __init__(self, userId, gameMap, gameMode, team, frags, start, end, time):
 		self.userId = userId
 		self.gameMap = gameMap
@@ -106,7 +168,7 @@ def splitFormat(time):
 
 def colorTeam(teamName):
 	if teamName == "good":
-		return blue(teamName)
+		return Colors.blue(teamName)
 	elif teamName == "evil":
 		return Colors.red(teamName)
 	else:
@@ -172,37 +234,37 @@ class FlagTimingAuthority:
 		if userId != None:
 			publicName = getDisplayNameByUser(userId)
 		
-		messageModule.sendMessage("thisRun", dictionary={"recordTime": timeFormat(time)})
+		messager.sendMessage("thisRun", dictionary={"recordTime": timeFormat(time)})
 		
 		if mapModeTeamBest != None:
 			previousHolder = getDisplayNameByUser(mapModeTeamBest.userId)
 			
 			data = {
-					"gameMode": gameMap,
-					"gameMap": modeName(gameMode),
-					"teamName": colorTeam(teamName(team)),
+					"gameMap": gameMap,
+					"gameMode": Game.modeName(gameMode),
+					"teamName": colorTeam(Game.teamName(team)),
 					"recordHolder": previousHolder,
 					"recordTime": timeFormat(mapModeTeamBest.time),
 					"split": splitFormat(time - mapModeTeamBest.time),
 				}
 		
-			messageModule.sendMessage("overall", dictionary=data)
+			messager.sendMessage("overall", dictionary=data)
 			
 		
 		if userMapModeTeamBest != None:
 			data = {
-					"gameMode": gameMap,
-					"gameMap": modeName(gameMode),
-					"teamName": colorTeam(teamName(team)),
+					"gameMap": gameMap,
+					"gameMode": Game.modeName(gameMode),
+					"teamName": colorTeam(Game.teamName(team)),
 					"recordHolder": "personal",
 					"recordTime": timeFormat(mapModeTeamBest.time),
 					"split": splitFormat(time - mapModeTeamBest.time),
 				}
 		
-			messageModule.sendMessage("overall", dictionary=data)
+			messager.sendMessage("overall", dictionary=data)
 		
 	def onTakeFlag(self, cn, team):
-		if not currentMode() in self.timedModes:
+		if not Game.currentMode() in self.timedModes:
 			return
 	
 		if self.flagStatus[team] == "clean":
@@ -211,8 +273,8 @@ class FlagTimingAuthority:
 			return
 		
 		try:
-			p = player(cn)
-			userId = p.user.id
+			p = Players.player(cn)
+			userId = p.userId
 		except AttributeError:
 			userId = None
 		except:
@@ -221,8 +283,8 @@ class FlagTimingAuthority:
 		self.activeRuns[cn] = {
 							"cn": cn,
 							"userId": userId,
-							"gameMap": currentMap(),
-							"gameMode": currentMode(),
+							"gameMap": Game.currentMap(),
+							"gameMode": Game.currentMode(),
 							"team": team, "frags": 0,
 							"start": time.time(),
 							"end": None,
@@ -230,14 +292,14 @@ class FlagTimingAuthority:
 							}
 	
 	def onFlagDropped(self, cn, team):
-		if not currentMode() in self.timedModes:
+		if not Game.currentMode() in self.timedModes:
 			return
 			
 		self.flagStatus[team] = "dirty"
 		self.clear(cn)
 	
 	def onFlagScored(self, cn, team):
-		if not currentMode() in self.timedModes:
+		if not Game.currentMode() in self.timedModes:
 			return
 			
 		self.flagStatus[team] = "clean"
@@ -251,38 +313,38 @@ class FlagTimingAuthority:
 		self.clear(cn)
 	
 	def onFlagStopped(self, cn, killerCn):
-		if not currentMode() in self.timedModes:
+		if not Game.currentMode() in self.timedModes:
 			return
 			
 		p = player(cn)
-		self.flagStatus[teamNumber(p.team())] = "dirty"
+		self.flagStatus[Game.teamNumber(p.team())] = "dirty"
 		self.clear(cn)
 	
 	def onFlagReset(self, team):
-		if not currentMode() in self.timedModes:
+		if not Game.currentMode() in self.timedModes:
 			return
 			
 		self.flagStatus[team] = "clean"
 		
 	def onMapChange(self, gameMap, gameMode):
-		if not currentMode() in self.timedModes:
+		if not Game.currentMode() in self.timedModes:
 			return
 		pass
 		
 	def onPause(self, cn):
-		if not currentMode() in self.timedModes:
+		if not Game.currentMode() in self.timedModes:
 			return
 			
 		pass
 		
 	def onResume(self, cn):
-		if not currentMode() in self.timedModes:
+		if not Game.currentMode() in self.timedModes:
 			return
 			
 		pass
 		
 	def onFrag(self, cn, tcn):
-		if not currentMode() in self.timedModes:
+		if not Game.currentMode() in self.timedModes:
 			return
 			
 		if cn in self.activeRuns.keys():
@@ -293,27 +355,9 @@ class FlagTimingAuthority:
 				self.activeRuns[cn]["frags"] += 1
 				
 	def onDisconnect(self, cn):
-		if not currentMode() in self.timedModes:
+		if not Game.currentMode() in self.timedModes:
 			return
 			
-		self.clear(cn)		
-		
-flagTimingAuthority = FlagTimingAuthority()
-
-registerServerEventHandler('flag_taken', flagTimingAuthority.onTakeFlag)
-registerServerEventHandler('flag_dropped', flagTimingAuthority.onFlagDropped)
-registerServerEventHandler('flag_scored', flagTimingAuthority.onFlagScored)
-registerServerEventHandler('flag_stopped', flagTimingAuthority.onFlagStopped)
-registerServerEventHandler('flag_reset', flagTimingAuthority.onFlagReset)
-#registerServerEventHandler('flag_spawned', flagTimingAuthority.onFlagReset)
-
-registerServerEventHandler('map_changed', flagTimingAuthority.onMapChange)
-
-registerServerEventHandler('player_frag', flagTimingAuthority.onFrag)
-
-registerServerEventHandler('paused', flagTimingAuthority.onPause)
-registerServerEventHandler('unpaused', flagTimingAuthority.onResume)
-
-registerServerEventHandler('player_disconnect', flagTimingAuthority.onDisconnect)
+		self.clear(cn)
 
 Base.metadata.create_all(DatabaseManager.dbmanager.engine)

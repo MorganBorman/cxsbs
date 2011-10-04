@@ -3,6 +3,16 @@ Name = Flag Timing
 SymbolicName = FlagTiming
 Version = 0.0.1
 Author = Chasm
-Enabled = False
+Enabled = True
 
 [Dependencies]
+Colors = 0.0.1
+Commands = 0.0.1
+Game = 0.0.1
+Players = 0.0.1
+DatabaseManager = 0.0.1
+Events = 0.0.1
+Timers = 0.0.1
+Setting = 0.0.1
+SettingsManager = 0.0.1
+Messages = 0.0.1
