@@ -36,6 +36,16 @@ from groups.Query import Contains, Not, Select, Intersection
 import time, random
 
 pluginCategory = "ClanWar"
+pluginSubcategory = 'General'
+
+SettingsManager.addSetting(Setting.BoolSetting	(
+												category=pluginCategory, 
+												subcategory=pluginSubcategory, 
+												symbolicName="end_when_vacant", 
+												displayName="End when vacant", 
+												default=True,
+												doc="Whether or not the clanwar should end when there are no clients connected."
+											))
 
 Messages.addMessage	(
 						subcategory=pluginCategory, 
@@ -278,3 +288,9 @@ def clanWar(cn, args):
 				clan2 = args[1]
 				
 		clanWarManager.initiate(clan1, clan2)
+		
+@Events.eventHandler('no_clients')
+def onEmpty():
+	if settings["end_when_vacant"]:
+		if clanWarManager.enabled():
+			clanWarManager.end()

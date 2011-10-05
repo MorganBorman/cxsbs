@@ -602,7 +602,7 @@ class Model(UserModelBase.Model):
 		#check whether the association already exists
 		session = DatabaseManager.dbmanager.session()
 		try:
-			groupMembership = session.query(GroupMembership).filter(GroupMembership.userId==userId).one()
+			groupMembership = session.query(GroupMembership).filter(GroupMembership.userId==userId).filter(GroupMembership.groupId==groupId).one()
 			raise UserModelBase.DuplicateAssociation()
 		except NoResultFound:
 			pass
