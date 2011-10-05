@@ -74,3 +74,10 @@ def onNoClients():
 		if ServerCore.masterMode() != settings["default_mastermode"]:
 			ServerCore.setMasterMode(settings["default_mastermode"])
 			Logging.info("Server empty: resetting mastermode to: " + MMNAMES[settings["default_mastermode"]])
+			
+@Events.policyHandler('player_unspectate')
+def onUnspectate(cn, tcn):
+	if ServerCore.masterMode() > 1:
+		return False
+	else:
+		return True
