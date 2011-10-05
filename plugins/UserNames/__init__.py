@@ -17,7 +17,7 @@ class Plugin(cxsbs.Plugin.Plugin):
 	def unload(self):
 		pass
 		
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
