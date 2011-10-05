@@ -68,16 +68,15 @@ def onSetMM(cn, mm):
 	messager.sendMessage('set_mastermode', dictionary={'name':p.name(), 'mastermode':MMNAMES[mm]})
 	ServerCore.setMasterMode(mm)
 
+@Events.eventHandler('server_start')
+def onServerStart():
+	if ServerCore.masterMode() != settings["default_mastermode"]:
+		ServerCore.setMasterMode(settings["default_mastermode"])
+		Logging.info("Server start: setting mastermode to: " + MMNAMES[settings["default_mastermode"]])
+
 @Events.eventHandler('no_clients')
 def onNoClients():
 	if settings["reset_when_empty"]:
 		if ServerCore.masterMode() != settings["default_mastermode"]:
 			ServerCore.setMasterMode(settings["default_mastermode"])
 			Logging.info("Server empty: resetting mastermode to: " + MMNAMES[settings["default_mastermode"]])
-			
-@Events.policyHandler('player_unspectate')
-def onUnspectate(cn, tcn):
-	if ServerCore.masterMode() > 1:
-		return False
-	else:
-		return True
