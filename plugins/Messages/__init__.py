@@ -106,3 +106,4 @@ def addMessage(subcategory, symbolicName, displayName, default, doc, category="M
 def getAccessor(subcategory, category="Messages"):
 	"""Get an accessor for a particular category and subcategory."""
 	return messagesManager.getAccessor(category=category, subcategory=subcategory)
+	

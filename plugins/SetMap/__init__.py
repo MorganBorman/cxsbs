@@ -174,8 +174,6 @@ def whenSetMap(p, mapName, modeNumber):
 def onMapVote(cn, mapName, modeNumber):
 	p = Players.player(cn)
 	
-	playerGroups = p.groups()
-	
 	#check if players group can actually change map at all
 	if not p.isPermitted(groupSettings["allow_groups_change_map"], groupSettings["deny_groups_change_map"]):
 		messager.sendPlayerMessage('denied_change_map', p)

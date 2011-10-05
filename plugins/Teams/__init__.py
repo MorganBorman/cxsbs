@@ -304,7 +304,11 @@ class TeamManager:
 				
 	def onSpectate(self, cn):
 		p = Players.player(cn)
-		self.unspectateTeams[cn] = self.playerTeams[cn]
+		try:
+			self.unspectateTeams[cn] = self.playerTeams[cn]
+		except:
+			self.unspectateTeams[cn] = "good"
+			
 		try:
 			del self.playerTeams[cn]
 		except IndexError:
