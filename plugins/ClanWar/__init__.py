@@ -47,6 +47,8 @@ SettingsManager.addSetting(Setting.BoolSetting	(
 												doc="Whether or not the clanwar should end when there are no clients connected."
 											))
 
+settings = SettingsManager.getAccessor(pluginCategory, pluginSubcategory)
+
 Messages.addMessage	(
 						subcategory=pluginCategory, 
 						symbolicName="count_down", 
