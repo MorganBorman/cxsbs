@@ -164,13 +164,5 @@ def getCommandInfo(command):
 		return None
 	
 def allowCommand(cmd, p):
-	playerGroups = p.groups()
-	allow = False
-	for group in playerGroups:
-		if group in cmd.allowGroups:
-			allow = True
-	for group in playerGroups:
-		if group in cmd.denyGroups:
-			return False
-	return allow
+	return p.isPermitted(cmd.getAllowedGroups(), cmd.getDeniedGroups())
 			

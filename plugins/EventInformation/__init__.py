@@ -152,10 +152,7 @@ def getEventHandlerInfo(handlerFunction):
 		return None
 	
 def allowEvent(eventInfo, p):
-	playerGroups = p.groups()
-	for group in playerGroups:
-		if group in eventInfo.allowGroups and not group in eventInfo.denyGroups:
-			return True
+	return p.isPermitted(eventInfo.getAllowedGroups(), eventInfo.getDeniedGroups())
 		
 def init():
 	global eventhandler_info
