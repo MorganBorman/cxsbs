@@ -5,14 +5,7 @@ class Plugin(cxsbs.Plugin.Plugin):
 		cxsbs.Plugin.Plugin.__init__(self)
 		
 	def load(self):
-		global tags, refreshTags
-		tags = {}
-		refreshTags = False
-		
-		tagsUpdater = LoopingCall(updateTags)
-		tagsUpdater.start(1)
-		
-		refreshTags = True
+		pass
 		
 	def unload(self):
 		pass
@@ -127,7 +120,7 @@ SettingsManager.addSetting(Setting.Setting	(
 												subcategory=pluginCategory, 
 												symbolicName="table_name", 
 												displayName="Table name", 
-												default="clantags",
+												default="usermanager_clantags",
 												doc="Table name for storing the clantag-group associations."
 											))
 
@@ -148,33 +141,29 @@ Base.metadata.create_all(DatabaseManager.dbmanager.engine)
 import textSearchUtils
 
 def stripTags(name):
+	tags = getTags(name)
 	for tag in tags.keys():
 		name = textSearchUtils.replaceWord(tag, "", name, caseSensitive=settings["case_sensitive"])
 	return name
 
 def getTags(name):
 	nameTags = {}
-	for tag in tags.keys():
-		if textSearchUtils.hasWord(tag, name, caseSensitive=settings["case_sensitive"]):
-			nameTags[tag] = tags[tag]
-	return nameTags
-	
-def updateTags():
-	global refreshTags
-	if not refreshTags:
-		return
-	global tags
-	tags.clear()
 	
 	session = DatabaseManager.dbmanager.session()
 	try:
-		groupTags = session.query(ClanTag).all()
-		for tag in groupTags:
-			if not tag.tag in tags.keys():
-				tags[tag.tag] = []
-			tags[tag.tag].append(tag.group)
+		if settings["case_sensitive"]:
+			tags = session.query("id", "tag", "group").from_statement("SELECT * FROM clantags where :name like '%' || tag || '%'").params(name=name).all()
+		else:
+			tags = session.query("id", "tag", "group").from_statement("SELECT * FROM clantags where :name like '%' || lower(tag) || '%'").params(name=name.lower()).all()
+		
+		for tag in tags:
+			if not tag.tag in nameTags.keys():
+				nameTags[tag.tag] = []
+			nameTags[tag.tag].append(tag.group)
 	finally:
 		session.close()
+
+	return nameTags
 
 def warnTagsReserved(cn, count, startTime=None):
 	try:

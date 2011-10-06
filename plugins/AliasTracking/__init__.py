@@ -118,7 +118,7 @@ def namesCmd(cn, args):
 		count = 0
 		namestr = ""
 		for result in results:
-			percent = int(float(result.count)/float(totalOccurances)*100)
+			percent = round(float(result.count)/float(totalOccurances)*100, 2)
 			namestr += result.name + Colors.grey('(' + str(percent) + '%) ')
 			count += 1
 			if count > settings['max_results']:

@@ -22,7 +22,7 @@ Setting = cxsbs.getResource("Setting")
 Net = cxsbs.getResource("Net")
 SetMaster = cxsbs.getResource("SetMaster")
 
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, BigInteger
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
@@ -47,12 +47,12 @@ class Ban(Base):
 	__table_args__ = {'extend_existing': True}
 	__tablename__= tableSettings["table_name"]
 	id = Column(Integer, primary_key=True)
-	ip = Column(Integer, index=True)
-	mask = Column(Integer, index=True)
+	ip = Column(BigInteger, index=True)
+	mask = Column(BigInteger, index=True)
 	expiration = Column(Integer, index=True) # Epoch seconds
 	reason = Column(String(length=64))
 	name = Column(String(length=16))
-	responsible_ip = Column(Integer)
+	responsible_ip = Column(BigInteger)
 	responsible_nick= Column(String(length=16))
 	time = Column(Integer)
 	def __init__(self, ip, mask, expiration, reason, name, responsible_ip, responsible_nick, time):

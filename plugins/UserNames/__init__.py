@@ -5,14 +5,7 @@ class Plugin(cxsbs.Plugin.Plugin):
 		cxsbs.Plugin.Plugin.__init__(self)
 		
 	def load(self):
-		global tags, refreshTags
-		tags = {}
-		refreshTags = False
-		
-		tagsUpdater = LoopingCall(updateTags)
-		tagsUpdater.start(1)
-		
-		refreshTags = True
+		pass
 		
 	def unload(self):
 		pass
@@ -39,6 +32,7 @@ SettingsManager = cxsbs.getResource("SettingsManager")
 Messages = cxsbs.getResource("Messages")
 Commands = cxsbs.getResource("Commands")
 ClanTags = cxsbs.getResource("ClanTags")
+Users = cxsbs.getResource("Users")
 
 pluginCategory = 'UserNames'
 
@@ -169,7 +163,7 @@ SettingsManager.addSetting(Setting.Setting	(
 												subcategory=pluginCategory, 
 												symbolicName="table_name", 
 												displayName="Table name", 
-												default="clantags",
+												default="usermanager_names",
 												doc="Table name for storing the user name reservations."
 											))
 
@@ -180,7 +174,7 @@ class UserName(Base):
 	__tablename__ = tableSettings["table_name"]
 	id = Column(Integer, primary_key=True)
 	name = Column(String(16), index=True)
-	userId = Column(String(16), index=True)
+	userId = Column(Integer, index=True)
 	primary = Column(Boolean, nullable=False)
 	def __init__(self, name, userId, primary=False):
 		self.name = name
@@ -190,25 +184,43 @@ class UserName(Base):
 Base.metadata.create_all(DatabaseManager.dbmanager.engine)
 
 def getDisplayName(userId):
+	#if not hasName(userId):
+	#	return "Unidentified"
+	if not hasPrimaryName(userId):
+		session = DatabaseManager.dbmanager.session()
+		try:
+			name = session.query(UserName).filter(UserName.userId==userId).first()
+			return name.name
+		finally:
+			session.close()
+	else:
+		session = DatabaseManager.dbmanager.session()
+		try:
+			name = session.query(UserName).filter(UserName.userId==userId).filter(UserName.primary==True).one()
+			return name.name
+		finally:
+			session.close()
+		
+def hasName(userId):
 	session = DatabaseManager.dbmanager.session()
 	try:
-		names = session.query(UserName).filter(UserName.userId==userId).all()
-		for name in names:
-			if name.primary:
-				return name.name
-		if len(names) > 0:
-			return names[0]
-		return "Unidentified"
+		session.query(UserName).filter(UserName.userId==userId).one()
+		return True
+	except MultipleResultsFound:
+		return True
+	except NoResultFound:
+		return False
 	finally:
 		session.close()
 		
 def hasPrimaryName(userId):
 	session = DatabaseManager.dbmanager.session()
 	try:
-		names = session.query(UserName).filter(UserName.userId==userId).all()
-		for name in names:
-			if name.primary:
-				return True
+		session.query(UserName).filter(UserName.userId==userId).filter(UserName.primary==True).one()
+		return True
+	except MultipleResultsFound:
+		return True
+	except NoResultFound:
 		return False
 	finally:
 		session.close()
@@ -216,7 +228,7 @@ def hasPrimaryName(userId):
 def setNonePrimary(userId):
 	session = DatabaseManager.dbmanager.session()
 	try:
-		names = session.query(UserName).filter(UserName.userId==userId).all()
+		names = session.query(UserName).filter(UserName.userId==userId).filter(UserName.primary==True).all()
 		for name in names:
 			name.primary = False
 			session.add(name)
@@ -225,19 +237,22 @@ def setNonePrimary(userId):
 		session.close()
 		
 def isNamePermitted(name, userId=None):
-	if settings['reserve_superstrings']:
-		name = '%' + name + '%'
-	
 	session = DatabaseManager.dbmanager.session()
 	try:
-		query = session.query(UserName)
-		if settings["case_sensitive"]:
-			query = query.filter(func.lower(UserName.c.name).like(name.lower()))
+		if settings['reserve_superstrings']:
+			if settings["case_sensitive"]:
+				userNames = session.query("id", "name", "userId", "primary").from_statement("SELECT * FROM " + tableSettings["table_name"] + " where :name like '%' || name || '%'").params(name=name).all()
+			else:
+				userNames = session.query("id", "name", "userId", "primary").from_statement("SELECT * FROM " + tableSettings["table_name"] + " where :name like '%' || lower(name) || '%'").params(name=name.lower()).all()
 		else:
-			query = query.filter(UserName.name==name)
+			query = session.query(UserName)
+			if settings["case_sensitive"]:
+				query = query.filter(func.lower(UserName.c.name).like(name.lower()))
+			else:
+				query = query.filter(UserName.name==name)
+				
+			userNames = query.all()
 			
-		userNames = query.all()
-		
 		for userName in userNames:
 			if userId != userName.userId:
 				return False
@@ -297,7 +312,7 @@ def onReserveNameCommand(cn, args):
 	@doc Stake a name reservation
 	'''
 	args = args.split()
-	if len(args) != 2:
+	if len(args) != 1:
 		raise Commands.UsageError()
 	
 	if not Users.isLoggedIn(cn):
@@ -347,7 +362,10 @@ def onReleaseNameCommand(cn, args):
 	
 	session = DatabaseManager.dbmanager.session()
 	try:
-		pass
+		names = session.query(UserName).filter(UserName.userId==userId).filter(UserName.name==nameString).all()
+		for name in names:
+			session.delete(name)
+		session.commit()
 	finally:
 		session.close()
 		
@@ -376,6 +394,9 @@ def onDisplayNameCommand(cn, args):
 	
 	session = DatabaseManager.dbmanager.session()
 	try:
-		pass
+		name = session.query(UserName).filter(UserName.userId==userId).filter(UserName.name==nameString).first()
+		name.primary = True
+		session.add(name)
+		session.commit()
 	finally:
 		session.close()

@@ -24,5 +24,9 @@ def replaceWord(word, replacement, text, caseSensitive=False):
 	while hasWord(word, text, caseSensitive=caseSensitive):
 		coords = findWord(word, text, caseSensitive=caseSensitive)
 		text = text[:coords[0]] + "\x00" + text[coords[1]:]
-	text = string.replace("\x00", replacement, text)
+	text = string.replace(text, "\x00", replacement)
 	return text
+
+if __name__ == '__main__':
+	print replaceWord("[fd]", "", "[FD]Chasm", False)
+	print replaceWord("[fd]", "", "[FD]Chasm", True)

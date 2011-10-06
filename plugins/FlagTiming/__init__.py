@@ -42,10 +42,7 @@ Timers = cxsbs.getResource("Timers")
 Setting = cxsbs.getResource("Setting")
 SettingsManager = cxsbs.getResource("SettingsManager")
 Messages = cxsbs.getResource("Messages")
-#UserNames = cxsbs.getResource("UserNames")
-
-def getDisplayNameByUser(*args):
-	return "Unidentified"
+UserNames = cxsbs.getResource("UserNames")
 
 import time
 
@@ -232,12 +229,12 @@ class FlagTimingAuthority:
 		time = record['time']
 		
 		if userId != None:
-			publicName = getDisplayNameByUser(userId)
+			publicName = UserNames.getDisplayName(userId)
 		
 		messager.sendMessage("thisRun", dictionary={"recordTime": timeFormat(time)})
 		
 		if mapModeTeamBest != None:
-			previousHolder = getDisplayNameByUser(mapModeTeamBest.userId)
+			previousHolder = UserNames.getDisplayName(mapModeTeamBest.userId)
 			
 			data = {
 					"gameMap": gameMap,

@@ -369,7 +369,7 @@ def authChallengeResponse(cn, reqid, response):
 def addToGroupCommand(cn, args):
 	'''
 	@description Add a user to a group
-	@usage <email or cn> <group name>
+	@usage <email or tcn> <group name>
 	@allowGroups __admin__
 	@denyGroups
 	@doc Adds a user to a specified group, creating said group if necessary.
@@ -386,10 +386,10 @@ def addToGroupCommand(cn, args):
 		except UserModelBase.InvalidEmail:
 			raise Commands.StateError("That email does not correspond to an account.")
 	else:
-		cn = int(args[0])
+		tcn = int(args[0])
 		
-		if isLoggedIn(cn):
-			user = Players.player(cn)
+		if isLoggedIn(tcn):
+			user = Players.player(tcn)
 			userId = user.userId
 		else:
 			raise Commands.StateError("That player does not seem to be logged in.")
@@ -422,13 +422,13 @@ def removeFromGroupCommand(cn, args):
 		raise Commands.UsageError()
 
 	try:
-		cn = int(args[0])
+		tcn = int(args[0])
 	except ValueError:
-		cn = None
+		tcn = None
 		
-	if cn != None:
-		if isLoggedIn(cn):
-			user = Players.player(cn)
+	if tcn != None:
+		if isLoggedIn(tcn):
+			user = Players.player(tcn)
 			userId = user.userId
 		else:
 			raise Commands.StateError("That player does not seem to be logged in.")
