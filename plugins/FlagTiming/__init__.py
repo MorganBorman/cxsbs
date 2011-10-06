@@ -245,7 +245,7 @@ class FlagTimingAuthority:
 					"split": splitFormat(time - mapModeTeamBest.time),
 				}
 		
-			messager.sendMessage("overall", dictionary=data)
+			messager.sendPlayerMessage("overall", Players.player(cn), dictionary=data)
 			
 		
 		if userMapModeTeamBest != None:
@@ -254,11 +254,11 @@ class FlagTimingAuthority:
 					"gameMode": Game.modeName(gameMode),
 					"teamName": colorTeam(Game.teamName(team)),
 					"recordHolder": "personal",
-					"recordTime": timeFormat(mapModeTeamBest.time),
-					"split": splitFormat(time - mapModeTeamBest.time),
+					"recordTime": timeFormat(userMapModeTeamBest.time),
+					"split": splitFormat(time - userMapModeTeamBest.time),
 				}
 		
-			messager.sendMessage("overall", dictionary=data)
+			messager.sendPlayerMessage("overall", Players.player(cn), dictionary=data)
 		
 	def onTakeFlag(self, cn, team):
 		if not Game.currentMode() in self.timedModes:

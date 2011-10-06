@@ -152,9 +152,9 @@ def getTags(name):
 	session = DatabaseManager.dbmanager.session()
 	try:
 		if settings["case_sensitive"]:
-			tags = session.query("id", "tag", "group").from_statement("SELECT * FROM clantags where :name like '%' || tag || '%'").params(name=name).all()
+			tags = session.query("id", "tag", "group").from_statement("SELECT * FROM " + tableSettings["table_name"] + " where :name like '%' || tag || '%'").params(name=name).all()
 		else:
-			tags = session.query("id", "tag", "group").from_statement("SELECT * FROM clantags where :name like '%' || lower(tag) || '%'").params(name=name.lower()).all()
+			tags = session.query("id", "tag", "group").from_statement("SELECT * FROM " + tableSettings["table_name"] + " where :name like '%' || lower(tag) || '%'").params(name=name.lower()).all()
 		
 		for tag in tags:
 			if not tag.tag in nameTags.keys():
