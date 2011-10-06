@@ -184,8 +184,8 @@ class UserName(Base):
 Base.metadata.create_all(DatabaseManager.dbmanager.engine)
 
 def getDisplayName(userId):
-	#if not hasName(userId):
-	#	return "Unidentified"
+	if not hasName(userId):
+		return "Unidentified"
 	if not hasPrimaryName(userId):
 		session = DatabaseManager.dbmanager.session()
 		try:
