@@ -93,20 +93,30 @@ def takeAction(cn):
 @Events.eventHandler('player_shot')
 def onPlayerShot(cn, millis, gun):
 	if cn in shotDict.keys():
-		while len(shotDict[cn]) >= 2:
-			shotDict[cn].popleft()
-	try:
-		shotDict[cn].append((gun, millis))
-	except KeyError:
-		shotDict[cn] = deque()
-		shotDict[cn].append((gun, millis))
+		while len(shotDict[cn]) > 1:
+			shotDict[cn].pop()
+			
+		shotDict[cn].appendleft((gun, millis))
 		
-	if len(shotDict[cn]) >= 2:
-		validWeaponReloadTime = weaponReloadTimes[shotDict[cn][0][0]]
-		timeBetweenShots = (shotDict[cn][1][1] - shotDict[cn][0][1])
-		Logging.debug("CheatDetection: " + weapons[shotDict[cn][0][0]] + " reload time: " + str(timeBetweenShots) + " normal time: " + str(validWeaponReloadTime))
+		firstShot = shotDict[cn][1]
+		secondShot = shotDict[cn][0]
+		
+		validWeaponReloadTime = weaponReloadTimes[firstShot[0]]
+		timeBetweenShots = (secondShot[1] - firstShot[1])
+		Logging.debug("CheatDetection: " + weapons[firstShot[0]] + " reload time: " + str(timeBetweenShots) + " normal time: " + str(validWeaponReloadTime))
 		if (validWeaponReloadTime-timeBetweenShots) > 0:
 			takeAction(cn)
+			
+@Events.eventHandler('player_disconnect')
+def onPlayerDisconnect(cn):
+	if cn in shotDict.keys():
+		del shotDict[cn]
+		
+@Events.eventHandler('player_connect')
+def onPlayerConnect(cn):
+	if cn in shotDict.keys():
+		onPlayerDisconnect(cn)
+	shotDict[cn] = deque()
 	
 @Events.eventHandler('player_shot_hit')
 def onPlayerShotHit(cn, tcn, lifeseq, dist, rays):
