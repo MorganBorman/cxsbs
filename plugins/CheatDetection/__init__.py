@@ -88,7 +88,7 @@ def takeAction(cn):
 	elif action == "":
 		pass
 	else:
-		Logging.error("Failed take action against player regarding spam of type: " + self.settings['type_name'] + ". reason: invalid configured action: " + str(action))
+		Logging.error("Failed take action against player regarding cheating of type: " + self.settings['type_name'] + ". reason: invalid configured action: " + str(action))
 
 @Events.eventHandler('player_shot')
 def onPlayerShot(cn, millis, gun):
@@ -103,7 +103,7 @@ def onPlayerShot(cn, millis, gun):
 		
 	if len(shotDict[cn]) >= 2:
 		validWeaponReloadTime = weaponReloadTimes[shotDict[cn][0][0]]
-		timeBetweenShots = (shotDict[cn][-1][1] - shotDict[cn][0][1])
+		timeBetweenShots = (shotDict[cn][1][1] - shotDict[cn][0][1])
 		Logging.debug("CheatDetection: " + weapons[shotDict[cn][0][0]] + " reload time: " + str(timeBetweenShots) + " normal time: " + str(validWeaponReloadTime))
 		if (validWeaponReloadTime-timeBetweenShots) > 0:
 			takeAction(cn)
