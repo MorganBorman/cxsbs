@@ -40,6 +40,8 @@ bool triggerEventIntString(const char *event_name, int cn, const char *text);
 bool triggerEventIntStringInt(const char *event_name, int cn, const char *text, int cn2);
 bool triggerEventIntStringString(const char *event_name, int cn, const char *text, const char *text2);
 bool triggerEventIntInt(const char *name, int cn1, int cn2);
+bool triggerEventIntIntInt(const char *name, int cn1, int cn2, int cn3);
+bool triggerEventIntIntIntIntInt(const char *name, int cn1, int cn2, int cn3, int cn4, int cn5);
 bool triggerEventIntIntString(const char *name, int cn1, int cn2, const char *text);
 bool triggerEventStrInt(const char *name, const char *str, int n);
 bool triggerPolicyEventInt(const char *name, int cn);

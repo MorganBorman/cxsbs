@@ -44,6 +44,10 @@ def registerServerEventHandler(event, func):
 	'''Call function when event has been executed.'''
 	EventInformation.loadEventHandlerInfo(event, func)
 	eventManager.connect(event, func)
+	
+def registerAllEventHandler(func):
+	'''Register an event handler to all events'''
+	eventManager.connectAll(func)
 
 class eventHandler(object):
 	'''Decorator which registers a function as an event handler.'''

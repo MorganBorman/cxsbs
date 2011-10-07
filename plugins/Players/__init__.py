@@ -82,6 +82,12 @@ class Player:
 	def sessionId(self):
 		'''Session ID of client'''
 		return ServerCore.playerSessionId(self.cn)
+	def mapCrc(self):
+		'''Map CRC of the client'''
+		return ServerCore.playerMapCrc(self.cn)
+	def mapName(self):
+		'''Map name of the client'''
+		return ServerCore.playerMapName(self.cn)
 	def requestAuth(self, description):
 		'''Request that a player send their auth key with the given description'''
 		ServerCore.requestPlayerAuth(self.cn, description)

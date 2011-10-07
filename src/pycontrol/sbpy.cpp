@@ -431,6 +431,34 @@ bool triggerFuncEventIntInt(const char *name, int cn, int cn2, PyObject *func)
 	return triggerFuncEvent(name, &args, func);
 }
 
+bool triggerFuncEventIntIntInt(const char *name, int cn1, int cn2, int cn3, PyObject *func)
+{
+	std::vector<PyObject*> args;
+	PyObject *pCn1 = PyInt_FromLong(cn1);
+	PyObject *pCn2 = PyInt_FromLong(cn2);
+	PyObject *pCn3 = PyInt_FromLong(cn3);
+	args.push_back(pCn1);
+	args.push_back(pCn2);
+	args.push_back(pCn3);
+	return triggerFuncEvent(name, &args, func);
+}
+
+bool triggerFuncEventIntIntIntIntInt(const char *name, int cn1, int cn2, int cn3, int cn4, int cn5, PyObject *func)
+{
+	std::vector<PyObject*> args;
+	PyObject *pCn1 = PyInt_FromLong(cn1);
+	PyObject *pCn2 = PyInt_FromLong(cn2);
+	PyObject *pCn3 = PyInt_FromLong(cn3);
+	PyObject *pCn4 = PyInt_FromLong(cn4);
+	PyObject *pCn5 = PyInt_FromLong(cn5);
+	args.push_back(pCn1);
+	args.push_back(pCn2);
+	args.push_back(pCn3);
+	args.push_back(pCn4);
+	args.push_back(pCn5);
+	return triggerFuncEvent(name, &args, func);
+}
+
 bool triggerFuncEventIntStringString(const char *name, int cn, const char *text, const char *text2, PyObject *func)
 {
 	std::vector<PyObject*> args;
@@ -485,12 +513,17 @@ bool triggerEventIntStringString(const char *name, int cn, const char *text, con
 
 bool triggerEventIntInt(const char *name, int cn1, int cn2)
 {
-	std::vector<PyObject*> args;
-	PyObject *pCn1 = PyInt_FromLong(cn1);
-	PyObject *pCn2 = PyInt_FromLong(cn2);
-	args.push_back(pCn1);
-	args.push_back(pCn2);
-	return triggerFuncEvent(name, &args, triggerEventFunc);
+	return triggerFuncEventIntInt(name, cn1, cn2, triggerEventFunc);
+}
+
+bool triggerEventIntIntInt(const char *name, int cn1, int cn2, int cn3)
+{
+	return triggerFuncEventIntIntInt(name, cn1, cn2, cn3, triggerEventFunc);
+}
+
+bool triggerEventIntIntIntIntInt(const char *name, int cn1, int cn2, int cn3, int cn4, int cn5)
+{
+	return triggerFuncEventIntIntIntIntInt(name, cn1, cn2, cn3, cn4, cn5, triggerEventFunc);
 }
 
 bool triggerEventIntIntString(const char *name, int cn1, int cn2, const char *text)

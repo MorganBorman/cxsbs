@@ -126,7 +126,7 @@ def isIpSpectd(ipaddress):
 	except MultipleResultsFound:
 		return True
 
-def addSpect(cn, seconds, reason, responsible_cn, cidr=32):
+def addSpect(cn, seconds, reason, responsible_cn=-1, cidr=32):
 
 	ip = ServerCore.playerIpLong(cn)
 	expiration = time.time() + seconds
@@ -142,12 +142,11 @@ def addSpect(cn, seconds, reason, responsible_cn, cidr=32):
 	theTime = time.time()
 	
 	mask = Net.makeMask(cidr)
-		
-	newmute = Spect(ip, mask, expiration, reason, nick, responsible_ip, responsible_nick, theTime)
 
 	session = DatabaseManager.dbmanager.session()
 	try:
-		session.add(newmute)
+		newspect = Spect(ip, mask, expiration, reason, nick, responsible_ip, responsible_nick, theTime)
+		session.add(newspect)
 		session.commit()
 	finally:
 		session.close()

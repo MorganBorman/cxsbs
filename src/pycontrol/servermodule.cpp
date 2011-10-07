@@ -248,6 +248,36 @@ static PyObject *playerSessionId(PyObject *self, PyObject *args)
 	return Py_BuildValue("k", ci->sessionid);
 }
 
+static PyObject *playerMapCrc(PyObject *self, PyObject *args)
+{
+	int cn;
+	server::clientinfo *ci;
+	if(!PyArg_ParseTuple(args, "i", &cn))
+		return 0;
+	ci = server::getinfo(cn);
+	if(!ci)
+	{
+		PyErr_SetString(PyExc_ValueError, "Invalid cn specified");
+		return 0;
+	}
+	return Py_BuildValue("i", ci->mapcrc);
+}
+
+static PyObject *playerMapName(PyObject *self, PyObject *args)
+{
+	int cn;
+	server::clientinfo *ci;
+	if(!PyArg_ParseTuple(args, "i", &cn))
+		return 0;
+	ci = server::getinfo(cn);
+	if(!ci)
+	{
+		PyErr_SetString(PyExc_ValueError, "Invalid cn specified");
+		return 0;
+	}
+	return Py_BuildValue("s", ci->clientmap);
+}
+
 static PyObject *playerIpLong(PyObject *self, PyObject *args)
 {
 	int cn;
@@ -1130,6 +1160,8 @@ static PyMethodDef ModuleMethods[] = {
 	{"playerMessageTeam", playerMessageTeam, METH_VARARGS, "Send a team message as a player(from, to, text)."},
 	{"playerName", playerName, METH_VARARGS, "Get name of player from cn."},
 	{"playerSessionId", playerSessionId, METH_VARARGS, "Session ID of player."},
+	{"playerMapCrc", playerMapCrc, METH_VARARGS, "Map CRC of player."},
+	{"playerMapName", playerMapName, METH_VARARGS, "Map name of player."},
 	{"playerIpLong", playerIpLong, METH_VARARGS, "Get IP of player from cn."},
 	{"playerKick", playerKick, METH_VARARGS, "Kick player from server."},
 	{"playerDisc", playerDisc, METH_VARARGS, "Disconnect player from server."},

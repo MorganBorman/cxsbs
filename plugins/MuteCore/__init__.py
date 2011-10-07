@@ -153,7 +153,7 @@ def isIpMuted(ipaddress):
 	except MultipleResultsFound:
 		return True
 
-def addMute(cn, seconds, reason, responsible_cn, cidr=32):
+def addMute(cn, seconds, reason, responsible_cn=-1, cidr=32):
 
 	ip = ServerCore.playerIpLong(cn)
 	expiration = time.time() + seconds

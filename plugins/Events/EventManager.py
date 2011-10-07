@@ -19,6 +19,9 @@ class EventManager:
 	def __init__(self, Players=None):
 		self.Players = Players
 		self.events = {}
+		self.allHandlers = []
+	def connectAll(self, func):
+		self.allHandlers.append(func)
 	def connect(self, event, func):
 		if not event in self.events.keys():
 			self.events[event] = []
@@ -33,6 +36,8 @@ class EventManager:
 		
 	def trigger(self, eventName, args=()):
 		Logging.debug("Event: " + str(eventName) + " " + str(args))
+		for handler in self.allHandlers:
+			handler(eventName, args)
 		try:
 			#Logging.debug("Event handlers: " + str(self.events[eventName]))
 			for event in self.events[eventName]:

@@ -1,0 +1,18 @@
+[Plugin]
+Name = Spam Core
+SymbolicName = SpamCore
+Version = 0.0.1
+Author = Chasm
+Enabled = True
+
+[Dependencies]
+MuteCore = 0.0.1
+BanCore = 0.0.1
+SpectCore = 0.0.1
+Messages = 0.0.1
+Setting = 0.0.1
+SettingsManager = 0.0.1
+Logging = 0.0.1
+Events = 0.0.1
+ServerCore = 0.0.1
+Players = 0.0.1

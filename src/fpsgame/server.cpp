@@ -1481,51 +1481,6 @@ namespace server
         }
     };
 
-    void checkmaps(int req = -1)
-    {
-        if(m_edit || !smapname[0]) return;
-        vector<crcinfo> crcs;
-        int total = 0, unsent = 0, invalid = 0;
-        loopv(clients)
-        {
-            clientinfo *ci = clients[i];
-            if(ci->state.state==CS_SPECTATOR || ci->state.aitype != AI_NONE) continue;
-            total++;
-            if(!ci->clientmap[0])
-            {
-                if(ci->mapcrc < 0) invalid++;
-                else if(!ci->mapcrc) unsent++;
-            }
-            else
-            {
-                crcinfo *match = NULL;
-                loopvj(crcs) if(crcs[j].crc == ci->mapcrc) { match = &crcs[j]; break; }
-                if(!match) crcs.add(crcinfo(ci->mapcrc, 1));
-                else match->matches++;
-            }
-        }
-        if(total - unsent < min(total, 4)) return;
-        crcs.sort(crcinfo::compare);
-        string msg;
-        loopv(clients)
-        {
-            clientinfo *ci = clients[i];
-            if(ci->state.state==CS_SPECTATOR || ci->state.aitype != AI_NONE || ci->clientmap[0] || ci->mapcrc >= 0 || (req < 0 && ci->warned)) continue;
-            SbPy::triggerEventInt("player_modified_map", ci->clientnum);
-        }
-        if(crcs.empty() || crcs.length() < 2) return;
-        loopv(crcs)
-        {
-            crcinfo &info = crcs[i];
-            if(i || info.matches <= crcs[i+1].matches) loopvj(clients)
-            {
-                clientinfo *ci = clients[j];
-                if(ci->state.state==CS_SPECTATOR || ci->state.aitype != AI_NONE || !ci->clientmap[0] || ci->mapcrc != info.crc || (req < 0 && ci->warned)) continue;
-                SbPy::triggerEventInt("player_modified_map", ci->clientnum);
-            }
-        }
-    }
-
     void sendservinfo(clientinfo *ci)
     {
         sendf(ci->clientnum, 1, "ri5s", N_SERVINFO, ci->clientnum, PROTOCOL_VERSION, ci->sessionid, serverpass[0] ? 1 : 0, serverdesc);
@@ -1549,8 +1504,7 @@ namespace server
              spinfo->state.respawn();
              spinfo->state.lasttimeplayed = lastmillis;
              aiman::addclient(spinfo);
-             if(spinfo->clientmap[0] || spinfo->mapcrc) checkmaps();
-	     unspectated = true;
+             unspectated = true;
          }
          else
              return false;
@@ -1924,21 +1878,22 @@ namespace server
                 }
                 copystring(ci->clientmap, text);
                 ci->mapcrc = text[0] ? crc : 1;
-                checkmaps();
+                SbPy::triggerEventIntInt("player_map_crc", ci->clientnum, ci->mapcrc);
+                //checkmaps();
                 break;
             }
 
             case N_CHECKMAPS:
-                checkmaps(sender);
+            	SbPy::triggerEventInt("player_checkmaps", sender);
                 break;
 
             case N_TRYSPAWN:
                 if(!ci || !cq || cq->state.state!=CS_DEAD || cq->state.lastspawn>=0 || (smode && !smode->canspawn(cq))) break;
-                if(!ci->clientmap[0] && !ci->mapcrc)
-                {
-                    ci->mapcrc = -1;
-                    checkmaps();
-                }
+                //if(!ci->clientmap[0] && !ci->mapcrc)
+                //{
+                //    ci->mapcrc = -1;
+                //    checkmaps();
+                //}
                 if(cq->state.lastdeath)
                 {
                     flushevents(cq, cq->state.lastdeath + DEATHMILLIS);
@@ -1987,13 +1942,13 @@ namespace server
 
             case N_SHOOT:
             {
-
                 shotevent *shot = new shotevent;
                 shot->id = getint(p);
                 shot->millis = cq ? cq->geteventmillis(gamemillis, shot->id) : 0;
                 shot->gun = getint(p);
                 loopk(3) shot->from[k] = getint(p)/DMF;
                 loopk(3) shot->to[k] = getint(p)/DMF;
+                SbPy::triggerEventIntIntInt("player_shot", cq->clientnum, shot->millis, shot->gun);
                 int hits = getint(p);
                 loopk(hits)
                 {
@@ -2004,6 +1959,7 @@ namespace server
                     hit.dist = getint(p)/DMF;
                     hit.rays = getint(p);
                     loopk(3) hit.dir[k] = getint(p)/DNF;
+                    SbPy::triggerEventIntIntIntIntInt("player_shot_hit", cq->clientnum, hit.target, hit.lifesequence, hit.dist, hit.rays);
                 }
                 if(cq)
                 {
