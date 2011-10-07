@@ -193,7 +193,7 @@ def onUnspectate(cn, tcn):
 				else:
 					UI.insufficientPermissions(cn)
 					return False
-	except KeyError:
+	except:
 		exceptionType, exceptionValue, exceptionTraceback = sys.exc_info()
 		Logging.warn(traceback.format_exc())
 		return False
