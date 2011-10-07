@@ -290,7 +290,7 @@ def warnNameReserved(cn, count, startTime=None):
 		return
 	
 	remaining = (settings["max_warnings"]*settings["warning_interval"]) - (count*settings["warning_interval"])
-	messager.sendMessage('name_reserved', dictionary={'name':playerNick, 'remaining':remaining})
+	messager.sendPlayerMessage('name_reserved', p, dictionary={'name':playerNick, 'remaining':remaining})
 	Timers.addTimer(settings["warning_interval"]*1000, warnNameReserved, (cn, count+1, startTime))
 	
 @Events.eventHandler('player_name_changed')	

@@ -1805,6 +1805,7 @@ namespace server
 					{
 	                    sendf(-1, 0, "ri4x", N_TELEPORT, pcn, teleport, teledest, cp->ownernum);
 					}
+                    SbPy::triggerEventIntIntInt("player_teleport", cp->clientnum, teleport, teledest);
                 }
                 break;
             }
@@ -1822,6 +1823,7 @@ namespace server
 					{
 	                    sendf(-1, 0, "ri3x", N_JUMPPAD, pcn, jumppad, cp->ownernum);
 					}
+                    SbPy::triggerEventIntInt("player_jumppad", cp->clientnum, jumppad);
                 }
                 break;
             }
@@ -1879,7 +1881,6 @@ namespace server
                 copystring(ci->clientmap, text);
                 ci->mapcrc = text[0] ? crc : 1;
                 SbPy::triggerEventIntInt("player_map_crc", ci->clientnum, ci->mapcrc);
-                //checkmaps();
                 break;
             }
 
@@ -1889,11 +1890,6 @@ namespace server
 
             case N_TRYSPAWN:
                 if(!ci || !cq || cq->state.state!=CS_DEAD || cq->state.lastspawn>=0 || (smode && !smode->canspawn(cq))) break;
-                //if(!ci->clientmap[0] && !ci->mapcrc)
-                //{
-                //    ci->mapcrc = -1;
-                //    checkmaps();
-                //}
                 if(cq->state.lastdeath)
                 {
                     flushevents(cq, cq->state.lastdeath + DEATHMILLIS);
@@ -1979,6 +1975,7 @@ namespace server
                 exp->gun = getint(p);
                 exp->id = getint(p);
                 int hits = getint(p);
+                SbPy::triggerEventIntIntInt("player_explode", cq->clientnum, shot->millis, shot->gun);
 				loopk(hits)
 				{
 					if(p.overread()) break;
@@ -1988,6 +1985,7 @@ namespace server
 					hit.dist = getint(p)/DMF;
 					hit.rays = getint(p);
 					loopk(3) hit.dir[k] = getint(p)/DNF;
+					SbPy::triggerEventIntIntIntIntInt("player_explode_hit", cq->clientnum, hit.target, hit.lifesequence, hit.dist, hit.rays);
 				}
                 if(cq) cq->addevent(exp);
                 else delete exp;
@@ -2001,6 +1999,7 @@ namespace server
                 pickupevent *pickup = new pickupevent;
                 pickup->ent = n;
                 cq->addevent(pickup);
+                SbPy::triggerEventIntInt("player_pickup", cq->clientnum, pickup->ent);
                 break;
             }
 
