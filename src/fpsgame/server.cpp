@@ -1975,7 +1975,7 @@ namespace server
                 exp->gun = getint(p);
                 exp->id = getint(p);
                 int hits = getint(p);
-                SbPy::triggerEventIntIntInt("player_explode", cq->clientnum, shot->millis, shot->gun);
+                SbPy::triggerEventIntIntInt("player_explode", cq->clientnum, exp->millis, exp->gun);
 				loopk(hits)
 				{
 					if(p.overread()) break;
