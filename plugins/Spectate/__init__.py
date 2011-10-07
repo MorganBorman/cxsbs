@@ -15,9 +15,12 @@ Events = cxsbs.getResource("Events")
 Players = cxsbs.getResource("Players")
 UI = cxsbs.getResource("UI")
 ServerCore = cxsbs.getResource("ServerCore")
+Logging = cxsbs.getResource("Logging")
 Setting = cxsbs.getResource("Setting")
 SettingsManager = cxsbs.getResource("SettingsManager")
 Messages = cxsbs.getResource("Messages")
+
+import sys, traceback
 
 permissionsCategory = 'Permissions'
 pluginSubcategory = 'Spectate'
@@ -162,30 +165,35 @@ def onSpectate(cn, tcn):
 		
 @Events.policyHandler('player_unspectate')
 def onUnspectate(cn, tcn):
-	p = Players.player(cn)
-	if tcn != cn:
-		if ServerCore.masterMode() > 1:
-			if p.isPermitted(groupSettings["allow_groups_unspectate_players_locked"], groupSettings["deny_groups_unspectate_players_locked"]):
-				return True
+	try:
+		p = Players.player(cn)
+		if tcn != cn:
+			if ServerCore.masterMode() > 1:
+				if p.isPermitted(groupSettings["allow_groups_unspectate_players_locked"], groupSettings["deny_groups_unspectate_players_locked"]):
+					return True
+				else:
+					UI.insufficientPermissions(cn)
+					return False
 			else:
-				UI.insufficientPermissions(cn)
-				return False
+				if p.isPermitted(groupSettings["allow_groups_unspectate_players"], groupSettings["deny_groups_unspectate_players"]):
+					return True
+				else:
+					UI.insufficientPermissions(cn)
+					return False
 		else:
-			if p.isPermitted(groupSettings["allow_groups_unspectate_players"], groupSettings["deny_groups_unspectate_players"]):
-				return True
+			if ServerCore.masterMode() > 1:
+				if p.isPermitted(groupSettings["allow_groups_unspectate_self_locked"], groupSettings["deny_groups_unspectate_self_locked"]):
+					return True
+				else:
+					messager.sendPlayerMessage("unspectate_denied_locked", p)
+					return False
 			else:
-				UI.insufficientPermissions(cn)
-				return False
-	else:
-		if ServerCore.masterMode() > 1:
-			if p.isPermitted(groupSettings["allow_groups_unspectate_self_locked"], groupSettings["deny_groups_unspectate_self_locked"]):
-				return True
-			else:
-				messager.sendPlayerMessage("unspectate_denied_locked", p)
-				return False
-		else:
-			if p.isPermitted(groupSettings["allow_groups_unspectate_self"], groupSettings["deny_groups_unspectate_self"]):
-				return True
-			else:
-				UI.insufficientPermissions(cn)
-				return False
+				if p.isPermitted(groupSettings["allow_groups_unspectate_self"], groupSettings["deny_groups_unspectate_self"]):
+					return True
+				else:
+					UI.insufficientPermissions(cn)
+					return False
+	except KeyError:
+		exceptionType, exceptionValue, exceptionTraceback = sys.exc_info()
+		Logging.warn(traceback.format_exc())
+		return False
