@@ -20,5 +20,7 @@ class PolicyEventManager(EventManager):
 					else:
 						Logging.debug("PolicyEventHandler: " + event.__name__ + " from module " + event.__module__ + " returned True.")
 		except KeyError:
+			Logging.debug("PolicyEventHandler: No registered handlers.")
 			return True
+		Logging.debug("PolicyEventHandler: No False' returned.")
 		return True
