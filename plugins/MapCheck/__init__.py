@@ -176,7 +176,10 @@ def onUnspectate(cn, tcn):
 		return True
 		
 	p = Players.player(cn)
-	if not p.gamevars['modified_map']:
+	try:
+		if not p.gamevars['modified_map']:
+			return True
+	except KeyError:
 		return True
 		
 	if p.isPermitted(groupSettings["allow_groups_modified_unspec"], groupSettings["deny_groups_modified_unspec"]):
