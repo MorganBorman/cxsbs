@@ -11,20 +11,23 @@ class PolicyEventManager(EventManager):
 	def trigger(self, eventName, args=()):
 		Logging.debug("PolicyEvent: " + eventName + " " + str(args))
 		try:
-			for event in self.events[eventName]:
-					output = event(*args)
-					if output == None:
-						Logging.error("PolicyEventHandler: " + event.__name__ + " from module " + event.__module__ + " returned None.")
-						pass
-					elif not output:
-						Logging.debug("PolicyEventHandler: " + event.__name__ + " from module " + event.__module__ + " returned False.")
-						return False
-					else:
-						Logging.debug("PolicyEventHandler: " + event.__name__ + " from module " + event.__module__ + " returned True.")
-		except KeyError:
-			Logging.debug("PolicyEventHandler: error while processing policy event handlers.")
+			if eventName in self.events.keys():
+				for event in self.events[eventName]:
+						output = event(*args)
+						if output == None:
+							Logging.error("PolicyEventHandler: " + event.__name__ + " from module " + event.__module__ + " returned None.")
+							pass
+						elif not output:
+							Logging.debug("PolicyEventHandler: " + event.__name__ + " from module " + event.__module__ + " returned False.")
+							return False
+						else:
+							Logging.debug("PolicyEventHandler: " + event.__name__ + " from module " + event.__module__ + " returned True.")
+			else:
+				Logging.debug("PolicyEventHandler: No handler to policy event: " + eventName)
+		except:
+			Logging.error("PolicyEventHandler: error while processing policy event handlers.")
 			exceptionType, exceptionValue, exceptionTraceback = sys.exc_info()
-			Logging.warn(traceback.format_exc())
+			Logging.error(traceback.format_exc())
 			return False
 		Logging.debug("PolicyEventHandler: No False' returned.")
 		return True
