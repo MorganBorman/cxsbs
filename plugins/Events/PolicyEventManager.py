@@ -1,5 +1,7 @@
 from EventManager import EventManager
 
+import sys, traceback
+
 import cxsbs
 Logging = cxsbs.getResource("Logging")
 
@@ -20,7 +22,9 @@ class PolicyEventManager(EventManager):
 					else:
 						Logging.debug("PolicyEventHandler: " + event.__name__ + " from module " + event.__module__ + " returned True.")
 		except KeyError:
-			Logging.debug("PolicyEventHandler: No registered handlers.")
-			return True
+			Logging.debug("PolicyEventHandler: error while processing policy event handlers.")
+			exceptionType, exceptionValue, exceptionTraceback = sys.exc_info()
+			Logging.warn(traceback.format_exc())
+			return False
 		Logging.debug("PolicyEventHandler: No False' returned.")
 		return True

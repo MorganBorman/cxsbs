@@ -20,8 +20,6 @@ Setting = cxsbs.getResource("Setting")
 SettingsManager = cxsbs.getResource("SettingsManager")
 Messages = cxsbs.getResource("Messages")
 
-import sys, traceback
-
 permissionsCategory = 'Permissions'
 pluginSubcategory = 'Spectate'
 
@@ -194,6 +192,4 @@ def onUnspectate(cn, tcn):
 					UI.insufficientPermissions(cn)
 					return False
 	except:
-		exceptionType, exceptionValue, exceptionTraceback = sys.exc_info()
-		Logging.warn(traceback.format_exc())
 		return False
