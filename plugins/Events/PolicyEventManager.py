@@ -15,7 +15,10 @@ class PolicyEventManager(EventManager):
 						Logging.error("PolicyEventHandler: " + event.__name__ + " from module " + event.__module__ + " returned None.")
 						pass
 					elif not output:
+						Logging.debug("PolicyEventHandler: " + event.__name__ + " from module " + event.__module__ + " returned False.")
 						return False
+					else:
+						Logging.debug("PolicyEventHandler: " + event.__name__ + " from module " + event.__module__ + " returned True.")
 		except KeyError:
 			return True
 		return True

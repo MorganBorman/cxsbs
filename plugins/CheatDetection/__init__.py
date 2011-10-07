@@ -64,6 +64,16 @@ weaponReloadTimes = 	{
 							6:500,
 						}
 
+weapons = 	{
+				0: "fist",
+				1: "shotgun",
+				2: "chaingun",
+				3: "rocket",
+				4: "rifle",
+				5: "grenade launcher",
+				6: "pistol",
+			}
+
 def takeAction(cn):
 	action = settings['action']
 	reason = settings['reason']
@@ -94,7 +104,7 @@ def onPlayerShot(cn, millis, gun):
 	if len(shotDict[cn]) >= 2:
 		validWeaponReloadTime = weaponReloadTimes[shotDict[cn][0][0]]
 		timeBetweenShots = (shotDict[cn][-1][1] - shotDict[cn][0][1])
-		#print (validWeaponReloadTime-timeBetweenShots)
+		Logging.debug("CheatDetection: " + weapons[shotDict[cn][0][0]] + " reload time: " + str(timeBetweenShots) + " normal time: " + str(validWeaponReloadTime))
 		if (validWeaponReloadTime-timeBetweenShots) > 0:
 			takeAction(cn)
 	

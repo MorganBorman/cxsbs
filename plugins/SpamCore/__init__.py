@@ -356,7 +356,7 @@ class SpamManager:
 		for spamHandler in self.spamEvents.values():
 			spamHandler.onDisconnect(cn)
 			
-	def onNewGame(self):
+	def onNewGame(self, gameMap, gameMode):
 		for spamHandler in self.spamEvents.values():
 			spamHandler.onNewGame()
 			
