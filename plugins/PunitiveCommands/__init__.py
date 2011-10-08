@@ -14,6 +14,7 @@ import cxsbs
 MuteCore = cxsbs.getResource("MuteCore")
 BanCore = cxsbs.getResource("BanCore")
 SpectCore = cxsbs.getResource("SpectCore")
+ServerCore = cxsbs.getResource("ServerCore")
 Commands = cxsbs.getResource("Commands")
 Messages = cxsbs.getResource("Messages")
 Setting = cxsbs.getResource("Setting")
