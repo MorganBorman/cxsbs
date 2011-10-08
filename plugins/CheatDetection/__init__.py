@@ -98,14 +98,15 @@ def onPlayerShot(cn, millis, gun):
 			
 		shotDict[cn].appendleft((gun, millis))
 		
-		firstShot = shotDict[cn][1]
-		secondShot = shotDict[cn][0]
-		
-		validWeaponReloadTime = weaponReloadTimes[firstShot[0]]
-		timeBetweenShots = (secondShot[1] - firstShot[1])
-		Logging.debug("CheatDetection: " + weapons[firstShot[0]] + " reload time: " + str(timeBetweenShots) + " normal time: " + str(validWeaponReloadTime))
-		if (validWeaponReloadTime-timeBetweenShots) > 0:
-			takeAction(cn)
+		if len(shotDict[cn]) > 1:
+			firstShot = shotDict[cn][1]
+			secondShot = shotDict[cn][0]
+			
+			validWeaponReloadTime = weaponReloadTimes[firstShot[0]]
+			timeBetweenShots = (secondShot[1] - firstShot[1])
+			Logging.debug("CheatDetection: " + weapons[firstShot[0]] + " reload time: " + str(timeBetweenShots) + " normal time: " + str(validWeaponReloadTime))
+			if (validWeaponReloadTime-timeBetweenShots) > 0:
+				takeAction(cn)
 			
 @Events.eventHandler('player_disconnect')
 def onPlayerDisconnect(cn):
