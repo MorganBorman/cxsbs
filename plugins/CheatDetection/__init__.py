@@ -129,4 +129,5 @@ def onPlayerConnect(cn):
 	
 @Events.eventHandler('player_shot_hit')
 def onPlayerShotHit(cn, tcn, lifeseq, dist, rays):
+	pass
 	#print cn, tcn, lifeseq, dist, rays
