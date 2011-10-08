@@ -17,6 +17,7 @@ Events = cxsbs.getResource("Events")
 Messages = cxsbs.getResource("Messages")
 Setting = cxsbs.getResource("Setting")
 SettingsManager = cxsbs.getResource("SettingsManager")
+Timers = cxsbs.getResource("Timers")
 	
 pluginCategory = 'Pause'
 pluginSubcategory = 'General'
