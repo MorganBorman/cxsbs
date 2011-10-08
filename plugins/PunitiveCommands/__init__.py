@@ -154,7 +154,7 @@ def onDiscCommand(cn, args):
 	args = args.split(' ')
 	try:
 		tcn = int(args[0])
-		sbserver.playerDisc(tcn)
+		ServerCore.playerDisc(tcn)
 	except (KeyError):
 		raise UsageError()
 	
