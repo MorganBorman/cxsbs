@@ -54,6 +54,14 @@ Messages.addMessage	(
 
 Messages.addMessage	(
 						subcategory=pluginCategory, 
+						symbolicName="player_smited", 
+						displayName="Player smited", 
+						default="${info}${green}${smited}${white} has been smited by ${orange}${smiter}", 
+						doc="Message to print when a player is smited."
+					)
+
+Messages.addMessage	(
+						subcategory=pluginCategory, 
 						symbolicName="punitive_effects_cleared", 
 						displayName="Punitive effects cleared", 
 						default="${info}All ${blue}bans${white}, ${blue}mutes${white}, and ${blue}force spectates${white} with the reason, ${red}${reason}${white}, have been cleared.", 
@@ -158,6 +166,22 @@ def onDiscCommand(cn, args):
 		ServerCore.playerDisc(tcn)
 	except (KeyError):
 		raise UsageError()
+	
+@Commands.commandHandler('smite')
+def onSmiteCommand(cn, args):
+	'''
+	@description Cause a player to suicide
+	@usage <cn>
+	@allowGroups __admin__
+	@denyGroups
+	@doc Cause a player to suicide.
+	'''
+	if args == '':
+		raise UsageError()
+	p = Players.player(cn)
+	t = Players.player(int(args))
+	messager.sendMessage('player_smited', dictionary={'smiter':p.name(), 'smited':t.name()})
+	t.suicide()
 	
 @Commands.commandHandler('mutespectators')
 def toggleMuteSpectators(cn, args):

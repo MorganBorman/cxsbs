@@ -27,8 +27,12 @@ class Select(Filter):
 			keep = True
 			for key in self.criteria:
 				try:
-					func = getattr(item, key)
-					if not self.criteria[key].apply(func()):
+					attribute = getattr(item, key)
+					if callable(attribute):
+						result = attribute()
+					else:
+						result = attribute
+					if not self.criteria[key].apply(result):
 						keep = False
 				except AttributeError:
 					if key in item.__dict__.keys():
@@ -62,8 +66,12 @@ class Cull(Filter):
 			keep = True
 			for key in self.criteria:
 				try:
-					func = getattr(item, key)
-					if not self.criteria[key].apply(func()):
+					attribute = getattr(item, key)
+					if callable(attribute):
+						result = attribute()
+					else:
+						result = attribute
+					if not self.criteria[key].apply(result):
 						keep = False
 				except AttributeError:
 					if key in item.__dict__.keys():

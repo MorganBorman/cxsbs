@@ -17,6 +17,7 @@ Events = cxsbs.getResource("Events")
 Players = cxsbs.getResource("Players")
 ServerCore = cxsbs.getResource("ServerCore")
 Messages = cxsbs.getResource("Messages")
+Commands = cxsbs.getResource("Commands")
 
 import ppwgen
 
@@ -107,6 +108,14 @@ Messages.addMessage	(
 						doc="Message to print when a user relinquished admin."
 					)
 
+Messages.addMessage	(
+						subcategory=pluginCategory, 
+						symbolicName="master_given", 
+						displayName="Master given", 
+						default="${info}${orange}master${white} has been given to ${green}${name}${white}.", 
+						doc="Message to show a user when they give master to a player."
+					)
+
 messager = Messages.getAccessor(subcategory=pluginCategory)
 
 def setSimpleMaster(cn, auth=False):
@@ -127,6 +136,15 @@ def setSimpleMaster(cn, auth=False):
 			messager.sendMessage('claimed_master', group=Players.SeeInvisibleGroup, dictionary={"name": p.name()})
 		p.logAction('claimed master')
 		ServerCore.setMaster(cn)
+		
+def setSimpleAdmin(cn):
+	p = Players.player(cn)
+	if not p.isInvisible():
+		messager.sendMessage('claimed_admin', dictionary={"name": p.name()})
+	else:
+		messager.sendMessage('claimed_admin', group=Players.SeeInvisibleGroup, dictionary={"name": p.name()})
+	p.logAction('claimed admin')
+	ServerCore.setAdmin(cn)
 	
 @Events.eventHandler('player_setmaster')
 def onSetMaster(cn, givenhash):
@@ -141,12 +159,7 @@ def onSetMaster(cn, givenhash):
 	p = Players.player(cn)
 	adminhash = ServerCore.hashPassword(cn, settings["admin_password"])
 	if givenhash == adminhash:
-		if not p.isInvisible():
-			messager.sendMessage('claimed_admin', dictionary={"name": p.name()})
-		else:
-			messager.sendMessage('claimed_admin', group=Players.SeeInvisibleGroup, dictionary={"name": p.name()})
-		p.logAction('claimed admin')
-		ServerCore.setAdmin(cn)
+		setSimpleAdmin(cn)
 	else:
 		setSimpleMaster(cn)
 		
@@ -175,3 +188,54 @@ def onSetMasterOff(cn):
 	else:
 		return
 	ServerCore.resetPrivilege(cn)
+	
+@Commands.commandHandler('master')
+def masterCmd(cn, args):
+	'''
+	@description claim master
+	@usage
+	@allowGroups __admin__ __master
+	@denyGroups
+	@doc Allows a player who is in the appropriate groups to claim master.
+	'''
+	p = Players.player(cn)
+	if args != '':
+		raise Commands.ExtraArgumentError()
+	setSimpleMaster(cn)
+
+@Commands.commandHandler('admin')
+def adminCmd(cn, args):
+	'''
+	@description claim admin
+	@usage
+	@allowGroups __admin__
+	@denyGroups
+	@doc Allows a player who is in the appropriate groups to claim admin.
+	'''
+	if args != '':
+		raise Commands.ExtraArgumentError()
+	setSimpleAdmin(cn)
+		
+@Commands.commandHandler('givemaster')
+def onGiveMaster(cn, args):
+	'''
+	@description give master to a player
+	@usage <cn>
+	@allowGroups __admin__ __master__
+	@denyGroups
+	@doc Allows a player who is in the appropriate groups to give master to another.
+	'''
+	if args == '':
+		raise Commands.UsageError()
+		return
+	try:
+		tcn = int(args)
+	except TypeError:
+		raise Commands.UsageError()
+		return
+	
+	p = Players.player(cn)
+	t = Players.player(tcn)
+	
+	messager.sendPlayerMessage('master_given', p, dictionary={'name': t.name()})
+	ServerCore.setMaster(tcn)
