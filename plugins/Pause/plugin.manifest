@@ -1,0 +1,14 @@
+[Plugin]
+Name = Pause
+SymbolicName = Pause
+Version = 0.0.1
+Author = Chasm
+Enabled = True
+
+[Dependencies]
+Server = 0.0.1
+Commands = 0.0.1
+Events = 0.0.1
+Messages = 0.0.1
+Setting = 0.0.1
+SettingsManager = 0.0.1

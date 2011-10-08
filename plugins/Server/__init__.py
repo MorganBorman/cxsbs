@@ -127,12 +127,3 @@ def setFrozen(val):
 def isFrozen():
 	'''Is the currently frozen. See setFrozen(val).'''
 	return server_frozen
-	
-@Events.eventHandler('player_pause')
-def onPlayerPause(cn, val):
-	'''
-	@commandType
-	@allowGroups __admin__ __master__
-	@doc This command type event occurs when a player issues "/pausegame <value>" from their client.
-	'''
-	setPaused(val, cn)

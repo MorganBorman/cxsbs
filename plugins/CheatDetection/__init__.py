@@ -105,6 +105,8 @@ def onPlayerShot(cn, millis, gun):
 			validWeaponReloadTime = weaponReloadTimes[firstShot[0]]
 			timeBetweenShots = (secondShot[1] - firstShot[1])
 			Logging.debug("CheatDetection: " + weapons[firstShot[0]] + " reload time: " + str(timeBetweenShots) + " normal time: " + str(validWeaponReloadTime))
+			if timeBetweenShots < 0:
+				return
 			if (validWeaponReloadTime-timeBetweenShots) > 0:
 				takeAction(cn)
 			
