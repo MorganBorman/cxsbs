@@ -1944,7 +1944,7 @@ namespace server
                 shot->gun = getint(p);
                 loopk(3) shot->from[k] = getint(p)/DMF;
                 loopk(3) shot->to[k] = getint(p)/DMF;
-                SbPy::triggerEventIntIntInt("player_shot", cq->clientnum, shot->millis, shot->gun);
+                SbPy::triggerEventIntIntInt("player_shot", cq->clientnum, shot->id, shot->gun);
                 int hits = getint(p);
                 loopk(hits)
                 {
@@ -1975,7 +1975,7 @@ namespace server
                 exp->gun = getint(p);
                 exp->id = getint(p);
                 int hits = getint(p);
-                SbPy::triggerEventIntIntInt("player_explode", cq->clientnum, exp->millis, exp->gun);
+                SbPy::triggerEventIntIntInt("player_explode", cq->clientnum, cmillis, exp->gun);
 				loopk(hits)
 				{
 					if(p.overread()) break;
