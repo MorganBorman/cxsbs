@@ -5,7 +5,8 @@ class Plugin(cxsbs.Plugin.Plugin):
 		cxsbs.Plugin.Plugin.__init__(self)
 		
 	def load(self):
-		global shotDict
+		global shotDict, prevLow
+		prevLow = {}
 		shotDict = {}
 		
 	def unload(self):
@@ -104,11 +105,16 @@ def onPlayerShot(cn, millis, gun):
 			
 			validWeaponReloadTime = weaponReloadTimes[firstShot[0]]
 			timeBetweenShots = (secondShot[1] - firstShot[1])
-			#Logging.debug("CheatDetection: " + weapons[firstShot[0]] + " reload time: " + str(timeBetweenShots) + " normal time: " + str(validWeaponReloadTime))
+			Logging.debug("CheatDetection: " + weapons[firstShot[0]] + " reload time: " + str(timeBetweenShots) + " normal time: " + str(validWeaponReloadTime))
 			if timeBetweenShots < 0:
-				return
-			if (validWeaponReloadTime-timeBetweenShots) > 0:
-				takeAction(cn)
+				prevLow[cn] = False
+			elif (validWeaponReloadTime-timeBetweenShots) > (0.1 * validWeaponReloadTime):
+				if cn in prevLow.keys():
+					if prevLow[cn]:
+						takeAction(cn)
+				prevLow[cn] = True
+			else:
+				prevLow[cn] = False
 			
 @Events.eventHandler('player_disconnect')
 def onPlayerDisconnect(cn):
@@ -123,4 +129,4 @@ def onPlayerConnect(cn):
 	
 @Events.eventHandler('player_shot_hit')
 def onPlayerShotHit(cn, tcn, lifeseq, dist, rays):
-	print cn, tcn, lifeseq, dist, rays
+	#print cn, tcn, lifeseq, dist, rays
