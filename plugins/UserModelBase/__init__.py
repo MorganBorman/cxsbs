@@ -11,6 +11,16 @@ class Plugin(cxsbs.Plugin.Plugin):
 		pass
 	
 import abc
+
+protectedGroups = 	[
+					'__all__',
+					'__invisible__',
+					'__master__',
+					'__admin__',
+					'__norm__',
+					'__spectator__',
+					'__player__',
+					]
 	
 class Model(object):
 	__metaclass__ = abc.ABCMeta

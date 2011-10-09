@@ -7,23 +7,8 @@ class Plugin(cxsbs.Plugin.Plugin):
 	def load(self):
 		pass
 		
-	def reload(self):
-		pass
-		
 	def unload(self):
 		pass
-	
-@commandHandler('servermsg')
-@masterRequired
-def serverMessage(cn, args):
-	'''@description Broadcast message to all clients in server
-	   @usage message
-	   @master'''
-	if args == '':
-		raise UsageError()
-	else:
-		msg = servermsg_template.substitute(colordict, sender=sbserver.playerName(cn), message=args)
-		sbserver.message(msg)
 		
 @Commands.commandHandler('addtemplate')
 def onAddTemplate(cn, args):

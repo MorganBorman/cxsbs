@@ -329,9 +329,11 @@ def onReserveNameCommand(cn, args):
 	
 	if not isNamePermitted(nameString, userId):
 		messager.sendPlayerMessage('name_add_failure_taken', u, dictionary={'name': nameString})
+		return
 		
 	if len(nameString) < settings['minimum_length']:
 		messager.sendPlayerMessage('name_add_failure_short', u, dictionary={'name': nameString, 'length': settings['minimum_length']})
+		return
 	
 	primary = not hasPrimaryName(userId)
 

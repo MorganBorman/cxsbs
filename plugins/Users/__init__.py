@@ -29,37 +29,30 @@ Timers = cxsbs.getResource("Timers")
 Auth = cxsbs.getResource("Auth")
 ServerCore = cxsbs.getResource("ServerCore")
 Email = cxsbs.getResource("Email")
+CommandInformation = cxsbs.getResource("CommandInformation")
 
 pluginCategory = 'Users'
-pluginSubcategory = 'Reserved Name'
+pluginSubcategory = 'General'
 
-SettingsManager.addSetting(Setting.IntSetting	(
+SettingsManager.addSetting(Setting.BoolSetting	(
 												category=pluginCategory, 
 												subcategory=pluginSubcategory, 
-												symbolicName="max_warnings", 
-												displayName="Maximum warnings", 
-												default=5,
-												doc="Number of warnings to give before kicking a player using a reserved nickname."
+												symbolicName="protect_system_groups", 
+												displayName="Protect system groups", 
+												default=True,
+												doc="Prevent users who have not claimed admin using the admin password from adding users to the built in system groups."
 											))
 
-SettingsManager.addSetting(Setting.IntSetting	(
+SettingsManager.addSetting(Setting.BoolSetting	(
 												category=pluginCategory, 
 												subcategory=pluginSubcategory, 
-												symbolicName="warning_interval", 
-												displayName="Warning interval", 
-												default=5,
-												doc="Amount of time between warnings about using a reserved nickname."
+												symbolicName="allow_self_propagating_groups", 
+												displayName="Allow self propagating groups", 
+												default=False,
+												doc="Prevent users who have not claimed admin from adding users to groups which in turn have permissions to add users to groups."
 											))
 
 settings = SettingsManager.getAccessor(pluginCategory, pluginSubcategory)
-
-Messages.addMessage	(
-						subcategory=pluginCategory, 
-						symbolicName="name_reserved", 
-						displayName="Name reserved", 
-						default="${warning}You're are using a reserved name; ${blue}${name}${white}. You have ${red}${remaining}${white} seconds to login or be kicked.", 
-						doc="Message to print when a player has violated the sanctity of another's name without proper credentials."
-					)
 
 Messages.addMessage	(
 						subcategory=pluginCategory, 
@@ -363,6 +356,12 @@ def addToGroupCommand(cn, args):
 			raise Commands.StateError("That player does not seem to be logged in.")
 	
 	groupName = args[1]
+	
+	if groupName in UserModelBase.protectedGroups and ServerCore.playerPrivilege(cn) != 2 and settings['protect_system_groups']:
+		raise Commands.StateError("That is a protected group, only admins may add users to this group.")
+	
+	if groupName in CommandInformation.getCommandInfo('addtogroup').getAllowedGroups() and ServerCore.playerPrivilege(cn) != 2 and not settings['allow_self_propagating_groups']:
+		raise Commands.StateError("That group is protected because it can add users to groups, only admins may add users to this group.")
 		
 	try:
 		groupId = UserModel.model.getGroupId(groupName)
