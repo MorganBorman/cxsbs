@@ -207,7 +207,7 @@ def onUnregisterCommand(cn, args):
 		cxsbs.AsyncronousExecutor.dispatch(Email.send_templated_email, (verificationDict['verificationType'], verificationDict['userEmail']), verificationDict)
 		
 		p = Players.player(cn)
-		p.logAction('Unregistered: ' + email)
+		p.logAction('Unregistered: ' + verificationDict['userEmail'])
 		messager.sendPlayerMessage('unregistration_successful', p)
 		
 	except UserModelBase.InvalidUserId:
@@ -236,7 +236,7 @@ def onVerifyCommand(cn, args):
 		
 		messager.sendPlayerMessage('verification_successful', p)
 		p.logAction('Verified: ' + email + ' Action: ' + verificationDict['verificationType'])
-	except (UserModelBase.InvalidUserName, UserModelBase.InvalidVerification):
+	except (UserModelBase.InvalidEmail, UserModelBase.InvalidVerification):
 		messager.sendPlayerMessage('verification_unsuccessful', p)
 
 @Commands.commandHandler('changekey')

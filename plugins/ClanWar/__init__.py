@@ -178,25 +178,27 @@ class ClanWar:
 			#teamBalance()
 			
 	def saveCombatants(self):
-		pass
+		self.combatants = ServerCore.players()
 		
 	def isCombatant(self, cn):
-		pass
+		return cn in self.combatants
 	
 	def onMapChange(self, gameMap, gameMode):
 		self.isIntermission = False
 		self.saveCombatants()
 		Timers.addTimer(1, self.start, ())
 			
-	def onDisconnect(self, cn): #make on disconnect events sync_
-		p = Players.player(cn)
-		if not p.isSpectator() and not self.isIntermission:
+	def onDisconnect(self, cn):
+		if self.isCombatant(cn) and not self.isIntermission:
 			messager.sendMessage("interruption")
 			Server.setPaused(True, -1)
+			self.saveCombatants()
 			
 	def onSpectate(self, cn):
-		messager.sendMessage("interruption")
-		Server.setPaused(True, -1)
+		if self.isCombatant(cn) and not self.isIntermission:
+			messager.sendMessage("interruption")
+			Server.setPaused(True, -1)
+			self.saveCombatants()
 		
 	def onUnspectate(self, cn):
 		self.saveCombatants()
@@ -211,6 +213,8 @@ class ClanWar:
 		
 		Server.setPaused(True, -1)
 		Server.setFrozen(True)
+		
+		self.saveCombatants()
 		
 		clanWarTimer(10)
 		

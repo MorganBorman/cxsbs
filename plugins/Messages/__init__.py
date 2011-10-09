@@ -30,14 +30,14 @@ class Accessor:
 	def __str__(self):
 		print "<"+"MessagesManager['"+self.category+"']['"+self.subcategory+"'] Accessor>"
 	
-	def sendMessage(self, symbolicName, group=None, dictionary=None):
-		self.messagesManager.sendMessage(self.subcategory, symbolicName, group, dictionary, self.category)
+	def sendMessage(self, symbolicName, group=None, dictionary=None, submessages={}):
+		self.messagesManager.sendMessage(self.subcategory, symbolicName, group, dictionary, submessages, self.category)
 		
-	def sendPlayerMessage(self, symbolicName, p, dictionary=None):
-		self.messagesManager.sendPlayerMessage(self.subcategory, symbolicName, p, dictionary, self.category)
+	def sendPlayerMessage(self, symbolicName, p, dictionary=None, submessages={}):
+		self.messagesManager.sendPlayerMessage(self.subcategory, symbolicName, p, dictionary, submessages, self.category)
 		
-	def printMessage(self, symbolicName, group=None, dictionary=None):
-		self.messagesManager.printMessage(self.subcategory, symbolicName, dictionary, self.category)
+	def printMessage(self, symbolicName, group=None, dictionary=None, submessages={}):
+		self.messagesManager.printMessage(self.subcategory, symbolicName, dictionary, submessages, self.category)
 	
 class MessagesManager:
 	def __init__(self, settingsManager):
@@ -76,7 +76,7 @@ class MessagesManager:
 	def getAccessor(self, category="Messages", subcategory="General"):
 		return Accessor(self, category, subcategory)
 		
-	def sendMessage(self, subcategory, symbolicName, group=None, dictionary=None, category="Messages"):
+	def sendMessage(self, subcategory, symbolicName, group=None, dictionary=None, submessages={}, category="Messages"):
 		if group == None:
 			group = Players.AllPlayersGroup
 			
@@ -87,13 +87,13 @@ class MessagesManager:
 		
 		group.action("message", (message,))
 		
-	def printMessage(self, subcategory, symbolicName, dictionary=None, category="Messages"):
+	def printMessage(self, subcategory, symbolicName, dictionary=None, submessages={}, category="Messages"):
 		message = self.__formMessage(category=category, subcategory=subcategory, symbolicName=symbolicName, dictionary=dictionary)
 		if message == '' or message == None:
 			return
 		print repr(message)
 		
-	def sendPlayerMessage(self, subcategory, symbolicName, p, dictionary=None, category="Messages"):
+	def sendPlayerMessage(self, subcategory, symbolicName, p, dictionary=None, submessages={}, category="Messages"):
 		message = self.__formMessage(category=category, subcategory=subcategory, symbolicName=symbolicName, dictionary=dictionary)
 		if message == '' or message == None:
 			return
