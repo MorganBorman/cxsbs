@@ -194,13 +194,10 @@ def masterCmd(cn, args):
 	'''
 	@description claim master
 	@usage
-	@allowGroups __admin__ __master
+	@allowGroups __admin__ __master__
 	@denyGroups
 	@doc Allows a player who is in the appropriate groups to claim master.
 	'''
-	p = Players.player(cn)
-	if args != '':
-		raise Commands.ExtraArgumentError()
 	setSimpleMaster(cn)
 
 @Commands.commandHandler('admin')
@@ -212,8 +209,6 @@ def adminCmd(cn, args):
 	@denyGroups
 	@doc Allows a player who is in the appropriate groups to claim admin.
 	'''
-	if args != '':
-		raise Commands.ExtraArgumentError()
 	setSimpleAdmin(cn)
 		
 @Commands.commandHandler('givemaster')
