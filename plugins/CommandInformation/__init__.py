@@ -19,6 +19,7 @@ SettingsManager = cxsbs.getResource("SettingsManager")
 class CommandInfo:
 	def __init__(self, command):
 		self.command = command
+		self.threaded = False
 		self.usages = []
 		self.allowGroups = []
 		self.denyGroups = []
@@ -114,6 +115,9 @@ def loadCommandInfo(command, handler):
 						doc = False
 					elif tag == '@description':
 						info.description = text
+						doc = False
+					elif tag == '@threaded':
+						info.threaded = True
 						doc = False
 					elif tag == '@allowgroups':
 						info.allowGroups += text.split()

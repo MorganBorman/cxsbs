@@ -113,7 +113,7 @@ Messages.addMessage	(
 						subcategory=pluginCategory, 
 						symbolicName="name_add_success", 
 						displayName="name add success", 
-						default="${info}The name ${blue}${name}${white} is not associated with your account, ${blue}${email}${white}.", 
+						default="${info}The name ${blue}${name}${white} is now associated with your account, ${blue}${email}${white}.", 
 						doc="Message to print when a player added a name reservation."
 					)
 
@@ -137,7 +137,7 @@ Messages.addMessage	(
 						subcategory=pluginCategory, 
 						symbolicName="name_remove_success", 
 						displayName="Name remove success", 
-						default="${info}The name ${blue}${name}${white} was disassociated with your account, ${blue}${email}${white}.", 
+						default="${info}The name ${blue}${name}${white} has been disassociated with your account, ${blue}${email}${white}.", 
 						doc="Message to print when a player removes a name reservation."
 					)
 
@@ -306,6 +306,7 @@ def onPlayerActive(*args):
 @Commands.commandHandler('reservename')
 def onReserveNameCommand(cn, args):
 	'''
+	@threaded
 	@description Stake a name reservation
 	@usage <name>
 	@allowGroups __user__
@@ -349,6 +350,7 @@ def onReserveNameCommand(cn, args):
 @Commands.commandHandler('releasename')
 def onReleaseNameCommand(cn, args):
 	'''
+	@threaded
 	@description Relinquish a name reservation
 	@usage <name>
 	@allowGroups __user__
@@ -373,15 +375,19 @@ def onReleaseNameCommand(cn, args):
 	session = DatabaseManager.dbmanager.session()
 	try:
 		names = session.query(UserName).filter(UserName.userId==userId).filter(UserName.name==nameString).all()
+		removedName = ""
 		for name in names:
+			removedName = name.name
 			session.delete(name)
 		session.commit()
+		messager.sendPlayerMessage('name_remove_success', u, dictionary={'name': removedName, 'email': UserModel.model.getUserEmail(userId)})
 	finally:
 		session.close()
 		
 @Commands.commandHandler('displayname')
 def onDisplayNameCommand(cn, args):
 	'''
+	@threaded
 	@description Set the primary display name to the specified name
 	@usage <name>
 	@allowGroups __user__

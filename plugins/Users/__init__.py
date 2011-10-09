@@ -158,6 +158,7 @@ def isLoggedIn(cn):
 @Commands.commandHandler('register')
 def onRegisterCommand(cn, args):
 	'''
+	@threaded
 	@description Register account with server
 	@usage <email> <token seed>
 	@allowGroups __all__
@@ -191,6 +192,7 @@ def onRegisterCommand(cn, args):
 @Commands.commandHandler('unregister')
 def onUnregisterCommand(cn, args):
 	'''
+	@threaded
 	@description Unregister this account with server
 	@usage
 	@allowGroups __user__
@@ -212,6 +214,7 @@ def onUnregisterCommand(cn, args):
 @Commands.commandHandler('verify')
 def onVerifyCommand(cn, args):
 	'''
+	@threaded
 	@description Supply verification for a pending action
 	@usage <username> <code>
 	@allowGroups __all__
@@ -237,6 +240,7 @@ def onVerifyCommand(cn, args):
 @Commands.commandHandler('changekey')
 def onChangeKeyCommand(cn, args):
 	'''
+	@threaded
 	@description change account password
 	@usage <token seed>
 	@allowGroups __user__
@@ -329,6 +333,7 @@ def authChallengeResponse(cn, reqid, response):
 @Commands.commandHandler('addtogroup')
 def addToGroupCommand(cn, args):
 	'''
+	@threaded
 	@description Add a user to a group
 	@usage <email or tcn> <group name>
 	@allowGroups __admin__
@@ -378,6 +383,7 @@ def addToGroupCommand(cn, args):
 @Commands.commandHandler('removefromgroup')
 def removeFromGroupCommand(cn, args):
 	'''
+	@threaded
 	@description Remove a user from a group
 	@usage <email> <group name>
 	@allowGroups __admin__

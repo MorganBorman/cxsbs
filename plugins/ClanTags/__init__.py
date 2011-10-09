@@ -219,6 +219,7 @@ def onPlayerActive(*args):
 @Commands.commandHandler('addtag')
 def onAddTagCommand(cn, args):
 	'''
+	@threaded
 	@description Add a group tag association
 	@usage <tag> <group>
 	@allowGroups __admin__
@@ -244,6 +245,7 @@ def onAddTagCommand(cn, args):
 @Commands.commandHandler('deltag')
 def onDelTagCommand(cn, args):
 	'''
+	@threaded
 	@description Delete a tag-group association
 	@usage <tag> (group)
 	@allowGroups __admin__

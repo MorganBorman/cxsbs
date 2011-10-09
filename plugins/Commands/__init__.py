@@ -99,9 +99,17 @@ class InsufficientPermissions(Exception):
 	def __init__(self):
 		Exception.__init__(self, "Insufficient Permissions")
 		
-def executeCommand(p, command, func, args):
+def executeCommand(p, command, func, args, threaded=False):
 	try:
 		info = CommandInformation.getCommandInfo(command)
+		if info.threaded and not threaded:
+			
+			args = (p, command, func, args)
+			kwargs = {'threaded':True}
+			
+			cxsbs.AsyncronousExecutor.dispatch(executeCommand, args=args, time=0, kwargs=kwargs)
+			return
+		
 		if info == None:
 			raise StateError("Commands without info cannot be executed.")
 			
@@ -218,25 +226,6 @@ def registerCommandHandler(command, func):
 	
 def registerCallback(cn, func):
 	commandManager.registerCallback(cn, func)
-
-class CommandThreadQueuer:
-	def __init__(self, f):
-		self.func = f
-		self.__doc__ = f.__doc__
-		self.__name__ = f.__name__
-
-	def __call__(self, *args, **kwargs):
-		cxsbs.AsyncronousExecutor.dispatch(self.func, args=args, time=0, kwargs=kwargs)
-		
-class threadedCommandHandler(object):
-	'''Decorator to register an event as an asyncronous command handler.'''
-	def __init__(self, name):
-		self.name = name
-	def __call__(self, f):
-		self.__doc__ = f.__doc__
-		self.__name__ = f.__name__
-		registerCommandHandler(self.name, CommandThreadQueuer(f))
-		return f
 
 class commandHandler(object):
 	def __init__(self, name):

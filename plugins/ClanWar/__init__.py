@@ -264,6 +264,7 @@ class ClanWarManager:
 @Commands.commandHandler('clanwar')
 def clanWar(cn, args):
 	'''
+	@threaded
 	@description Toggle clanwar mode
 	@usage <clantag1> (clantag2)
 	@usage

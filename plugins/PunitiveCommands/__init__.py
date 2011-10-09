@@ -118,6 +118,7 @@ def extractCommonActionDetails(cn, args):
 @Commands.commandHandler('mute')
 def onMuteCommand(cn, args):
 	'''
+	@threaded
 	@description Mute a player
 	@usage <cn> (seconds) (reason)%(cidr)
 	@allowGroups __admin__ __master__
@@ -130,6 +131,7 @@ def onMuteCommand(cn, args):
 @Commands.commandHandler('ban')
 def onBanCommand(cn, args):
 	'''
+	@threaded
 	@description Ban a player
 	@usage <cn> (seconds) (reason)%(cidr)
 	@allowGroups __admin__ __master__
@@ -142,6 +144,7 @@ def onBanCommand(cn, args):
 @Commands.commandHandler('spec')
 def onSpecCommand(cn, args):
 	'''
+	@threaded
 	@description force spectate a player
 	@usage <cn> (seconds) (reason)%(cidr)
 	@allowGroups __admin__ __master__
