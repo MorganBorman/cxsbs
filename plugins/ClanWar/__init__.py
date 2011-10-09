@@ -129,7 +129,7 @@ class ClanWar:
 		self.firstIntermission = True
 		
 		ServerCore.setPersistentIntermission(True)
-		ServerCore.setMinsRemaining(0)
+		ServerCore.setSecondsRemaining(0)
 		
 		self.restoreMasterMode = ServerCore.masterMode()
 		self.restoreTeamMode = Teams.getTeamMode()

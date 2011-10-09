@@ -215,58 +215,7 @@ def reqClearBans(cn):
 	SpectCore.clearByReason(settings['default_reason'])
 	messager.sendMessage('punitive_effects_cleared', dictionary={'reason': settings['default_reason']})
 	
-import datetime
-
-def getComponent(value, identifier):
-	if value <= 0:
-		return ""
-	returnValue = str(value) + " " + str(identifier)
-	if value == 1:
-		return returnValue
-	else:
-		return returnValue + "s"
-
-def createDurationString(seconds):
-	timeObject = datetime.timedelta(seconds=seconds)
-	
-	years = int(timeObject.days/365)
-	days = int(timeObject.days % 365)
-	hours = int(timeObject.seconds/3600)
-	minutes = int(int(timeObject.seconds % 3600) / 60)
-	seconds = int(int(timeObject.seconds % 3600) % 60)
-	
-	timeList = []
-	
-	component = getComponent(years, "year")
-	if component != "":
-		timeList.append(component)
-		
-	component = getComponent(days, "day")
-	if component != "":
-		timeList.append(component)
-		
-	component = getComponent(hours, "hour")
-	if component != "":
-		timeList.append(component)
-		
-	component = getComponent(minutes, "minute")
-	if component != "":
-		timeList.append(component)
-		
-	component = getComponent(seconds, "second")
-	if component != "":
-		timeList.append(component)
-		
-	if len(timeList) == 0:
-		return "0 seconds"
-		
-	if len(timeList) == 1:
-		return timeList[0]
-	
-	if len(timeList) > 2:
-		timeList = [', '.join(timeList[:-1]), timeList[-1]]
-		
-	return ', and '.join(timeList)
+import prettytime
 
 @Events.eventHandler('player_punished')
 def onPlayerPunished(type, ip, seconds, expiration, reason, nick, responsible_ip, responsible_nick, time):
@@ -275,7 +224,7 @@ def onPlayerPunished(type, ip, seconds, expiration, reason, nick, responsible_ip
 	dictionary = 	{
 						'name': nick,
 						'ip': ip,
-						'time': createDurationString(seconds),
+						'time': prettytime.createDurationString(seconds),
 						'action': type,
 						'responsible': responsible_nick,
 						'reason': reason,

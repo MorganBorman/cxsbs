@@ -33,6 +33,7 @@ Messages = cxsbs.getResource("Messages")
 Commands = cxsbs.getResource("Commands")
 ClanTags = cxsbs.getResource("ClanTags")
 Users = cxsbs.getResource("Users")
+UserModel = cxsbs.getResource("UserModel")
 
 pluginCategory = 'UserNames'
 
@@ -323,6 +324,9 @@ def onReserveNameCommand(cn, args):
 	userId = u.userId
 	nameString = args[0]
 	
+	if not UserModel.model.isUser(userId):
+		raise Commands.StateError("You're caught in limbo... you have a user object but no valid user entry in the user model. Tell an administrator about this.")
+	
 	if not isNamePermitted(nameString, userId):
 		messager.sendPlayerMessage('name_add_failure_taken', u, dictionary={'name': nameString})
 		
@@ -336,6 +340,7 @@ def onReserveNameCommand(cn, args):
 		userName = UserName(nameString, userId, primary=primary)
 		session.add(userName)
 		session.commit()
+		messager.sendPlayerMessage('name_add_success', u, dictionary={'name': nameString, 'email': UserModel.model.getUserEmail(userId)})
 	finally:
 		session.close()
 
@@ -353,12 +358,15 @@ def onReleaseNameCommand(cn, args):
 		raise Commands.UsageError()
 	
 	if not Users.isLoggedIn(cn):
-		raise Commands.UsageError("You must be logged in to use this command.")
+		raise Commands.StateError("You must be logged in to use this command.")
 	
 	u = Players.player(cn)
 	
 	userId = u.userId
 	nameString = args[0]
+	
+	if not UserModel.model.isUser(userId):
+		raise Commands.StateError("You're caught in limbo... you have a user object but no valid user entry in the user model. Tell an administrator about this.")
 	
 	session = DatabaseManager.dbmanager.session()
 	try:
@@ -379,24 +387,30 @@ def onDisplayNameCommand(cn, args):
 	@doc Set the primary display name to the specified name. Will add the name as a user name if it is not found.
 	'''
 	args = args.split()
-	if len(args) != 2:
+	if len(args) != 1:
 		raise Commands.UsageError()
 	
 	if not Users.isLoggedIn(cn):
-		raise Commands.UsageError("You must be logged in to use this command.")
+		raise Commands.StateError("You must be logged in to use this command.")
 	
 	u = Players.player(cn)
 	
 	userId = u.userId
 	nameString = args[0]
 	
+	if not UserModel.model.isUser(userId):
+		raise Commands.StateError("You're caught in limbo... you have a user object but no valid user entry in the user model. Tell an administrator about this.")
+	
 	setNonePrimary(userId)
 	
 	session = DatabaseManager.dbmanager.session()
 	try:
-		name = session.query(UserName).filter(UserName.userId==userId).filter(UserName.name==nameString).first()
+		name = session.query(UserName).filter(UserName.userId==userId).filter(UserName.name==nameString).one()
 		name.primary = True
 		session.add(name)
 		session.commit()
+		messager.sendPlayerMessage('set_primary_success', u, dictionary={'name': nameString})
+	except NoResultFound:
+		raise Commands.StateError("That name does not seem to be reserved by your account.")
 	finally:
 		session.close()

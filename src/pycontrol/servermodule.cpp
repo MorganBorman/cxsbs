@@ -918,12 +918,12 @@ static PyObject *authChal(PyObject *self, PyObject *args)
 	return Py_None;
 }
 
-static PyObject *setGameMins(PyObject *self, PyObject *args)
+static PyObject *setSecondsLeft(PyObject *self, PyObject *args)
 {
-	int mm;
-	if(!PyArg_ParseTuple(args, "i", &mm))
+	int seconds;
+	if(!PyArg_ParseTuple(args, "i", &seconds))
 		return 0;
-	server::setgamemins(mm);
+	server::setSecondsLeft(seconds);
 	Py_INCREF(Py_None);
 	return Py_None;
 }
@@ -959,7 +959,7 @@ static PyObject *serverPassword(PyObject *self, PyObject *args)
 	return Py_BuildValue("s", server::serverpass);
 }
 
-static PyObject *minRemain(PyObject *self, PyObject *args)
+static PyObject *secondsLeft(PyObject *self, PyObject *args)
 {
 	return Py_BuildValue("i", max((server::gamelimit - server::gamemillis)/1000, 0));
 }
@@ -1206,13 +1206,13 @@ static PyMethodDef ModuleMethods[] = {
 	{"ip", ip, METH_VARARGS, "Current server ip."},
 	{"port", port, METH_VARARGS, "Current server port."},
 	{"authChallenge", authChal, METH_VARARGS, "Send auth challenge to client."},
-	{"setMinsRemaining", setGameMins, METH_VARARGS, "Set the minutes remanining in current game."},
+	{"setSecondsRemaining", setSecondsLeft, METH_VARARGS, "Set the number of seconds remaining in current game."},
 	{"adminPassword", adminPass, METH_VARARGS, "Get the administrator password."},
 	{"publicServer", publicServer, METH_VARARGS, "Decides how masters are chosen and what privileges they have."},
 	{"setServerDesc", setServerDesc, METH_VARARGS, "Set the server description."},
 	{"sendMapReload", sendMapReload, METH_VARARGS, "Causes all users to send vote on next map."},
 	{"serverPassword", serverPassword, METH_VARARGS, "Password for entry to the server."},
-	{"minutesRemaining", minRemain, METH_VARARGS, "Minutes remaining in current match."},
+	{"secondsRemaining", secondsLeft, METH_VARARGS, "seconds remaining in current match."},
 	{"persistentIntermission", persistentIntermission, METH_VARARGS, "Get whether or not persistent intermission is enabled."},
 	{"setPersistentIntermission", setPersistentIntermission, METH_VARARGS, "Set whether or not persistent intermission is enabled."},
 	{"allowShooting", allowShooting, METH_VARARGS, "get whether or not shooting is allowed."},

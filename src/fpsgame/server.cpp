@@ -1158,10 +1158,10 @@ namespace server
         changemap(map, mode);
     }
 
-    void setgamemins(int mins)
+    void setSecondsLeft(int seconds)
     {
-        gamelimit = gamemillis + (mins * 60000) + 1;
-	sendf(-1, 1, "ri2", N_TIMEUP, gamemillis < gamelimit && !interm ? max((gamelimit - gamemillis)/1000, 1) : 0);
+        gamelimit = gamemillis + (seconds * 1000) + 1;
+        sendf(-1, 1, "ri2", N_TIMEUP, gamemillis < gamelimit && !interm ? max((gamelimit - gamemillis)/1000, 1) : 0);
     }
 
     void checkintermission()

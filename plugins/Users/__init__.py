@@ -171,18 +171,18 @@ def onRegisterCommand(cn, args):
 	@denyGroups __user__
 	@doc
 	'''
-	args = args.split(' ')
+	args = args.split()
 	if len(args) != 2:
 		raise Commands.UsageError()
 	
 	email = args[0]
 	if not Email.isValidEmail(email):
-		raise Commands.UsageError('The email you provided is not valid.')
+		raise Commands.ArgumentValueError('The email you provided is not valid.')
 	
 	authenticationTokenSeed = args[1]
 	
 	if len(authenticationTokenSeed) < 5:
-		raise Commands.UsageError("Please provide a tokenSeed with a length greater than 5")
+		raise Commands.ArgumentValueError("Please provide a tokenSeed with a length greater than 5.")
 	
 	try:
 		verificationDict = UserModel.model.createUser(email, authenticationTokenSeed)
@@ -193,7 +193,7 @@ def onRegisterCommand(cn, args):
 		messager.sendPlayerMessage('registration_successful', p)
 		
 	except UserModelBase.InvalidEmail:
-		raise Commands.StateError('The email you provided is not valid.')
+		raise Commands.ArgumentValueError('The email you provided is not valid.')
 	
 @Commands.commandHandler('unregister')
 def onUnregisterCommand(cn, args):
@@ -225,7 +225,7 @@ def onVerifyCommand(cn, args):
 	@denyGroups
 	@doc 
 	'''
-	args = args.split(' ')
+	args = args.split()
 	if len(args) != 2:
 		raise Commands.UsageError()
 	
@@ -240,38 +240,6 @@ def onVerifyCommand(cn, args):
 
 	except (UserModelBase.InvalidUserName, UserModelBase.InvalidVerification):
 		messager.sendPlayerMessage('verification_unsuccessful', p)
-		
-"""
-def onLinkNameCommand(cn, args):
-	'''
-	@description Link name to server account, and reserve name.
-	@usage
-	@allowGroups __user__
-	@denyGroups
-	@doc 
-	'''
-	if args != '':
-		raise Commands.UsageError()
-	if not isLoggedIn(cn):
-		raise Commands.StateError('You must be logged in to link a name to your account')
-	user = Players.player(cn)
-	name = ClanTags.stripTags(user.name())
-	try:
-		UserModel.model.associateNick(name, user.userId)
-	except UserModelBase.InvalidUserId:
-		raise Commands.StateError('You must be logged in to link a name to your account.')
-	except UserModelBase.NameConflict:
-		raise Commands.StateError('That name is not available.')
-	except UserModelBase.SingleNickSystem:
-		raise Commands.StateError('This system does not permit multiple names.')
-	except UserModelBase.NickLimitExceeded:
-		raise Commands.StateError('You have exceeded the permissible number of linked names.')
-	except UserModelBase.InvalidUserName:
-		raise Commands.StateError('That name is not permitted.')
-	except UserModelBase.ReadOnlyViolation:
-		raise Commands.StateError('Linking of names is not permitted.')
-	#except UserModelBase.:
-"""
 
 @Commands.commandHandler('changekey')
 def onChangeKeyCommand(cn, args):
@@ -283,7 +251,7 @@ def onChangeKeyCommand(cn, args):
 	@doc 
 	'''
 	if len(args) < 5:
-		raise Commands.UsageError("Please provide a token Seed with a length greater than 5")
+		raise Commands.ArgumentValueError("Please provide a tokenSeed with a length greater than 5.")
 	if not isLoggedIn(cn):
 		raise Commands.StateError('You must be logged in to change your authentication key.')
 	user = Players.player(cn)
