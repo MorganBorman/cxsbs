@@ -166,6 +166,10 @@ def onDiscCommand(cn, args):
 	args = args.split(' ')
 	try:
 		tcn = int(args[0])
+		
+		p = Players.player(cn)
+		t = Players.player(tcn)
+		p.logAction('Silently disconnected: ' + t.name() + '@' + t.ipString())
 		ServerCore.playerDisc(tcn)
 	except (KeyError):
 		raise UsageError()
@@ -183,6 +187,7 @@ def onSmiteCommand(cn, args):
 		raise UsageError()
 	p = Players.player(cn)
 	t = Players.player(int(args))
+	p.logAction('Smited: ' + t.name() + '@' + t.ipString())
 	messager.sendMessage('player_smited', dictionary={'smiter':p.name(), 'smited':t.name()})
 	t.suicide()
 	
@@ -203,6 +208,7 @@ def toggleMuteSpectators(cn, args):
 		action = "muted"
 		
 	p = Players.player(cn)
+	p.logAction('MuteSpectators: ' + action)
 	MuteCore.messager.sendMessage('spectators_muted_toggled', dictionary={'action': action, 'name': p.name()})
 	
 @Events.eventHandler('server_clear_bans')
@@ -216,6 +222,8 @@ def reqClearBans(cn):
 	BanCore.clearByReason(settings['default_reason'])
 	MuteCore.clearByReason(settings['default_reason'])
 	SpectCore.clearByReason(settings['default_reason'])
+	p = Players.player(cn)
+	p.logAction('Executed clear punitive measures.')
 	messager.sendMessage('punitive_effects_cleared', dictionary={'reason': settings['default_reason']})
 	
 import prettytime

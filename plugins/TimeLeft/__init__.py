@@ -73,4 +73,6 @@ def onTimeLeft(cn, args):
 	
 	displaytime = prettytime.createDurationString(ServerCore.secondsRemaining())
 	
+	p.logAction('TimeLeft set: ' + displaytime)
+	
 	messager.sendMessage('time_changed', dictionary={'timeleft':displaytime, 'name':p.name()})

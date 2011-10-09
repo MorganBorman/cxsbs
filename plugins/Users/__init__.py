@@ -184,6 +184,7 @@ def onRegisterCommand(cn, args):
 		cxsbs.AsyncronousExecutor.dispatch(Email.send_templated_email, (verificationDict['verificationType'], verificationDict['userEmail']), verificationDict)
 		
 		p = Players.player(cn)
+		p.logAction('Registered: ' + email)
 		messager.sendPlayerMessage('registration_successful', p)
 		
 	except UserModelBase.InvalidEmail:
@@ -206,6 +207,7 @@ def onUnregisterCommand(cn, args):
 		cxsbs.AsyncronousExecutor.dispatch(Email.send_templated_email, (verificationDict['verificationType'], verificationDict['userEmail']), verificationDict)
 		
 		p = Players.player(cn)
+		p.logAction('Unregistered: ' + email)
 		messager.sendPlayerMessage('unregistration_successful', p)
 		
 	except UserModelBase.InvalidUserId:
@@ -233,7 +235,7 @@ def onVerifyCommand(cn, args):
 		cxsbs.AsyncronousExecutor.dispatch(Email.send_templated_email, (verificationDict['verificationType'], verificationDict['userEmail']), verificationDict)
 		
 		messager.sendPlayerMessage('verification_successful', p)
-
+		p.logAction('Verified: ' + email + ' Action: ' + verificationDict['verificationType'])
 	except (UserModelBase.InvalidUserName, UserModelBase.InvalidVerification):
 		messager.sendPlayerMessage('verification_unsuccessful', p)
 
@@ -258,6 +260,7 @@ def onChangeKeyCommand(cn, args):
 		cxsbs.AsyncronousExecutor.dispatch(Email.send_templated_email, (verificationDict['verificationType'], verificationDict['userEmail']), verificationDict)
 		
 		p = Players.player(cn)
+		p.logAction('KeyChange')
 		messager.sendPlayerMessage('keychange_successful', p)
 		
 	except UserModelBase.InvalidUserId:
@@ -378,7 +381,11 @@ def addToGroupCommand(cn, args):
 	except UserModelBase.DuplicateAssociation:
 		raise Commands.StateError("That player already is in that group.")
 	
-	messager.sendPlayerMessage('group_add_success', Players.player(cn), dictionary={'name': UserModel.model.getUserEmail(userId), 'groupName': groupName})
+	email = UserModel.model.getUserEmail(userId)
+	
+	p = Players.player(cn)
+	p.logAction('AddToGroup: ' + email + ' Group: ' + groupName)
+	messager.sendPlayerMessage('group_add_success', p, dictionary={'name': email, 'groupName': groupName})
 	
 @Commands.commandHandler('removefromgroup')
 def removeFromGroupCommand(cn, args):
@@ -417,7 +424,10 @@ def removeFromGroupCommand(cn, args):
 		groupName = args[1]
 		groupId = UserModel.model.getGroupId(groupName)
 		UserModel.model.removeFromGroup(userId, groupId)
-		messager.sendPlayerMessage('group_removed_success', Players.player(cn), dictionary={'name': UserModel.model.getUserEmail(userId), 'groupName': groupName})
+		p = Players.player(cn)
+		email = UserModel.model.getUserEmail(userId)
+		p.logAction('RemoveFromGroup: ' + email + ' Group: ' + groupName)
+		messager.sendPlayerMessage('group_removed_success', p, dictionary={'name': email, 'groupName': groupName})
 	except UserModelBase.InvalidGroupId:
 		raise Commands.StateError("That user is not a member of the specified group.")
 	except UserModelBase.InvalidAssociation:

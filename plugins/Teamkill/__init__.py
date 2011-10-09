@@ -38,5 +38,6 @@ def onTeamkill(cn, tcn):
 		return
 	p = Players.player(cn)
 	t = Players.player(tcn)
+	p.logAction('Teamkilled: ' + t.name() + '@' + t.ipLong())
 	messageGroup = Players.AllPlayersGroup.query(Intersection(Select(cn=Not(Is(cn))), Select(cn=Not(Is(tcn))))).all()
 	messager.sendMessage('teamkill_broadcast', messageGroup, dictionary={'teamkiller':p.name(), 'victim':t.name()})

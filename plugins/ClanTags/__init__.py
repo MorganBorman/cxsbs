@@ -238,6 +238,7 @@ def onAddTagCommand(cn, args):
 		tag = ClanTag(tagString, groupName)
 		session.add(tag)
 		session.commit()
+		p.logAction('Added clantag: ' + tagString + ' to group: ' + groupName)
 		messager.sendPlayerMessage('tag_add_success', Players.player(cn), dictionary={'tag': tagString, 'groupName': groupName})
 	finally:
 		session.close()
@@ -280,9 +281,11 @@ def onDelTagCommand(cn, args):
 		if len(removedGroups) < 1:
 			messager.sendPlayerMessage('removed_association_none', Players.player(cn), dictionary={'tag': tagString})
 		if len(removedGroups) == 1:
+			p.logAction('Removed clantag: ' + tagString + ' from group: ' + removedGroups[0])
 			messager.sendPlayerMessage('removed_association_one', Players.player(cn), dictionary={'tag': tagString, 'groupName': removedGroups[0]})
 		else:
 			groupNames = ', '.join(removedGroups[:-1]) + ', and ' + removedGroups[-1]
+			p.logAction('Removed clantag: ' + tagString + ' from groups: ' + groupNames)
 			messager.sendPlayerMessage('removed_association_many', Players.player(cn), dictionary={'tag': tagString, 'groupNames': groupNames})
 	finally:
 		session.close()
