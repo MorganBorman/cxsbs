@@ -121,6 +121,9 @@ def clanWarTimer(count):
 		Timers.addTimer(1000, clanWarTimer, (count-1,))
 	else:
 		messager.sendMessage("count_ended")
+		Server.setFrozen(False)
+		Server.setPaused(False)
+		Timers.addTimer(750, ServerCore.setAllowShooting, (True,))
 	
 class ClanWar:
 	def __init__(self, clan1=None, clan2=None):
@@ -217,11 +220,6 @@ class ClanWar:
 		self.saveCombatants()
 		
 		clanWarTimer(10)
-		
-		Timers.addTimer(10000, Server.setFrozen, (False,))
-		Timers.addTimer(10000, Server.setPaused, (False,))
-		
-		Timers.addTimer(10750, ServerCore.setAllowShooting, (True,))
 		
 	def end(self):
 		Server.setMasterMode(self.restoreMasterMode)

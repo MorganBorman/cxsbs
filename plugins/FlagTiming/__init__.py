@@ -13,7 +13,7 @@ class Plugin(cxsbs.Plugin.Plugin):
 		Events.registerServerEventHandler('flag_scored', flagTimingAuthority.onFlagScored)
 		Events.registerServerEventHandler('flag_stopped', flagTimingAuthority.onFlagStopped)
 		Events.registerServerEventHandler('flag_reset', flagTimingAuthority.onFlagReset)
-		#Events.registerServerEventHandler('flag_spawned', flagTimingAuthority.onFlagReset)
+		Events.registerServerEventHandler('flag_spawned', flagTimingAuthority.onFlagReset)
 		
 		Events.registerServerEventHandler('map_changed', flagTimingAuthority.onMapChange)
 		
