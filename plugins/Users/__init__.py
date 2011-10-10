@@ -136,8 +136,12 @@ Messages.addMessage	(
 
 messager = Messages.getAccessor(subcategory=pluginCategory)
 
-def userGroups(self):
-	return UserModel.model.groups(self.userId) + Players.Player.groups(self) + ['__user__']
+class userGroups:
+	def __init__(self, playerObject):
+		self.playerObject = playerObject
+		
+	def __call__(self):
+		return UserModel.model.groups(self.playerObject.userId) + Players.Player.groups(self.playerObject) + ['__user__']
 		
 def isLoggedIn(cn):
 	try:
@@ -317,7 +321,7 @@ def authChallengeResponse(cn, reqid, response):
 		if login[0]:
 			p.message(login[1])
 			p.userId = p.tempUserId
-			p.groups = userGroups
+			p.groups = userGroups(p)
 			messager.sendMessage('logged_in', dictionary={'name':p.name()})
 		else:
 			print "login from integrated user model returned false"
