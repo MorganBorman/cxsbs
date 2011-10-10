@@ -198,7 +198,16 @@ def masterCmd(cn, args):
 	@denyGroups
 	@doc Allows a player who is in the appropriate groups to claim master.
 	'''
-	setSimpleMaster(cn)
+	if Players.currentAdmin() != None:
+		messager.sendPlayerMessage('already_admin', p)
+		return
+	p = Players.player(cn)
+	if not p.isInvisible():
+		messager.sendMessage('claimed_master', dictionary={"name": p.name()})
+	else:
+		messager.sendMessage('claimed_master', group=Players.SeeInvisibleGroup, dictionary={"name": p.name()})
+	p.logAction('claimed master')
+	ServerCore.setMaster(cn)
 
 @Commands.commandHandler('admin')
 def adminCmd(cn, args):
