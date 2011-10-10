@@ -26,7 +26,7 @@ Messages.addMessage	(
 						doc="Message to say to players on connect."
 					)
 
-messager = Messages.getAccessor(subcategory=pluginCategory)
+messager = Messages.getAccessor(category=pluginCategory, subcategory="General")
 
 @Events.eventHandler('player_connect_delayed')
 def greet(cn):
