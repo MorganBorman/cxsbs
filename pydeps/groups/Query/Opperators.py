@@ -29,3 +29,14 @@ class Contains:
 			return (self.term in text)
 		else:
 			return (self.term.lower() in text.lower())
+		
+import operator
+		
+class Compare:
+	"""A boolean opperation which returns whether or not some text and a given term are equal"""
+	def __init__(self, value, operator=operator.gt):
+		self.value = value
+		self.operator = operator
+	
+	def apply(self, input):
+		return self.operator(input, self.value)

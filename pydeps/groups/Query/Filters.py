@@ -1,6 +1,7 @@
 from types import FunctionType
 import groups.Group
 from groups.Errors import InvalidProperty
+import Opperators
 
 class Filter:
 	pass
@@ -173,3 +174,47 @@ class Difference(Filter):
 				destination.append(item)
 					
 		return groups.Group(origin.memberClass(), destination)
+	
+class MaxMins(Filter):
+	"""
+	A filter type which keeps only those items which have the maximum value based on the feild and the function specified
+	
+	Filter(name=">")
+	
+	to use a built in comparator function ">", or "<" use the quoted symbols. 
+	
+	"""
+	def __init__(self, **kwargs):
+		self.criteria = kwargs
+		
+	def isValid(self, origin):
+		"""Returns a boolean indicating whether or not the filter is valid with respect to the given origin"""
+	
+	def compare(self, a, b, method):
+		if method == '<':
+			return a < b
+		elif method == '>':
+			return a > b
+		else:
+			return method(a, b)
+	
+	def apply(self, origin):
+		destination = []
+		
+		values = origin.all().action(self.criteria.keys()[0], ())
+		
+		valueIsSet = False
+		value = None
+		
+		for v in values:
+			if not valueIsSet:
+				value = v
+				valueIsSet = True
+			elif self.compare(v, value, self.criteria.values()[0]):
+				value = v
+			else:
+				pass
+		
+		selectArgs = {self.criteria.keys()[0]:Opperators.Is(value)}
+		
+		return origin.all().query(Select(**selectArgs)).all()

@@ -10,6 +10,9 @@ class Plugin(cxsbs.Plugin.Plugin):
 		
 	def unload(self):
 		pass
+
+import operator
+from groups.Query import Select, Compare
 	
 import cxsbs
 Setting = cxsbs.getResource("Setting")
@@ -80,6 +83,13 @@ class MessagesManager:
 		if group == None:
 			group = Players.AllPlayersGroup
 			
+		group = group.query(Select(cn=Compare(127, operator=operator.le))).all()
+			
+		if dictionary == None:
+			dictionary = {}
+		for submessageSymbolicName, submessageDictionary in submessages.items():
+			submessage = self.__formMessage(category=category, subcategory=subcategory, symbolicName=submessageSymbolicName, dictionary=submessageDictionary)
+			dictionary.update({submessageSymbolicName:submessage})
 		message = self.__formMessage(category=category, subcategory=subcategory, symbolicName=symbolicName, dictionary=dictionary)
 		
 		if message == '' or message == None:
@@ -88,12 +98,25 @@ class MessagesManager:
 		group.action("message", (message,))
 		
 	def printMessage(self, subcategory, symbolicName, dictionary=None, submessages={}, category="Messages"):
+		
+		if dictionary == None:
+			dictionary = {}
+		for submessageSymbolicName, submessageDictionary in submessages.items():
+			submessage = self.__formMessage(category=category, subcategory=subcategory, symbolicName=submessageSymbolicName, dictionary=submessageDictionary)
+			dictionary.update({submessageSymbolicName:submessage})
 		message = self.__formMessage(category=category, subcategory=subcategory, symbolicName=symbolicName, dictionary=dictionary)
 		if message == '' or message == None:
 			return
 		print repr(message)
 		
 	def sendPlayerMessage(self, subcategory, symbolicName, p, dictionary=None, submessages={}, category="Messages"):
+		if p.cn > 127: #don't send a message if the player is a bot
+			return
+		if dictionary == None:
+			dictionary = {}
+		for submessageSymbolicName, submessageDictionary in submessages.items():
+			submessage = self.__formMessage(category=category, subcategory=subcategory, symbolicName=submessageSymbolicName, dictionary=submessageDictionary)
+			dictionary.update({submessageSymbolicName:submessage})
 		message = self.__formMessage(category=category, subcategory=subcategory, symbolicName=symbolicName, dictionary=dictionary)
 		if message == '' or message == None:
 			return

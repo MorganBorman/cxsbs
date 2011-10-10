@@ -6,18 +6,22 @@ from Query import Contains, Not, Select, Intersection
 	
 import unittest
 
-class GroupTestCase(unittest.TestCase):
+class TestGroups(unittest.TestCase):
 	import Errors
 	import Query.Errors
 	
 	class ExampleClass:
-		def __init__(self, name):
+		def __init__(self, name, frags):
 			self.Name = name
+			self.frags = frags
 		
 		def name(self):
 			return self.Name
+		
+		def frags(self):
+			return self.frags
 	
-	base = [ExampleClass("[FD]Chasm"), ExampleClass("[FD]Oblivion"), ExampleClass("|DM|Broski"), ExampleClass("|DM|Dannyboy")]
+	base = [ExampleClass("[FD]Chasm", 5), ExampleClass("[FD]Oblivion", 5), ExampleClass("|DM|Broski", 3), ExampleClass("|DM|Dannyboy", 3)]
 	
 	class DynamicBase:
 		def __init__(self, base):
@@ -83,3 +87,15 @@ class GroupTestCase(unittest.TestCase):
 		exampleFilter = Select(nsdfame=Contains("[FD]"))
 		exampleQuery = exampleGroup.query(exampleFilter)
 		self.assertRaises(self.Errors.InvalidProperty, exampleQuery.all)
+		
+	def testMaxMinsSelect(self):
+		exampleGroup = Group(self.ExampleClass, self.base)
+		exampleFilter = MaxMins(frags='>')
+		exampleQuery = exampleGroup.query(exampleFilter)
+		self.assertEquals(str(exampleQuery.all().action("name", ())), str(['[FD]Chasm', '[FD]Oblivion']))
+		
+	def testMaxMinsSelect(self):
+		exampleGroup = Group(self.ExampleClass, self.base)
+		exampleFilter = MaxMins(frags='<')
+		exampleQuery = exampleGroup.query(exampleFilter)
+		self.assertEquals(str(exampleQuery.all().action("name", ())), str(['[FD]Chasm', '[FD]Oblivion']))
