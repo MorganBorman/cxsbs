@@ -141,6 +141,16 @@ def onBanCommand(cn, args):
 	'''
 	details = extractCommonActionDetails(cn, args)
 	BanCore.addBan(*details)
+	
+@Events.eventHandler('player_kick')
+def onKick(cn, tcn):
+	'''
+	@commandType
+	@allowGroups __admin__ __master__
+	@denyGroups
+	@doc Command type event triggered when a user issues the \"/kick\" command."
+	'''
+	BanCore.addBan(tcn, settings['default_action_interval'], settings['default_reason'], cn, 32)
 
 @Commands.commandHandler('spec')
 def onSpecCommand(cn, args):
