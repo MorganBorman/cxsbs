@@ -84,6 +84,9 @@ class MessagesManager:
 			group = Players.AllPlayersGroup
 			
 		group = group.query(Select(cn=Compare(127, operator=operator.le))).all()
+		
+		if len(group.members()) < 1:
+			return
 			
 		if dictionary == None:
 			dictionary = {}

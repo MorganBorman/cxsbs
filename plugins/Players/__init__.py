@@ -326,33 +326,6 @@ def addPlayerForCn(cn):
 		pass
 	players[cn] = Player(cn)
 	
-def updatePlayerObject(pObject):
-	'''Update a player's class. Facility primarily used to changing a Player to a User.'''
-	if not isinstance(pObject, Player):
-		raise Exception("Cannot update player object with an object of a class not derived from Player.")
-	cn = pObject.cn
-	try:
-		p = players[cn]
-		players[cn] = pObject
-	except IndexError:
-		raise Exception("Attempt to update player class for a player who does not exist.")
-	
-def revertPlayerObject(pObject):
-	'''Revert a player's class. Facility primarily used to revert a player back to a regular Player after logging out'''
-	if not isinstance(pObject, Player):
-		raise Exception("Cannot revert player object from a object of a class not derived from Player.")
-	try:
-		cn = pObject.cn
-		try:
-			gamevars = pObject.gamevars
-		except:
-			gamevars = {}
-		players[cn] = Player(players[cn])
-		players[cn].gamevars = gamevars
-	except (IndexError, KeyError):
-		pass
-		#raise Exception("Attempt to revert player class for a player who does not exist.")
-	
 @Events.eventHandler('player_connect')
 def onPlayerConnect(cn):
 	logPlayerAction(cn, 'connect')

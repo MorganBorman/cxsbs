@@ -356,5 +356,26 @@ class FlagTimingAuthority:
 			return
 			
 		self.clear(cn)
+	
+"""	
+@Commands.commandHandler('records')
+def onRecordsCommand(cn, args):
+	'''
+	@description Get the records for the given map.
+	@usage (map)
+	@usage
+	@allowGroups __all__
+	@denyGroups
+	@doc This command is used retreive the records for the current or the specified map.
+	'''
+	try:
+		p = Players.player(cn)
+		userId = p.userId
+	except AttributeError:
+		userId = None
+	except:
+		return
+	
+"""
 
 Base.metadata.create_all(DatabaseManager.dbmanager.engine)
