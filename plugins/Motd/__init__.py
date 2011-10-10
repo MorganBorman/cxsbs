@@ -18,7 +18,8 @@ Messages = cxsbs.getResource("Messages")
 pluginCategory = 'Motd'
 
 Messages.addMessage	(
-						subcategory=pluginCategory, 
+						category=pluginCategory,
+						subcategory="General", 
 						symbolicName="message_of_the_day", 
 						displayName="Message of the day", 
 						default="Welcome to a ${red}C${blue}X${green}S${yellow}B${magenta}S${white} server.", 
