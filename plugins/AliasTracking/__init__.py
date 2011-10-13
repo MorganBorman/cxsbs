@@ -103,7 +103,7 @@ def namesCmd(cn, args):
 	@doc Display aliases used with the given players ip
 	'''
 	if args == '':
-		raise UsageError()
+		raise Commands.UsageError()
 	
 	try:
 		tcn = int(args)
@@ -132,3 +132,5 @@ def namesCmd(cn, args):
 	except NoResultFound:
 		ServerCore.playerMessage(cn, 'No names found')
 		return
+	except ValueError:
+		raise Commands.UsageError()

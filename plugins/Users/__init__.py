@@ -232,7 +232,7 @@ def onVerifyCommand(cn, args):
 		cxsbs.AsyncronousExecutor.dispatch(Email.send_templated_email, (verificationDict['verificationType'], verificationDict['userEmail']), verificationDict)
 		
 		messager.sendPlayerMessage('verification_successful', p)
-		p.logAction('Verified: ' + email + ' Action: ' + verificationDict['verificationType'])
+		p.logAction('Verified: ' + verificationDict['userEmail']) + ' Action: ' + verificationDict['verificationType'])
 	except (UserModelBase.InvalidEmail, UserModelBase.InvalidVerification):
 		messager.sendPlayerMessage('verification_unsuccessful', p)
 

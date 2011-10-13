@@ -41,4 +41,9 @@ def onPmCommand(cn, args):
 	args = args.split(' ', 1) #split the arguments into two parts (cn, message)
 	if len(args) < 2:
 		raise Commands.UsageError()
-	Players.player(cn).say(int(args[0]), settings['pm_prefix'].substitute(message=args[1]))
+	try:
+		tcn = int(args[0])
+	except ValueError:
+		raise Commands.UsageError()
+	
+	Players.player(cn).say(tcn, settings['pm_prefix'].substitute(message=args[1]))

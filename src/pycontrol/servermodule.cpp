@@ -589,11 +589,11 @@ static PyObject *playerTeam(PyObject *self, PyObject *args)
 		PyErr_SetString(PyExc_ValueError, "Invalid cn specified");
 		return 0;
 	}
-	if(ci->state.state==CS_SPECTATOR)
-	{
-		PyErr_SetString(PyExc_ValueError, "Player is a spectator");
-		return 0;
-	}
+	//if(ci->state.state==CS_SPECTATOR)
+	//{
+	//	PyErr_SetString(PyExc_ValueError, "Player is a spectator");
+	//	return 0;
+	//}
 	return Py_BuildValue("s", ci->team);
 }
 
