@@ -249,8 +249,9 @@ def onSwitchTeam(cn, team):
 @Events.policyHandler('player_set_team')
 def onSetTeam(cn, tcn, team):
 	p = Players.player(cn)
+	t = Players.player(tcn)
 	
-	if p.team() == team:
+	if t.team() == team:
 		return False
 	
 	if not p.isPermitted(groupSettings['allow_groups_set_team'], groupSettings['deny_groups_set_team']):
