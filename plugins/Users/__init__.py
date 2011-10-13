@@ -291,7 +291,6 @@ def authRequest(cn, name, desc):
 			
 			requestIdTable[cn] = requestId
 			
-			#use the memory location of the Player object as the request id
 			p.challengeAnswer = ServerCore.sendAuthChallenge(cn, Auth.settings["automatic_request_description"], requestId, publicKey)
 			
 		except UserModelBase.InvalidEmail:
@@ -302,6 +301,7 @@ def authChallengeResponse(cn, reqid, response):
 	p = Players.player(cn)
 	try:
 		requestId = requestIdTable[cn]
+		p.pendingAuthLogin = False
 	except KeyError:
 		#Challenge must not have been issued by the auth login functionality
 		#otherwise there would be a requestId in the table.
