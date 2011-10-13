@@ -298,8 +298,8 @@ class SpamHandler:
 			del self.totalOccurrences[cn]
 	
 	def onNewGame(self):
-		for key in self.totalOccurrences.keys():
-			self.totalOccurrences[key] = 0
+		for cn in self.gameOccurrences.keys():
+			self.gameOccurrences[cn] = 0
 			
 	def warn(self, cn, key):
 		if key in self.warningsGiven.keys():
