@@ -86,6 +86,16 @@ def itemString(item):
 		identifier = Colors.grey("#" + str(item.id))
 	else:
 		identifier = Colors.green("#" + str(item.id))
+	
+	try:
+		timeString = time.ctime(item.time)
+	except:
+		timeString = "time of origin unknown"
+	
+	try:
+		expirationString = time.ctime(item.expiration)
+	except:
+		expirationString = "beyond the foreseeable"
 		
 	return_string = ''.join	(	[
 									justify(8, identifier),
@@ -93,8 +103,8 @@ def itemString(item):
 									justify(24, item.reason),
 									justify(15, item.name),
 									justify(15, item.responsible_nick),
-									justify(24, time.ctime(item.time)),
-									justify(24, time.ctime(item.expiration)),
+									justify(24, timeString),
+									justify(24, expirationString),
 								]
 							)
 	
