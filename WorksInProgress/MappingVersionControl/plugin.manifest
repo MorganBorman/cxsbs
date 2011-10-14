@@ -1,0 +1,8 @@
+[Plugin]
+Name = Mapping Version Control
+SymbolicName = Mapping Version Control
+Version = 0.0.1
+Author = Chasm
+Enabled = True
+
+[Dependencies]
