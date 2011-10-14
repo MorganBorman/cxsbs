@@ -1,0 +1,20 @@
+[Plugin]
+Name = Manage Punitive
+SymbolicName = ManagePunitive
+Version = 0.0.1
+Author = Chasm
+Enabled = True
+
+[Dependencies]
+Net = 0.0.1
+Messages = 0.0.1
+ManageCore = 0.0.1
+Colors = 0.0.1
+Players = 0.0.1
+Commands = 0.0.1
+DatabaseManager = 0.0.1
+PunitiveCommands = 0.0.1
+Logging = 0.0.1
+BanCore = 0.0.1
+MuteCore = 0.0.1
+SpectCore = 0.0.1
