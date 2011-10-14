@@ -13,6 +13,7 @@ class Plugin(cxsbs.Plugin.Plugin):
 from sqlalchemy import Column, Integer, String, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
+from sqlalchemy.sql.expression import func
 
 from twisted.internet.task import LoopingCall
 
@@ -248,7 +249,7 @@ def isNamePermitted(name, userId=None):
 		else:
 			query = session.query(UserName)
 			if settings["case_sensitive"]:
-				query = query.filter(func.lower(UserName.c.name).like(name.lower()))
+				query = query.filter(func.lower(UserName.name).like(name.lower()))
 			else:
 				query = query.filter(UserName.name==name)
 				

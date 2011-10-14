@@ -1,13 +1,13 @@
 import abc
 
 class Plugin(object):
-    __metaclass__ = abc.ABCMeta
-    
-    @abc.abstractmethod
-    def load(self, input):
-        """Initialize the plugin."""
-        return
-       
+	__metaclass__ = abc.ABCMeta
+	
+	@abc.abstractmethod
+	def load(self, input):
+		"""Initialize the plugin."""
+		return
+	   
 	@abc.abstractmethod
 	def unload(self, output, data):
 		"""Deinitialize the plugin."""

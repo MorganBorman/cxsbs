@@ -86,6 +86,7 @@ class Spect(Base):
 	responsible_ip = Column(BigInteger)
 	responsible_nick= Column(String(length=16))
 	time = Column(Integer)
+	expired = Column(Boolean)
 	def __init__(self, ip, mask, expiration, reason, name, responsible_ip, responsible_nick, time):
 		self.ip = ip
 		self.mask = mask
@@ -95,7 +96,10 @@ class Spect(Base):
 		self.responsible_ip = responsible_ip
 		self.responsible_nick= responsible_nick
 		self.time = time
+		self.expired = False
 	def isExpired(self):
+		if self.expired:
+			return True
 		return self.expiration <= time.time()
 
 Base.metadata.create_all(DatabaseManager.dbmanager.engine)
@@ -113,7 +117,7 @@ def clearByReason(reason):
 def getCurrentSpectByIp(ipaddress):
 	session = DatabaseManager.dbmanager.session()
 	try:
-		return session.query(Spect).filter(Spect.mask.op('&')(Spect.ip)==Spect.mask.op('&')(ipaddress)).filter('expiration>'+str(time.time())).one()
+		return session.query(Spect).filter(Spect.expired == False).filter(Spect.mask.op('&')(Spect.ip)==Spect.mask.op('&')(ipaddress)).filter('expiration>'+str(time.time())).one()
 	finally:
 		session.close()
 
@@ -126,7 +130,30 @@ def isIpSpectd(ipaddress):
 	except MultipleResultsFound:
 		return True
 
-def addSpect(cn, seconds, reason, responsible_cn=-1, cidr=32):
+def insertSpect(ipString, seconds, reason, responsible_cn=-1, maskString="255.255.255.255"):
+	ip = Net.ipStringToLong(cn)
+	expiration = time.time() + seconds
+	nick = "None Inserted"
+	
+	if responsible_cn != -1:
+		responsible_ip = ServerCore.playerIpLong(responsible_cn)
+		responsible_nick= ServerCore.playerName(responsible_cn)
+	else:
+		responsible_ip = 0
+		responsible_nick= 'the server'
+	
+	mask = Net.ipStringToLong(maskString)
+	
+	newspec = Spect(ip, mask, expiration, reason, nick, responsible_ip, responsible_nick, theTime)
+	
+	session = DatabaseManager.dbmanager.session()
+	try:
+		session.add(newspec)
+		session.commit()
+	finally:
+		session.close()
+
+def addSpect(cn, seconds, reason, responsible_cn=-1, maskString="255.255.255.255"):
 
 	ip = ServerCore.playerIpLong(cn)
 	expiration = time.time() + seconds
@@ -141,7 +168,7 @@ def addSpect(cn, seconds, reason, responsible_cn=-1, cidr=32):
 		
 	theTime = time.time()
 	
-	mask = Net.makeMask(cidr)
+	mask = Net.ipStringToLong(maskString)
 
 	session = DatabaseManager.dbmanager.session()
 	try:
@@ -152,7 +179,7 @@ def addSpect(cn, seconds, reason, responsible_cn=-1, cidr=32):
 		session.close()
 		
 	ServerCore.spectate(cn)
-	Events.triggerServerEvent("player_punished", ("force spectated", Net.ipLongToString(ip)+ "/" + str(cidr), seconds, expiration, reason, nick, responsible_ip, responsible_nick, theTime))
+	Events.triggerServerEvent("player_punished", ("force spectated", Net.ipLongToString(ip)+ ":" + maskString, seconds, expiration, reason, nick, responsible_ip, responsible_nick, theTime))
 
 @Events.policyHandler('player_unspectate')
 def onUnspectate(cn, tcn):

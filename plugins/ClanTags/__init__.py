@@ -13,6 +13,7 @@ class Plugin(cxsbs.Plugin.Plugin):
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
+from sqlalchemy.sql.expression import func
 
 from twisted.internet.task import LoopingCall
 

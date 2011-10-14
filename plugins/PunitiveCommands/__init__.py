@@ -71,28 +71,31 @@ Messages.addMessage	(
 
 messager = Messages.getAccessor(subcategory=pluginCategory)
 
+import timestring
+
 def extractCommonActionDetails(cn, args):
-	if "%" in args:
-		sp = args.split('%')
-		if len(sp) > 2:
-			raise Commands.UsageError()
-		try:
-			cidr = int(sp[1])
-			args = sp[0]
-		except:
-			raise Commands.UsageError()
-	else:
-		cidr = 32
-	
 	args = args.split()
 	
 	if len(args) < 1:
 		raise Commands.UsageError()
 	else:
+		
+		if ":" in args[0]:
+			sp = args[0].split(':')
+			
+			if len(sp) != 2:
+				raise Commands.ArgumentValueError("Extra ':' found when determining command target.")
+			
+			args[0] = sp[0]
+			
+			mask = sp[1]
+		else:
+			mask = "255.255.255.255"
+			
 		try:
 			tcn = int(args[0])
 		except:
-			raise Commands.UsageError()
+			raise Commands.ArgumentValueError("You must supply a valid player cn.")
 	
 	responsible_cn = cn
 	
@@ -100,9 +103,9 @@ def extractCommonActionDetails(cn, args):
 		seconds = settings['default_action_interval']
 	else:
 		try:
-			seconds = int(args[1])
-		except:
-			raise Commands.UsageError()
+			seconds = timestring.parseTimeString(args[1])[1]
+		except timestring.MalformedTimeString:
+			raise Commands.ArgumentValueError("That time string does not seem to be valid.")
 	
 	if len(args) < 3:
 		reason = settings['default_reason']
@@ -112,16 +115,16 @@ def extractCommonActionDetails(cn, args):
 		except:
 			raise Commands.UsageError()
 		
-	Logging.debug("Action details: " + str((tcn, seconds, reason, responsible_cn, cidr)))
+	Logging.debug("Action details: " + str((tcn, seconds, reason, responsible_cn, mask)))
 		
-	return (tcn, seconds, reason, responsible_cn, cidr)
+	return (tcn, seconds, reason, responsible_cn, mask)
 
 @Commands.commandHandler('mute')
 def onMuteCommand(cn, args):
 	'''
 	@threaded
 	@description Mute a player
-	@usage <cn> (seconds) (reason)%(cidr)
+	@usage <cn>(:mask) (time string) (reason)
 	@allowGroups __admin__ __master__
 	@denyGroups
 	@doc Add an ip mute on a player.
@@ -134,7 +137,7 @@ def onBanCommand(cn, args):
 	'''
 	@threaded
 	@description Ban a player
-	@usage <cn> (seconds) (reason)%(cidr)
+	@usage <cn>(:mask) (time string) (reason)
 	@allowGroups __admin__ __master__
 	@denyGroups
 	@doc Add an ip ban on a player
@@ -150,14 +153,14 @@ def onKick(cn, tcn):
 	@denyGroups
 	@doc Command type event triggered when a user issues the \"/kick\" command."
 	'''
-	BanCore.addBan(tcn, settings['default_action_interval'], settings['default_reason'], cn, 32)
+	BanCore.addBan(tcn, settings['default_action_interval'], settings['default_reason'], cn)
 
 @Commands.commandHandler('spec')
 def onSpecCommand(cn, args):
 	'''
 	@threaded
 	@description force spectate a player
-	@usage <cn> (seconds) (reason)%(cidr)
+	@usage <cn>(:mask) (time string) (reason)
 	@allowGroups __admin__ __master__
 	@denyGroups
 	@doc Add an ip force spectate on a player
@@ -241,8 +244,6 @@ import prettytime
 
 @Events.eventHandler('player_punished')
 def onPlayerPunished(type, ip, seconds, expiration, reason, nick, responsible_ip, responsible_nick, time):
-		
-	
 	dictionary = 	{
 						'name': nick,
 						'ip': ip,

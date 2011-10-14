@@ -70,7 +70,7 @@ class MessagesManager:
 		dictionary.update(UI.UIDict())
 		try:
 			messageTemplate = self.settingsManager.getValue(category, subcategory, symbolicName)
-			return messageTemplate.substitute(dictionary)
+			return messageTemplate.safe_substitute(dictionary)
 		except KeyError:
 			exceptionType, exceptionValue, exceptionTraceback = sys.exc_info()	
 			cxsbs.Logging.logger.error('Messages Framework: Attempt to send unknown message: ' + str(symbolicName) + ' from category: ' + str(category) + ' and subcategory: ' + str(subcategory))

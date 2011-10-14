@@ -113,6 +113,7 @@ class Mute(Base):
 	responsible_ip = Column(BigInteger)
 	responsible_nick= Column(String(length=16))
 	time = Column(Integer)
+	expired = Column(Boolean)
 	def __init__(self, ip, mask, expiration, reason, name, responsible_ip, responsible_nick, time):
 		self.ip = ip
 		self.mask = mask
@@ -122,7 +123,10 @@ class Mute(Base):
 		self.responsible_ip = responsible_ip
 		self.responsible_nick= responsible_nick
 		self.time = time
+		self.expired = False
 	def isExpired(self):
+		if self.expired:
+			return True
 		return self.expiration <= time.time()
 
 Base.metadata.create_all(DatabaseManager.dbmanager.engine)
@@ -140,7 +144,7 @@ def clearByReason(reason):
 def getCurrentMuteByIp(ipaddress):
 	session = DatabaseManager.dbmanager.session()
 	try:
-		return session.query(Mute).filter(Mute.mask.op('&')(Mute.ip)==Mute.mask.op('&')(ipaddress)).filter('expiration>'+str(time.time())).one()
+		return session.query(Mute).filter(Mute.expired == False).filter(Mute.mask.op('&')(Mute.ip)==Mute.mask.op('&')(ipaddress)).filter('expiration>'+str(time.time())).one()
 	finally:
 		session.close()
 
@@ -152,8 +156,31 @@ def isIpMuted(ipaddress):
 		return False
 	except MultipleResultsFound:
 		return True
+	
+def insertMute(ipString, seconds, reason, responsible_cn=-1, maskString="255.255.255.255"):
+	ip = Net.ipStringToLong(cn)
+	expiration = time.time() + seconds
+	nick = "None Inserted"
+	
+	if responsible_cn != -1:
+		responsible_ip = ServerCore.playerIpLong(responsible_cn)
+		responsible_nick= ServerCore.playerName(responsible_cn)
+	else:
+		responsible_ip = 0
+		responsible_nick= 'the server'
+	
+	mask = Net.ipStringToLong(maskString)
+	
+	newmute = Mute(ip, mask, expiration, reason, nick, responsible_ip, responsible_nick, theTime)
+	
+	session = DatabaseManager.dbmanager.session()
+	try:
+		session.add(newmute)
+		session.commit()
+	finally:
+		session.close()
 
-def addMute(cn, seconds, reason, responsible_cn=-1, cidr=32):
+def addMute(cn, seconds, reason, responsible_cn=-1, maskString="255.255.255.255"):
 
 	ip = ServerCore.playerIpLong(cn)
 	expiration = time.time() + seconds
@@ -168,7 +195,7 @@ def addMute(cn, seconds, reason, responsible_cn=-1, cidr=32):
 		
 	theTime = time.time()
 	
-	mask = Net.makeMask(cidr)
+	mask = Net.ipStringToLong(maskString)
 		
 	newmute = Mute(ip, mask, expiration, reason, nick, responsible_ip, responsible_nick, theTime)
 
@@ -179,7 +206,7 @@ def addMute(cn, seconds, reason, responsible_cn=-1, cidr=32):
 	finally:
 		session.close()
 	
-	Events.triggerServerEvent("player_punished", ("muted", Net.ipLongToString(ip)+ "/" + str(cidr), seconds, expiration, reason, nick, responsible_ip, responsible_nick, theTime))
+	Events.triggerServerEvent("player_punished", ("muted", Net.ipLongToString(ip)+ ":" + maskString, seconds, expiration, reason, nick, responsible_ip, responsible_nick, theTime))
 	
 @Events.policyHandler('allow_message_team')
 @Events.policyHandler('allow_message')

@@ -43,4 +43,3 @@ def dbsession():
 		yield session
 	finally:
 		session.close()
-
