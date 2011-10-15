@@ -208,3 +208,7 @@ def onMapVote(cn, mapName, modeNumber):
 		Timers.addTimer(settings["map_change_delay"]*1000, whenSetMap, (p, mapName, modeNumber))
 	else:
 		whenSetMap(p, mapName, modeNumber)
+		
+@Events.eventHandler('player_connect_delayed')
+def onDelayedConnect(cn):
+	ServerCore.sendMapInit(cn)

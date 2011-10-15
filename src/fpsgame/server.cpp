@@ -905,6 +905,15 @@ namespace server
         gs.lastspawn = gamemillis;
     }
 
+    int initmappacket(packetbuf &p, clientinfo *ci);
+
+    void sendInitMap(clientinfo *ci)
+    {
+        packetbuf p(MAXTRANS, ENET_PACKET_FLAG_RELIABLE);
+        int chan = initmappacket(p, ci);
+        sendpacket(ci->clientnum, chan, p.finalize());
+    }
+
     void sendwelcome(clientinfo *ci)
     {
         packetbuf p(MAXTRANS, ENET_PACKET_FLAG_RELIABLE);
@@ -945,12 +954,39 @@ namespace server
         }
     }
 
+    int initmappacket(packetbuf &p, clientinfo *ci)
+    {
+		putint(p, N_MAPCHANGE);
+		sendstring(smapname, p);
+		putint(p, gamemode);
+		putint(p, notgotitems ? 1 : 0);
+		if(!ci || (m_timed && smapname[0]))
+		{
+			putint(p, N_TIMEUP);
+			putint(p, gamemillis < gamelimit && !interm ? max((gamelimit - gamemillis)/1000, 1) : 0);
+		}
+		if(!notgotitems)
+		{
+			putint(p, N_ITEMLIST);
+			loopv(sents) if(sents[i].spawned)
+			{
+				putint(p, i);
+				putint(p, sents[i].type);
+			}
+			putint(p, -1);
+		}
+		return 1;
+    }
+
+
     int welcomepacket(packetbuf &p, clientinfo *ci)
     {
         int hasmap = (m_edit && (clients.length()>1 || (ci && ci->local))) || (smapname[0] && (!m_timed || gamemillis<gamelimit || (ci && ci->state.state==CS_SPECTATOR && !ci->privilege && !ci->local) || numclients(ci ? ci->clientnum : -1, true, true, true)));
         putint(p, N_WELCOME);
-        putint(p, hasmap);
-        if(hasmap)
+        putint(p, 1); //always tell the client we have a map but don't send what it is until after a delay
+        //putint(p, hasmap);
+        //if(hasmap)
+        if(false)
         {
             putint(p, N_MAPCHANGE);
             sendstring(smapname, p);

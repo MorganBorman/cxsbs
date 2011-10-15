@@ -130,6 +130,27 @@ static PyObject *message(PyObject *self, PyObject *args)
 	return Py_None;
 }
 
+static PyObject *sendMapInit(PyObject *self, PyObject *args)
+{
+	int cn;
+	server::clientinfo *ci;
+	if(!PyArg_ParseTuple(args, "i", &cn))
+		return 0;
+	ci = server::getinfo(cn);
+	if(!ci)
+	{
+		PyErr_SetString(PyExc_ValueError, "Invalid cn specified");
+		return 0;
+	}
+	if(ci->state.aitype != AI_NONE)
+	{
+		PyErr_SetString(PyExc_ValueError, "Cannot send map init to AI client");
+		return 0;
+	}
+	server::sendInitMap(ci);
+	return Py_None;
+}
+
 static PyObject *playerMessage(PyObject *self, PyObject *args)
 {
 	int cn;
@@ -1128,11 +1149,6 @@ static PyObject *suicide(PyObject *self, PyObject *args)
 	return Py_None;
 }
 
-//static PyObject *configdir(PyObject *self, PyObject *args)
-//{
-//	return Py_BuildValue("s", server::pyconfigpath);
-//}
-
 static PyObject *instanceRoot(PyObject *self, PyObject *args)
 {
 	return Py_BuildValue("s", server::instanceRoot);
@@ -1150,23 +1166,25 @@ static PyObject *shutdown(PyObject *self, PyObject *args)
 
 static PyMethodDef ModuleMethods[] = {
 	{"reinitializeHandlers", reinitializeHandlers, METH_VARARGS, "Re-retreive python functions for the c++ handlers."},
+
 	{"numClients", numClients, METH_VARARGS, "Return the number of clients on the server."},
+
 	{"message", message, METH_VARARGS, "Send a server message."},
+
+	{"sendMapInit", sendMapInit, METH_VARARGS, "Send the initial map change and items list to the client after they have connected."},
+
 	{"clients", clients, METH_VARARGS, "List of client numbers."},
 	{"players", players, METH_VARARGS, "List of client numbers of active clients."},
 	{"spectators", spectators, METH_VARARGS, "List of client numbers of spectating clients."},
+
 	{"playerMessage", playerMessage, METH_VARARGS, "Send a message to player."},
 	{"playerMessageAll", playerMessageAll, METH_VARARGS, "Send a message as a player(from, to, text)."},
 	{"playerMessageTeam", playerMessageTeam, METH_VARARGS, "Send a team message as a player(from, to, text)."},
+
 	{"playerName", playerName, METH_VARARGS, "Get name of player from cn."},
 	{"playerSessionId", playerSessionId, METH_VARARGS, "Session ID of player."},
-	{"playerMapCrc", playerMapCrc, METH_VARARGS, "Map CRC of player."},
-	{"playerMapName", playerMapName, METH_VARARGS, "Map name of player."},
 	{"playerIpLong", playerIpLong, METH_VARARGS, "Get IP of player from cn."},
-	{"playerKick", playerKick, METH_VARARGS, "Kick player from server."},
-	{"playerDisc", playerDisc, METH_VARARGS, "Disconnect player from server."},
 	{"playerPrivilege", playerPrivilege, METH_VARARGS, "Integer representing player privilege"},
-	{"requestPlayerAuth", requestPlayerAuth, METH_VARARGS, "Request that a players client autoauth."},
 	{"playerFrags", playerFrags, METH_VARARGS, "Number of frags by player in current match."},
 	{"playerTeamkills", playerTeamkills, METH_VARARGS, "Number of teamkills by player in current match."},
 	{"playerDeaths", playerDeaths, METH_VARARGS, "Number of deatds by player in current match."},
@@ -1179,6 +1197,15 @@ static PyMethodDef ModuleMethods[] = {
 	{"playerTeam", playerTeam, METH_VARARGS, "Team player is member of."},
 	{"playerIsSpectator", playerIsSpectator, METH_VARARGS, "Player is a spectator"},
 	{"playerIsInvisible", playerIsInvisible, METH_VARARGS, "Player is invisible."},
+
+	{"playerMapCrc", playerMapCrc, METH_VARARGS, "Map CRC of player."},
+	{"playerMapName", playerMapName, METH_VARARGS, "Map name of player."},
+
+	{"playerKick", playerKick, METH_VARARGS, "Kick player from server."},
+	{"playerDisc", playerDisc, METH_VARARGS, "Disconnect player from server."},
+
+	{"requestPlayerAuth", requestPlayerAuth, METH_VARARGS, "Request that a players client autoauth."},
+
 	{"setInvisible", setInvisible, METH_VARARGS, "Set the player invisible."},
 	{"setVisible", setVisible, METH_VARARGS, "Set the player visible."},
 	{"spectate", spectate, METH_VARARGS, "Spectate player."},
@@ -1202,17 +1229,22 @@ static PyMethodDef ModuleMethods[] = {
 	{"modeName", modeName, METH_VARARGS, "Name of game mode."},
 	{"maxClients", maxClients, METH_VARARGS, "Get current maximum number of allowed clients."},
 	{"setMaxClients", setMaxClients, METH_VARARGS, "Set maximum number of allowed clients."},
+
 	{"uptime", uptime, METH_VARARGS, "Number of milliseconds server has been running."},
 	{"ip", ip, METH_VARARGS, "Current server ip."},
 	{"port", port, METH_VARARGS, "Current server port."},
+
 	{"authChallenge", authChal, METH_VARARGS, "Send auth challenge to client."},
+
 	{"setSecondsRemaining", setSecondsLeft, METH_VARARGS, "Set the number of seconds remaining in current game."},
 	{"adminPassword", adminPass, METH_VARARGS, "Get the administrator password."},
 	{"publicServer", publicServer, METH_VARARGS, "Decides how masters are chosen and what privileges they have."},
 	{"setServerDesc", setServerDesc, METH_VARARGS, "Set the server description."},
 	{"sendMapReload", sendMapReload, METH_VARARGS, "Causes all users to send vote on next map."},
 	{"serverPassword", serverPassword, METH_VARARGS, "Password for entry to the server."},
+
 	{"secondsRemaining", secondsLeft, METH_VARARGS, "seconds remaining in current match."},
+
 	{"persistentIntermission", persistentIntermission, METH_VARARGS, "Get whether or not persistent intermission is enabled."},
 	{"setPersistentIntermission", setPersistentIntermission, METH_VARARGS, "Set whether or not persistent intermission is enabled."},
 	{"allowShooting", allowShooting, METH_VARARGS, "get whether or not shooting is allowed."},
@@ -1227,8 +1259,9 @@ static PyMethodDef ModuleMethods[] = {
 	{"sendDemo", sendDemo, METH_VARARGS, "Send demo to client."},
 	{"saveDemoFile", saveDemoFile, METH_VARARGS, "Save last demo file."},
 	{"suicide", suicide, METH_VARARGS, "Force client to commit suicide."},
-//	{"configdir", configdir, METH_VARARGS, "Python config dir."},
+
 	{"instanceRoot", instanceRoot, METH_VARARGS, "Get the root directory of the instance."},
+
 	{"shutdown", shutdown, METH_VARARGS, "Shutdown the c++ side of things."},
 	{NULL, NULL, 0, NULL}
 };

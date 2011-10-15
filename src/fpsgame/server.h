@@ -446,6 +446,7 @@ namespace server
 	void setmastermode(int);
 	void challengeauth(clientinfo *, uint, const char *);
 	bool setteam(clientinfo *, char *);
+	void sendInitMap(clientinfo *);
 	bool pregame_setteam(clientinfo *, char *);
 	bool spectate(clientinfo *, bool, int);
 	void setSecondsLeft(int seconds);
