@@ -45,7 +45,6 @@ SettingsManager.addSetting(Setting.Setting	(
 tableSettings = SettingsManager.getAccessor(DatabaseManager.getDbSettingsCategory(), pluginCategory)
 		
 class Ban(Base):
-	__table_args__ = {'extend_existing': True}
 	__tablename__= tableSettings["table_name"]
 	id = Column(Integer, primary_key=True)
 	ip = Column(BigInteger, index=True)
@@ -124,7 +123,6 @@ def insertBan(ipString, seconds, reason, responsible_cn=-1, maskString="255.255.
 		session.close()
 
 def addBan(cn, seconds, reason, responsible_cn=-1, maskString="255.255.255.255"):
-
 	ip = ServerCore.playerIpLong(cn)
 	expiration = time.time() + seconds
 	nick = ServerCore.playerName(cn)

@@ -154,7 +154,6 @@ def insertSpect(ipString, seconds, reason, responsible_cn=-1, maskString="255.25
 		session.close()
 
 def addSpect(cn, seconds, reason, responsible_cn=-1, maskString="255.255.255.255"):
-
 	ip = ServerCore.playerIpLong(cn)
 	expiration = time.time() + seconds
 	nick = ServerCore.playerName(cn)

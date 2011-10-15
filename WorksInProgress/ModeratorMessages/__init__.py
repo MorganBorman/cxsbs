@@ -9,6 +9,42 @@ class Plugin(cxsbs.Plugin.Plugin):
 		
 	def unload(self):
 		pass
+	
+import cxsbs
+DatabaseManager = cxsbs.getResource("DatabaseManager")
+SettingsManager = cxsbs.getResource("SettingsManager")
+Setting = cxsbs.getResource("Setting")
+Players = cxsbs.getResource("Players")
+Messages = cxsbs.getResource("Messages")
+Commands = cxsbs.getResource("Commands")
+	
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, BigInteger
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
+
+import time, string
+
+Base = declarative_base()
+	
+class ModeratorMessage(Base):
+	__table_args__ = {'extend_existing': True}
+	__tablename__= tableSettings["table_name"]
+	id = Column(Integer, primary_key=True)
+	symbolicName = Column(String(24), index=True)
+	message = Column(String(length=200))
+	
+pluginCategory = 'ModeratorMessages'
+
+SettingsManager.addSetting(Setting.Setting	(
+												category=DatabaseManager.getDbSettingsCategory(),
+												subcategory=pluginCategory, 
+												symbolicName="table_name", 
+												displayName="Table name", 
+												default="moderator_messages",
+												doc="Table name for storing the mutes."
+											))
+
+tableSettings = SettingsManager.getAccessor(DatabaseManager.getDbSettingsCategory(), pluginCategory)
 		
 @Commands.commandHandler('addtemplate')
 def onAddTemplate(cn, args):

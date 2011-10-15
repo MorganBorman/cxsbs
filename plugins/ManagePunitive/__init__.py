@@ -102,7 +102,7 @@ def itemString(item):
 									justify(30, Net.ipLongToString(item.ip) + ':' + Net.ipLongToString(item.mask)),
 									justify(24, item.reason),
 									justify(15, item.name),
-									justify(15, item.responsible_nick),
+									justify(18, item.responsible_nick),
 									justify(24, timeString),
 									justify(24, expirationString),
 								]
