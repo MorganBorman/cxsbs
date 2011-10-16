@@ -245,7 +245,7 @@ class PunitiveManager(ManageCore.Manager):
 			session.close()
 			
 		dictionary = 	{
-							'ip': str(ip) + ":" + maskString,
+							'ip': str(ipString) + ":" + maskString,
 							'time': prettytime.createDurationString(seconds),
 							'action': self.punType,
 							'responsible': responsible_nick,

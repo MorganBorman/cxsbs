@@ -109,7 +109,8 @@ def clearByReason(reason):
 	try:
 		spects = session.query(Spect).filter(Spect.reason==reason).all()
 		for s in spects:
-			session.delete(s)
+			s.expired = True
+			session.add(s)
 		session.commit()
 	finally:
 		session.close()

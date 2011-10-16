@@ -78,7 +78,8 @@ def clearByReason(reason):
 	try:
 		bans = session.query(Ban).filter(Ban.reason==reason).all()
 		for b in bans:
-			session.delete(b)
+			b.expired = True
+			session.add(b)
 		session.commit()
 	finally:
 		session.close()

@@ -136,7 +136,8 @@ def clearByReason(reason):
 	try:
 		mutes = session.query(Mute).filter(Mute.reason==reason).all()
 		for m in mutes:
-			session.delete(m)
+			m.expired = True
+			session.add(m)
 		session.commit()
 	finally:
 		session.close()
