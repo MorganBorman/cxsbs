@@ -151,6 +151,43 @@ static PyObject *sendMapInit(PyObject *self, PyObject *args)
 	return Py_None;
 }
 
+static PyObject *sendEditMap(PyObject *self, PyObject *args)
+{
+	int cn;
+	uchar *data;
+	int len;
+	server::clientinfo *ci;
+	if(!PyArg_ParseTuple(args, "is#", &cn, &data, &len))
+		return 0;
+	ci = server::getinfo(cn);
+	if(!ci)
+	{
+		PyErr_SetString(PyExc_ValueError, "Invalid cn specified");
+		return 0;
+	}
+	if(ci->state.aitype != AI_NONE)
+	{
+		PyErr_SetString(PyExc_ValueError, "Cannot send map to AI client");
+		return 0;
+	}
+
+	//uchar *data;
+
+	//memcpy (data,cdata,len);
+
+	//char *tempfilename;
+	defformatstring(tempfilename)("sendmap_%d", lastmillis);
+
+	stream *datafile = opentempfile(tempfilename, "w+b");
+    if(!datafile) { sendf(cn, 1, "ris", N_SERVMSG, "failed to open temporary file when preparing to send"); return Py_None; }
+    datafile->write(data, len);
+
+	sendfile(cn, 2, datafile, "ri", N_SENDMAP);
+
+	if(datafile) DELETEP(datafile);
+	return Py_None;
+}
+
 static PyObject *playerMessage(PyObject *self, PyObject *args)
 {
 	int cn;
@@ -1172,6 +1209,8 @@ static PyMethodDef ModuleMethods[] = {
 	{"message", message, METH_VARARGS, "Send a server message."},
 
 	{"sendMapInit", sendMapInit, METH_VARARGS, "Send the initial map change and items list to the client after they have connected."},
+
+	{"sendEditMap", sendEditMap, METH_VARARGS, "Send the initial map change and items list to the client after they have connected."},
 
 	{"clients", clients, METH_VARARGS, "List of client numbers."},
 	{"players", players, METH_VARARGS, "List of client numbers of active clients."},

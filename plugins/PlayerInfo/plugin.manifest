@@ -1,0 +1,11 @@
+[Plugin]
+Name = Player Information
+SymbolicName = PlayerInfo
+Version = 0.0.1
+Author = Chasm
+Enabled = True
+
+[Dependencies]
+Players = 0.0.1
+Commands = 0.0.1
+Messages = 0.0.1

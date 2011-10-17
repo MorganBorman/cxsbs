@@ -36,6 +36,7 @@ namespace server
     int interm = 0;
     bool mapreload = false;
     bool persistentIntermission = false;
+    bool private_editing = false;
     bool allowShooting = true;
     enet_uint32 lastsend = 0;
     int mastermode = MM_OPEN, mastermask = MM_PRIVSERV;
@@ -956,25 +957,29 @@ namespace server
 
     int initmappacket(packetbuf &p, clientinfo *ci)
     {
-		putint(p, N_MAPCHANGE);
-		sendstring(smapname, p);
-		putint(p, gamemode);
-		putint(p, notgotitems ? 1 : 0);
-		if(!ci || (m_timed && smapname[0]))
+		int hasmap = (m_edit && (clients.length()>1 || (ci && ci->local))) || (smapname[0] && (!m_timed || gamemillis<gamelimit || (ci && ci->state.state==CS_SPECTATOR && !ci->privilege && !ci->local) || numclients(ci ? ci->clientnum : -1, true, true, true)));
+		if(hasmap)
 		{
-			putint(p, N_TIMEUP);
-			putint(p, gamemillis < gamelimit && !interm ? max((gamelimit - gamemillis)/1000, 1) : 0);
-		}
-		if(!notgotitems)
-		{
-			putint(p, N_ITEMLIST);
-			loopv(sents) if(sents[i].spawned)
+			putint(p, N_MAPCHANGE);
+			sendstring(smapname, p);
+			putint(p, gamemode);
+			putint(p, notgotitems ? 1 : 0);
+			if(!ci || (m_timed && smapname[0]))
 			{
-				putint(p, i);
-				putint(p, sents[i].type);
+				putint(p, N_TIMEUP);
+				putint(p, gamemillis < gamelimit && !interm ? max((gamelimit - gamemillis)/1000, 1) : 0);
 			}
-			putint(p, -1);
-		}
+			if(!notgotitems)
+			{
+				putint(p, N_ITEMLIST);
+				loopv(sents) if(sents[i].spawned)
+				{
+					putint(p, i);
+					putint(p, sents[i].type);
+				}
+				putint(p, -1);
+			}
+    	}
         if(currentmaster >= 0 || mastermode != MM_OPEN)
         {
             putint(p, N_CURRENTMASTER);
@@ -1050,31 +1055,7 @@ namespace server
     {
         int hasmap = (m_edit && (clients.length()>1 || (ci && ci->local))) || (smapname[0] && (!m_timed || gamemillis<gamelimit || (ci && ci->state.state==CS_SPECTATOR && !ci->privilege && !ci->local) || numclients(ci ? ci->clientnum : -1, true, true, true)));
         putint(p, N_WELCOME);
-        putint(p, 1); //always tell the client we have a map but don't send what it is until after a delay
-        //putint(p, hasmap);
-        //if(hasmap)
-        if(false)
-        {
-            putint(p, N_MAPCHANGE);
-            sendstring(smapname, p);
-            putint(p, gamemode);
-            putint(p, notgotitems ? 1 : 0);
-            if(!ci || (m_timed && smapname[0]))
-            {
-                putint(p, N_TIMEUP);
-                putint(p, gamemillis < gamelimit && !interm ? max((gamelimit - gamemillis)/1000, 1) : 0);
-            }
-            if(!notgotitems)
-            {
-                putint(p, N_ITEMLIST);
-                loopv(sents) if(sents[i].spawned)
-                {
-                    putint(p, i);
-                    putint(p, sents[i].type);
-                }
-                putint(p, -1);
-            }
-        }
+        putint(p, hasmap); //always tell the client if we have a map but don't send what it is until after a delay
         return 1;
     }
 
@@ -1663,20 +1644,6 @@ namespace server
         sendf(ci->clientnum, 1, "risis", N_AUTHCHAL, "", id, val);
     }
 
-    uint nextauthreq = 0;
-
-    void tryauth(clientinfo *ci, const char *user)
-    {
-        //SbPy::triggerEventIntString("player_auth_request", ci->clientnum, user);
-        return;
-    }
-
-    void answerchallenge(clientinfo *ci, uint id, char *val)
-    {
-        SbPy::triggerEventIntIntString("player_auth_challenge_response", ci->clientnum, id, val);
-        return;
-    }
-
     void receivefile(int sender, uchar *data, int len)
     {
         if(!m_edit || len > 1024*1024) return;
@@ -1687,7 +1654,14 @@ namespace server
         mapdata = opentempfile("mapdata", "w+b");
         if(!mapdata) { sendf(sender, 1, "ris", N_SERVMSG, "failed to open temporary file for map"); return; }
         mapdata->write(data, len);
-        SbPy::triggerEventInt("player_uploaded_map", sender);
+
+    	std::vector<PyObject*> args;
+    	PyObject *pCn = PyInt_FromLong(sender);
+    	PyObject *pData = Py_BuildValue("s#", data, len);
+    	args.push_back(pCn);
+    	args.push_back(pData);
+
+        SbPy::triggerEvent("player_uploaded_map", &args);
     }
 
     void sendclipboard(clientinfo *ci)
@@ -2165,6 +2139,22 @@ namespace server
                 notgotitems = false;
                 break;
             }
+
+            case N_EDITF:              // coop editing messages
+            case N_EDITT:
+            case N_EDITM:
+            case N_FLIP:
+            //case N_COPY:
+            //case N_PASTE:
+            case N_ROTATE:
+            case N_REPLACE:
+            case N_DELCUBE:
+            case N_REMIP:
+            {
+            	if (!private_editing) goto genericmsg;
+            	break;
+            }
+
 
             case N_EDITENT:
             {

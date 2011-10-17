@@ -107,7 +107,7 @@ class GroupMembership(Base):
 	groupId = Column(Integer, ForeignKey(tableSettings["group_table"] + '.id'))
 	user = relation(User, primaryjoin=userId==User.id)
 	group = relation(Group, primaryjoin=groupId==Group.id)
-	UniqueConstraint('ip', 'name', name='uq_user_ip_ip_name')
+	UniqueConstraint('userId', 'groupId', name='uq_user_id_group_id')
 	__mapper_args__ = {'primary_key':[userId, groupId]}
 	def __init__(self, userId, groupId):
 		self.userId = userId

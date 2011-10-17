@@ -10,9 +10,13 @@ class Plugin(cxsbs.Plugin.Plugin):
 	def unload(self):
 		pass
 	
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, func, Float
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, func, Float, LargeBinary
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.orm import relation, mapper
+from sqlalchemy.schema import UniqueConstraint
+
+Base = declarative_base()
 
 import cxsbs
 Setting = cxsbs.getResource("Setting")
@@ -21,6 +25,8 @@ Messages = cxsbs.getResource("Messages")
 Players = cxsbs.getResource("Players")
 DatabaseManager = cxsbs.getResource("DatabaseManager")
 Commands = cxsbs.getResource("Commands")
+Events = cxsbs.getResource("Events")
+ServerCore = cxsbs.getResource("ServerCore")
 	
 pluginCategory = "MappingVersionControl"
 
@@ -69,11 +75,30 @@ class Repository(Base):
 class Commit(Base):
 	__tablename__= tableSettings["commit_table"]
 	id = Column(Integer, primary_key=True)
+	repositoryId = Column(Integer, ForeignKey(tableSettings["repository_table"] + '.id'), nullable=False)
 	message = Column(String(128), nullable=False)
 	version = Column(Integer, nullable=False)
-	hash = Column(String(32), nullable=False)
-	data = Column(LargeBinary())
+	crc = Column(Integer, nullable=False)
+	data = Column(LargeBinary)
+	repository = relation(Repository, primaryjoin=repositoryId==Repository.id)
+	def __init__(self, repositoryId, message, version, crc, data):
+		self.repositoryId = repositoryId
+		self.message = message
+		self.crc = crc
+		self.data = data
 		
+class CommitGroup(Base):
+	__tablename__ = tableSettings["groups_table"]
+	repositoryId = Column(Integer, ForeignKey(tableSettings["repository_table"] + '.id'))
+	group = Column(String(16))
+	repository = relation(Repository, primaryjoin=repositoryId==Repository.id)
+	UniqueConstraint('repositoryId', 'group', name='uq_repository_id_group')
+	__mapper_args__ = {'primary_key':[repositoryId, group]}
+	def __init__(self, repositoryId, group):
+		self.repositoryId = repositoryId
+		self.group = group
+	
+Base.metadata.create_all(DatabaseManager.dbmanager.engine)
 	
 """
 resources
@@ -113,3 +138,21 @@ add a group that is permitted to commit to the specified repository
 remove a group from those that are permitted to commit to the specified repository
 #vcm delgroup <repository> <group>
 """
+
+lastData = ""
+
+@Commands.commandHandler('vcm')
+def onVersionedControlledMapping(cn, args):
+	'''
+	@description Get the server to send the last sent map to you.
+	@usage
+	@allowGroups __all__
+	@denyGroups
+	@doc Get the server to send the last sent map to you.
+	'''
+	ServerCore.sendEditMap(cn, lastData)
+
+@Events.eventHandler('player_uploaded_map')
+def onUploadedMapData(cn, data):
+	global lastData
+	lastData = data
