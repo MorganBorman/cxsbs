@@ -11,6 +11,8 @@ class Plugin(cxsbs.Plugin.Plugin):
 		pass
 	
 import cxsbs
+UserModel = cxsbs.getResource("UserModel")
+UserModelBase = cxsbs.getResource("UserModelBase")
 Players = cxsbs.getResource("Players")
 Commands = cxsbs.getResource("Commands")
 Messages = cxsbs.getResource("Messages")
@@ -86,12 +88,26 @@ def onGroupsCommand(cn, args):
 	@denyGroups
 	@doc Get a player's groups.
 	'''
+	p = Players.player(cn)
+	
+	args = args.split()
+	if len(args) != 1:
+		raise Commands.UsageError()
+
 	try:
-		p = Players.player(cn)
-		tcn = int(args)
-		
+		tcn = int(args[0])
 		groups = Players.player(tcn).groups()
+	except ValueError:
+		email = args[0]
 		
+		try:
+			userId = UserModel.model.getUserId(email)
+		except UserModelBase.InvalidEmail:
+			raise Commands.StateError("That email does not correspond to an account.")
+		
+		groups = UserModel.model.groups(userId)
+	
+	try:
 		if len(groups) > 0:
 			groups = ', '.join(groups)
 		else:
