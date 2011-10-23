@@ -38,11 +38,8 @@ def onCommand(cn, args):
 	'''
 	cp = Players.player(cn)
 	if args != '':
-		try:
-			tcn = int(args)
-			p = Players.player(tcn)
-		except ValueError:
-			Commands.UsageError("You must provide a valid cn.")
+		tcn = int(args)
+		p = Players.player(tcn)
 	else:
 		p = cp
 

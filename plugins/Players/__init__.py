@@ -309,14 +309,20 @@ def triggerBotConnectDelayed(cn):
 
 def currentMaster():
 	for cn in ServerCore.clients():
-		if ServerCore.playerPrivilege(cn) == 1:
-			return cn
+		try:
+			if ServerCore.playerPrivilege(cn) == 1:
+				return cn
+		except ValueError:
+			pass
 	return None
 
 def currentAdmin():
 	for cn in ServerCore.clients():
-		if ServerCore.playerPrivilege(cn) == 2:
-			return cn
+		try:
+			if ServerCore.playerPrivilege(cn) == 2:
+				return cn
+		except ValueError:
+			pass
 	return None
 
 def addPlayerForCn(cn):
