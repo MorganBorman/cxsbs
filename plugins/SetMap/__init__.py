@@ -157,9 +157,24 @@ Messages.addMessage	(
 						doc="Message to print when the map has been changed."
 					)
 
+Messages.addMessage	(
+						subcategory=pluginCategory, 
+						symbolicName="next_game_set", 
+						displayName="next_game_set", 
+						default="${info}Next match will be ${red}${modeName}${white} on ${blue}${mapName}${white} as set by ${green}${name}${white}.", 
+						doc="Message to print when the next map and mode have been changed."
+					)
+
 messager = Messages.getAccessor(subcategory=pluginCategory)
 
-def whenSetMap(p, mapName, modeNumber):
+def whenSetMap():
+		global responsiblePlayer, changeImminent
+		p = responsiblePlayer
+		mapName = MapRotation.nextmap
+		modeNumber = MapRotation.nextmode
+		MapRotation.nextmap = None
+		MapRotation.nextmode = None
+		responsiblePlayer = None
 		try:
 			Game.setMap(mapName, modeNumber)
 			p.logAction('changed map', mode=Game.modes[modeNumber], map=mapName)
@@ -169,6 +184,10 @@ def whenSetMap(p, mapName, modeNumber):
 				messager.sendMessage('map_changed', group=Players.SeeInvisibleGroup, dictionary={'name': p.name()})
 		except Commands.StateError:
 			Logging.warning('Start server map set tried to change the map while server was frozen.')
+		changeImminent = False
+		
+changeImminent = False
+responsiblePlayer = None
 	
 @Events.eventHandler('player_map_vote')
 def onMapVote(cn, mapName, modeNumber):
@@ -203,11 +222,22 @@ def onMapVote(cn, mapName, modeNumber):
 			messager.sendPlayerMessage('denied_change_on_open', p)
 			return
 	
-	if not settings["map_change_delay"] <= 0:
-		messager.sendMessage('map_changing', dictionary={'map': mapName, 'mode': Game.modes[modeNumber], 'time': settings["map_change_delay"]})
-		Timers.addTimer(settings["map_change_delay"]*1000, whenSetMap, (p, mapName, modeNumber))
+	global responsiblePlayer, changeImminent
+	responsiblePlayer = p
+	MapRotation.nextmap = mapName
+	MapRotation.nextmode = modeNumber
+	
+	
+	if ServerCore.secondsRemaining() < 1 and ServerCore.gameMode() != 1:
+		messager.sendMessage('next_game_set', dictionary={'name': p.name(), 'mapName': mapName, 'modeName': Game.modes[modeNumber]})
 	else:
-		whenSetMap(p, mapName, modeNumber)
+		if not settings["map_change_delay"] <= 0:
+			if not changeImminent:
+				changeImminent = True
+				messager.sendMessage('map_changing', dictionary={'map': mapName, 'mode': Game.modes[modeNumber], 'time': settings["map_change_delay"]})
+				Timers.addTimer(settings["map_change_delay"]*1000, whenSetMap, ())
+		else:
+			whenSetMap()
 		
 @Events.eventHandler('player_connect_delayed')
 def onDelayedConnect(cn):

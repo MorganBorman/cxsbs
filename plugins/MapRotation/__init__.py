@@ -95,12 +95,18 @@ Messages.addMessage	(
 
 messager = Messages.getAccessor(subcategory=pluginCategory)
 
+nextmap = None
+nextmode = None
+
 class Map:
 	def __init__(self, name, mode):
 		self.name = name
 		self.mode = mode
 
 def getSuccessor(mode_num, map):
+	if nextmap != None:
+		return nextmap
+	
 	try:
 		maps = rotations[Game.modes[mode_num]]
 		if map == '':
@@ -135,7 +141,9 @@ def isRotationMap(mapName, modeName=All):
 				return True
 		return False
 
+@Events.eventHandler('intermission_ended')
 def presetRotate():
+	global nextmap, nextmode
 	try:
 		map = getSuccessor(ServerCore.gameMode(), ServerCore.mapName())
 	except KeyError:
@@ -146,10 +154,18 @@ def presetRotate():
 		clientReloadRotate()
 	else:
 		try:
-			Game.setMap(map, ServerCore.gameMode())
+			if nextmode != None:
+				mode = nextmode
+			else:
+				mode = ServerCore.gameMode()
+				
+			Game.setMap(map, mode)
 		except Commands.StateError:
 			Logging.warning('Preset rotation tried to change the map while server was frozen.')
+	nextmap = None
+	nextmode = None
 
+@Commands.commandHandler('nextmap')
 def onNextMapCmd(cn, args):
 	'''
 	@description Display next map
