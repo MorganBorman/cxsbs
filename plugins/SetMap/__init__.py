@@ -10,6 +10,8 @@ class Plugin(cxsbs.Plugin.Plugin):
 	def unload(self):
 		pass
 		
+import time
+		
 import cxsbs
 ServerCore = cxsbs.getResource("ServerCore")
 Messages = cxsbs.getResource("Messages")
@@ -222,7 +224,7 @@ def onMapVote(cn, mapName, modeNumber):
 			messager.sendPlayerMessage('denied_change_on_open', p)
 			return
 	
-	global responsiblePlayer, changeImminent
+	global responsiblePlayer, changeImminent, changeTime
 	responsiblePlayer = p
 	MapRotation.nextmap = mapName
 	MapRotation.nextmode = modeNumber
@@ -234,8 +236,11 @@ def onMapVote(cn, mapName, modeNumber):
 		if not settings["map_change_delay"] <= 0:
 			if not changeImminent:
 				changeImminent = True
+				changeTime = time.time() + settings["map_change_delay"]
 				messager.sendMessage('map_changing', dictionary={'map': mapName, 'mode': Game.modes[modeNumber], 'time': settings["map_change_delay"]})
 				Timers.addTimer(settings["map_change_delay"]*1000, whenSetMap, ())
+			else:
+				messager.sendMessage('map_changing', dictionary={'map': mapName, 'mode': Game.modes[modeNumber], 'time': int(changeTime - time.time())})
 		else:
 			whenSetMap()
 		
