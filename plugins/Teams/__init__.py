@@ -312,7 +312,7 @@ class TeamManager:
 			
 		try:
 			del self.playerTeams[cn]
-		except IndexError:
+		except (IndexError, KeyError):
 			pass
 				
 	def onUnspectate(self, cn):
