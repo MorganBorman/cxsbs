@@ -1,5 +1,3 @@
-from sbserver import *
-
 import cxsbs.Plugin
 
 class Plugin(cxsbs.Plugin.Plugin):
@@ -9,9 +7,6 @@ class Plugin(cxsbs.Plugin.Plugin):
 	def load(self):
 		global textModerationHub
 		textModerationHub = TextModerationHub()
-		
-	def reload(self):
-		pass
 		
 	def unload(self):
 		pass
