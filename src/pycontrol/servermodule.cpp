@@ -929,7 +929,8 @@ static PyObject *setMaxClients(PyObject *self, PyObject *args)
 	int mm;
 	if(!PyArg_ParseTuple(args, "i", &mm))
 		return 0;
-	maxclients = mm;
+	setvar("maxclients", mm);
+	//maxclients = mm;
 	Py_INCREF(Py_None);
 	return Py_None;
 }
