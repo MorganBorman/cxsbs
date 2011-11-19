@@ -262,7 +262,7 @@ class PunitiveManager(ManageCore.Manager):
 		session = DatabaseManager.dbmanager.session()
 		try:
 			if show_expired:
-				recent = session.query(self.table).order_by(self.table.time.asc())
+				recent = session.query(self.table).order_by(self.table.time.asc()).all()
 			else:
 				recent = session.query(self.table).filter('expiration>'+str(time.time())).order_by(self.table.time.asc()).all()
 				
