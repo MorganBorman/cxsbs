@@ -1611,7 +1611,7 @@ namespace server
         {
         	return DISC_NONE;
         }
-        if(numclients(-1, false, true)>=maxclients) return DISC_MAXCLIENTS;
+        if(numclients(-1, false, true)>=getvar("maxclients")) return DISC_MAXCLIENTS;
         uint ip = getclientip(ci->clientnum);
         if(mastermode>=MM_PRIVATE && allowedips.find(ip)<0) return DISC_PRIVATE;
         if(!SbPy::triggerPolicyEventIntString("connect_private", ci->clientnum, pwd)) return DISC_PRIVATE;
@@ -2503,10 +2503,10 @@ namespace server
         putint(p, PROTOCOL_VERSION);    // generic attributes, passed back below
         putint(p, gamemode);
         putint(p, max((gamelimit - gamemillis)/1000, 0));
-        putint(p, maxclients);
+        putint(p, getvar("maxclients"));
         putint(p, serverpass[0] ? MM_PASSWORD : (!m_mp(gamemode) ? MM_PRIVATE : (mastermode || mastermask&MM_AUTOAPPROVE ? mastermode : MM_AUTH)));
         sendstring(smapname, p);
-        sendstring(serverdesc, p);
+        sendstring(getsvar("serverdesc"), p);
         sendserverinforeply(p);
     }
 

@@ -96,6 +96,8 @@ extern void touchvar(const char *name);
 extern int getvar(const char *name);
 extern int getvarmin(const char *name);
 extern int getvarmax(const char *name);
+extern float getfvar(const char *name);
+extern const char *getsvar(const char *name);
 extern bool identexists(const char *name);
 extern ident *getident(const char *name);
 extern bool addcommand(const char *name, void (*fun)(), const char *narg);

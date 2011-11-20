@@ -131,10 +131,30 @@ def mapModified(p):
 @Events.eventHandler('player_checkmaps')
 def onMapCheck(cn):
 	'''
-	@commandType
+	@commandtype
+	@allowGroups __all__
+	@denyGroups
+	@doc Loops through all the players and prints a message for those who have modified maps.
+	'''
+	session = DatabaseManager.dbmanager.session()
+	try:
+		mapEntry = session.query(Map).filter(Map.mapName==ServerCore.mapName()).one()
+		for p in Players.all():
+			if p.mapCrc() != mapEntry.mapCrc:
+				mapModified(p)
+	except NoResultFound:
+		pass
+	finally:
+		session.close()
+
+@Commands.commandHandler('setvalidmap')
+def onSetValidMap(cn):
+	'''
+	@description Set your map crc as the valid map crc
+	@usage
 	@allowGroups __admin__
 	@denyGroups
-	@doc Command type event which is called when a client types \"/checkmaps\" and which stores that player's map crc in the maps table.
+	@doc Command type event which is called when a client types \"/#setvalidmap\" and which stores that player's map crc in the maps table.
 	'''
 	p = Players.player(cn)	
 	session = DatabaseManager.dbmanager.session()

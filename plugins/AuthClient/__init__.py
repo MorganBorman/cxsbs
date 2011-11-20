@@ -209,9 +209,9 @@ class MasterClientFactory(protocol.ClientFactory):
 		self.response_handler.auth_id_map.clear()
 	def send(self, data):
 		if self.client == None:
-			ip = ServerCore.ip()
+			ip = ServerCore.getVariable('serverip')
 			if ip != None:
-				reactor.connectTCP(self.master_host, int(self.master_port), self, 30, (ServerCore.ip(), ServerCore.port())) #@UndefinedVariable
+				reactor.connectTCP(self.master_host, int(self.master_port), self, 30, (ServerCore.getVariable('serverip'), ServerCore.getVariable('serverport'))) #@UndefinedVariable
 			else:
 				reactor.connectTCP(self.master_host, int(self.master_port), self) #@UndefinedVariable
 			self.send_buffer.append(data)
@@ -220,7 +220,7 @@ class MasterClientFactory(protocol.ClientFactory):
 
 def registerServer():
 	factory.response_handler.responses_needed += 1
-	factory.send('regserv %i' % ServerCore.port())
+	factory.send('regserv %i' % ServerCore.getVariable('serverport'))
 		
 @Events.eventHandler('player_auth_succeed')
 def onAuthSuccess(cn, name):

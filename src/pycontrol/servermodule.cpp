@@ -23,12 +23,160 @@
 
 #include <iostream>
 
+int intlen(int val)
+{
+	if (val < 128 && val > -127) { return 1; }
+	else if(val < 0x8000 && val >= -0x8000) { return 2; }
+	else { return 4; }
+}
+
 namespace SbPy
 {
 
 static PyObject *reinitializeHandlers(PyObject *self, PyObject *args)
 {
 	SbPy::reinitPy();
+	return Py_None;
+}
+
+static PyObject *getVariable(PyObject *self, PyObject *args)
+{
+    char *variableName;
+    if(!PyArg_ParseTuple(args, "s", &variableName))
+    	return 0;
+
+    ident *id = idents->access(variableName);
+    if(id)
+    {
+        switch(id->type)
+        {
+			case ID_VAR:
+			{
+				return Py_BuildValue("i", *id->storage.i);
+				break;
+			}
+			case ID_FVAR:
+			{
+				return Py_BuildValue("f", *id->storage.f);
+				break;
+			}
+			case ID_SVAR:
+			{
+				return Py_BuildValue("s", *id->storage.s);
+				break;
+			}
+			default:
+			{
+				PyErr_SetString(PyExc_ValueError, "Invalid variable specified");
+				return 0;
+			}
+        }
+    }
+	else
+	{
+		PyErr_SetString(PyExc_ValueError, "Invalid variable specified");
+		return 0;
+	}
+}
+
+static PyObject *setVariable(PyObject *self, PyObject *args)
+{
+    char *variableName;
+    char *value;
+    if(!PyArg_ParseTuple(args, "ss", &variableName, &value))
+    	return 0;
+    static string scmdval; scmdval[0] = 0;
+    ident *id = idents->access(variableName);
+    if(id)
+    {
+        switch(id->type)
+        {
+			case ID_VAR:
+			{
+                int ret = parseint(value);
+                if(ret < id->minval || ret > id->maxval)
+                {
+                	PyErr_Format(PyExc_ValueError,
+                        id->flags&IDF_HEX ?
+                                (id->minval <= 255 ? "valid range for %s is %d..0x%X" : "valid range for %s is 0x%X..0x%X") :
+                                "valid range for %s is %d..%d", variableName, id->minval, id->maxval);
+                    return 0;
+                }
+                setvar(variableName, ret);
+				break;
+			}
+			case ID_FVAR:
+			{
+                float ret = parsefloat(value);
+                if(ret < id->minvalf || ret > id->maxvalf)
+                {
+                	PyErr_Format(PyExc_ValueError, "valid range for %s is %s..%s", variableName, floatstr(id->minvalf), floatstr(id->maxvalf));
+                    return 0;
+                }
+                setfvar(variableName, ret);
+                break;
+			}
+			case ID_SVAR:
+			{
+                setsvar(variableName, value);
+				break;
+			}
+			default:
+			{
+				PyErr_SetString(PyExc_ValueError, "Unknown server variable type");
+				return 0;
+				break;
+			}
+        }
+        printf("hopefully to set: %s to %s\n", variableName, value);
+    	Py_INCREF(Py_None);
+    	return Py_None;
+    }
+	PyErr_SetString(PyExc_ValueError, "Invalid variable specified");
+	return 0;
+}
+
+static PyObject *setClientVariable(PyObject *self, PyObject *args)
+{
+	int cn;
+	int tcn;
+	int msglen = 0;
+	server::clientinfo *ci;
+	server::clientinfo *tci;
+	char *variableName;
+	int value;
+	if(!PyArg_ParseTuple(args, "iisi", &cn, &tcn, &variableName, &value)) return 0;
+
+	ci = server::getinfo(cn);
+	if(!ci)
+	{
+		PyErr_SetString(PyExc_ValueError, "Invalid cn specified");
+		return 0;
+	}
+	if(ci->state.aitype != AI_NONE)
+	{
+		PyErr_SetString(PyExc_ValueError, "Cannot send message from AI client");
+		return 0;
+	}
+
+	tci = server::getinfo(tcn);
+	if(!tci)
+	{
+		PyErr_SetString(PyExc_ValueError, "Invalid cn specified");
+		return 0;
+	}
+	if(tci->state.aitype != AI_NONE)
+	{
+		PyErr_SetString(PyExc_ValueError, "Cannot send message to AI client");
+		return 0;
+	}
+
+	msglen = 2+strlen(variableName)+2+intlen(value);
+
+
+    sendf(tcn, 1, "riiiiisi", N_CLIENT, cn, msglen, N_EDITVAR, ID_VAR, variableName, value);
+
+	Py_INCREF(Py_None);
 	return Py_None;
 }
 
@@ -940,25 +1088,6 @@ static PyObject *uptime(PyObject *self, PyObject *args)
 	return Py_BuildValue("i", totalmillis);
 }
 
-static PyObject *ip(PyObject *self, PyObject *args)
-{
-	if(*serverip)
-		return Py_BuildValue("s", serverip);
-	else
-	{
-		Py_INCREF(Py_None);
-		return Py_None;
-	}
-}
-
-static PyObject *port(PyObject *self, PyObject *args)
-{
-	if(serverport <= 0)
-		return Py_BuildValue("i", server::serverport());
-	else
-		return Py_BuildValue("i", serverport);
-}
-
 static PyObject *authChal(PyObject *self, PyObject *args)
 {
 	int cn, id;
@@ -985,25 +1114,6 @@ static PyObject *setSecondsLeft(PyObject *self, PyObject *args)
 	server::setSecondsLeft(seconds);
 	Py_INCREF(Py_None);
 	return Py_None;
-}
-
-static PyObject *adminPass(PyObject *self, PyObject *args)
-{
-	return Py_BuildValue("s", server::adminpass);
-}
-
-static PyObject *publicServer(PyObject *self, PyObject *args)
-{
-	return Py_BuildValue("i", server::publicserver);
-}
-
-static PyObject *setServerDesc(PyObject *self, PyObject *args)
-{
-	char *desc;
-	if(!PyArg_ParseTuple(args, "s", &desc))
-		return 0;
-
-
 }
 
 static PyObject *sendMapReload(PyObject *self, PyObject *args)
@@ -1205,6 +1315,11 @@ static PyObject *shutdown(PyObject *self, PyObject *args)
 static PyMethodDef ModuleMethods[] = {
 	{"reinitializeHandlers", reinitializeHandlers, METH_VARARGS, "Re-retreive python functions for the c++ handlers."},
 
+	{"getVariable", getVariable, METH_VARARGS, "Get a server variable."},
+	{"setVariable", setVariable, METH_VARARGS, "Set a server variable."},
+
+	{"setClientVariable", setClientVariable, METH_VARARGS, "Set a clients variables."},
+
 	{"numClients", numClients, METH_VARARGS, "Return the number of clients on the server."},
 
 	{"message", message, METH_VARARGS, "Send a server message."},
@@ -1271,17 +1386,11 @@ static PyMethodDef ModuleMethods[] = {
 	{"setMaxClients", setMaxClients, METH_VARARGS, "Set maximum number of allowed clients."},
 
 	{"uptime", uptime, METH_VARARGS, "Number of milliseconds server has been running."},
-	{"ip", ip, METH_VARARGS, "Current server ip."},
-	{"port", port, METH_VARARGS, "Current server port."},
 
 	{"authChallenge", authChal, METH_VARARGS, "Send auth challenge to client."},
 
 	{"setSecondsRemaining", setSecondsLeft, METH_VARARGS, "Set the number of seconds remaining in current game."},
-	{"adminPassword", adminPass, METH_VARARGS, "Get the administrator password."},
-	{"publicServer", publicServer, METH_VARARGS, "Decides how masters are chosen and what privileges they have."},
-	{"setServerDesc", setServerDesc, METH_VARARGS, "Set the server description."},
 	{"sendMapReload", sendMapReload, METH_VARARGS, "Causes all users to send vote on next map."},
-	{"serverPassword", serverPassword, METH_VARARGS, "Password for entry to the server."},
 
 	{"secondsRemaining", secondsLeft, METH_VARARGS, "seconds remaining in current match."},
 

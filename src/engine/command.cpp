@@ -243,6 +243,16 @@ int getvarmax(const char *name)
     GETVAR(id, name, 0);
     return id->maxval;
 }
+float getfvar(const char *name)
+{
+    GETVAR(id, name, 0);
+    return *id->storage.f;
+}
+const char *getsvar(const char *name)
+{
+    GETVAR(id, name, 0);
+    return *id->storage.s;
+}
 bool identexists(const char *name) { return idents->access(name)!=NULL; }
 ident *getident(const char *name) { return idents->access(name); }
 

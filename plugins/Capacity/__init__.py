@@ -102,6 +102,8 @@ def onConnect(cn):
 @Events.eventHandler('player_disconnect')
 @Events.eventHandler('player_unspectated')
 def checkSize(cn):
+	if not settings["resize"]:
+		return
 	newsize = 0
 	clientCount = Server.clientCount()
 	if (Server.maxClients() - clientCount) >= settings["resize_by"]:

@@ -9,6 +9,19 @@
 
 #include "game.h"
 
+#define parseint(s) strtol((s), NULL, 0)
+
+static inline float parsefloat(const char *s)
+{
+    // not all platforms (windows) can parse hexadecimal integers via strtod
+    char *end;
+    double val = strtod(s, &end);
+    return val || end==s || (*end!='x' && *end!='X') ? float(val) : float(parseint(s));
+}
+
+// command
+extern hashtable<const char *, ident> *idents;
+
 namespace server
 {
     extern int nextexceeded, gamemillis;
