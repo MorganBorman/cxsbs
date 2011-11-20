@@ -2506,7 +2506,7 @@ namespace server
         putint(p, getvar("maxclients"));
         putint(p, serverpass[0] ? MM_PASSWORD : (!m_mp(gamemode) ? MM_PRIVATE : (mastermode || mastermask&MM_AUTOAPPROVE ? mastermode : MM_AUTH)));
         sendstring(smapname, p);
-        sendstring(getsvar("serverdesc"), p);
+        sendstring(serverdesc, p);
         sendserverinforeply(p);
     }
 
