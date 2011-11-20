@@ -148,7 +148,7 @@ def onMapCheck(cn):
 		session.close()
 
 @Commands.commandHandler('setvalidmap')
-def onSetValidMap(cn):
+def onSetValidMap(cn, args):
 	'''
 	@description Set your map crc as the valid map crc
 	@usage
