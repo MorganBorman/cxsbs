@@ -233,7 +233,7 @@ def onMapVote(cn, mapName, modeNumber):
 		messager.sendMessage('next_game_set', dictionary={'name': p.name(), 'mapName': mapName, 'modeName': Game.modes[modeNumber]})
 	else:
 		if not settings["map_change_delay"] <= 0:
-			if not changeImminent:
+			if not changeImminent or changeTime < time.time():
 				changeImminent = True
 				changeTime = time.time() + settings["map_change_delay"]
 				messager.sendMessage('map_changing', dictionary={'map': mapName, 'mode': Game.modes[modeNumber], 'time': settings["map_change_delay"]})
