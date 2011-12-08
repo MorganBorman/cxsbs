@@ -229,7 +229,7 @@ def onMapVote(cn, mapName, modeNumber):
 	MapRotation.nextmap = mapName
 	MapRotation.nextmode = modeNumber
 	
-	if ServerCore.secondsRemaining() < 1 and ServerCore.gameMode() != 1 and (not ServerCore.persistentIntermission() or not ServerCore.isPaused()):
+	if ServerCore.secondsRemaining() < settings["map_change_delay"] and ServerCore.gameMode() != 1 and (not ServerCore.persistentIntermission()) and (not ServerCore.isPaused()):
 		messager.sendMessage('next_game_set', dictionary={'name': p.name(), 'mapName': mapName, 'modeName': Game.modes[modeNumber]})
 	else:
 		if not settings["map_change_delay"] <= 0:
