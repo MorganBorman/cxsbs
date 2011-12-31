@@ -71,6 +71,9 @@ def onSetMM(cn, mm):
 	
 @Events.policyHandler('connect_private')
 def allowClient(cn, pwd):
+	if ServerCore.masterMode() == 3:
+		return True
+	
 	connecthash = ServerCore.hashPassword(cn, SetMaster.settings["connect_password"])
 	if pwd == connecthash:
 		return True
