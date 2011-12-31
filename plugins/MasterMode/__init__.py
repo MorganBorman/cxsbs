@@ -18,6 +18,7 @@ Players = cxsbs.getResource("Players")
 Logging = cxsbs.getResource("Logging")
 ServerCore = cxsbs.getResource("ServerCore")
 Messages = cxsbs.getResource("Messages")
+SetMaster = cxsbs.getResource("SetMaster")
 
 pluginCategory = 'MasterMode'
 
@@ -67,6 +68,14 @@ def onSetMM(cn, mm):
 	p.logAction('set mastermode', mastermode=MMNAMES[mm])
 	messager.sendMessage('set_mastermode', dictionary={'name':p.name(), 'mastermode':MMNAMES[mm]})
 	ServerCore.setMasterMode(mm)
+	
+@Events.policyHandler('connect_private')
+def allowClient(cn, pwd):
+	connecthash = ServerCore.hashPassword(cn, SetMaster.settings["connect_password"])
+	if pwd == connecthash:
+		return True
+	
+	return False
 
 @Events.eventHandler('server_start')
 def onServerStart():
