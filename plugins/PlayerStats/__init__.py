@@ -27,22 +27,13 @@ Messages.addMessage	(
 
 messager = Messages.getAccessor(subcategory=pluginCategory)
 
-@Commands.commandHandler('stats')
-def onCommand(cn, args):
-	'''
-	@description Get a players stats for the current match
-	@usage <cn>
-	@allowGroups __all__
-	@denyGroups
-	@doc Get a players stats for the current match.
-	'''
-	cp = Players.player(cn)
-	if args != '':
-		tcn = int(args)
-		p = Players.player(tcn)
-	else:
-		p = cp
+from operator import itemgetter
 
+def showStats(cn, tcn):
+	"get the stats of the player indicated by tcn and send them to the player indicated by cn"
+	cp = Players.player(cn)
+	p = Players.player(tcn)
+	
 	try:
 		statsDict = 	{
 							'name':p.name(), 
@@ -58,18 +49,23 @@ def onCommand(cn, args):
 		messager.sendPlayerMessage('stats', cp, dictionary=statsDict)
 	except ValueError:
 		pass
-
-@Commands.commandHandler('statsall')
-def showStatsAll(cn, args):
-	'''
-	@description Get all player stats for the current match
-	@usage
-	@allowGroups __all__
-	@denyGroups
-	@doc Get all player stats for the current match.
-	'''
+	
+validSortArgs = ['name', 'frags', 'deaths', 'teamkills', 'shots', 'hits', 'accuracy', 'ktd', 'score']
+	
+def showStatsAll(cn, sortArg):
 	cp = Players.player(cn)
 	players = Players.all()
+	
+	statsList = []
+	
+	reversed = False
+	if sortArg[0] == '-':
+		reversed = True
+		sortArg = sortArg[1:]
+	
+	if not sortArg in validSortArgs:
+		raise Commands.UsageError()
+	
 	for p in players:
 		try:
 			statsDict = 	{
@@ -83,6 +79,37 @@ def showStatsAll(cn, args):
 								'ktd':p.kpd(), 
 								'score':p.score(),
 							}
-			messager.sendPlayerMessage('stats', cp, dictionary=statsDict)
+			statsList.append(statsDict)
 		except ValueError:
-			continue
+			pass
+		
+	statsList = sorted(statsList, key=itemgetter(sortArg))
+		
+	if reversed:
+		statsList.reverse()
+		
+	for statsDict in statsList:
+		messager.sendPlayerMessage('stats', cp, dictionary=statsDict)
+
+@Commands.commandHandler('stats')
+def onStatsCommand(cn, args):
+	'''
+	@description Get a players stats for the current match
+	@usage (<cn>|all (sort by:name|frags|deaths|teamkills|shots|hits|accuracy|ktd|score))
+	@allowGroups __all__
+	@denyGroups
+	@doc Get player(s) stats for the current match.
+	'''
+	args = args.split()
+	
+	if len(args) < 1:
+		showStats(cn, cn)
+	elif args[0].lower() == "all":
+		if len(args) > 1:
+			showStatsAll(cn, args[1])
+		else:
+			showStatsAll(cn, "frags")
+	else:
+		tcn = int(args[0])
+		
+		showStats(cn, tcn)

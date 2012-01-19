@@ -57,6 +57,7 @@ SettingsManager.addSetting(Setting.BoolSetting	(
 
 #Default modes where clients can switch team
 switchteam_modes = 	[
+						"teamplay",
 						"instateam",
 						"efficteam",
 						"tacteam",
