@@ -59,7 +59,16 @@ def onDemoRecorded(demonum):
 	demoDetail = demoDetails.popleft() 
 	
 	date = datetime.datetime.today()
-	fname = path + "/" + settings['filename'].substitute(year=date.year, month=date.month, day=date.day, hour=date.hour, minute=date.minute, second=date.second, demonum=demonum, mapName=demoDetail.mapName, modeName=demoDetail.modeName)
+	fname = path + "/" + settings['filename'].substitute(	year="%04d" % date.year, 
+															month="%02d" % date.month, 
+															day="%02d" % date.day, 
+															hour="%02d" % date.hour, 
+															minute="%02d" % date.minute, 
+															second="%02d" % date.second, 
+															demonum=demonum, 
+															mapName=demoDetail.mapName, 
+															modeName=demoDetail.modeName
+														)
 	
 	ServerCore.saveDemoFile(fname)
 	
