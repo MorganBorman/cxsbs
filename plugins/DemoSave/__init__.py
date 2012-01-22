@@ -18,7 +18,7 @@ SettingsManager = cxsbs.getResource("SettingsManager")
 ServerCore = cxsbs.getResource("ServerCore")
 Game = cxsbs.getResource("Game")
 
-import time, os
+import time, os, datetime
 from collections import deque
 
 pluginCategory = 'Demo'
