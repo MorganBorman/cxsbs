@@ -37,7 +37,7 @@ SettingsManager.addSetting(Setting.TemplateSetting	(
 												subcategory="Save", 
 												symbolicName="filename", 
 												displayName="Filename", 
-												default='prefix_${date}_${demonum}_${mapName}_${modeName}.dmo',
+												default='${year}_${month}_${day}_${hour}_${minute}_${second}_server_${demonum}_${mapName}_${modeName}.dmo',
 												doc="Filename to store demos under."
 											))
 
@@ -58,8 +58,8 @@ def onDemoRecorded(demonum):
 	
 	demoDetail = demoDetails.popleft() 
 	
-	date = time.asctime( time.localtime(time.time()) )
-	fname = path + "/" + settings['filename'].substitute(date=date, demonum=demonum, mapName=demoDetail.mapName, modeName=demoDetail.modeName)
+	date = datetime.datetime.today()
+	fname = path + "/" + settings['filename'].substitute(year=date.year, month=date.month, day=date.day, hour=date.hour, minute=date.minute, second=date.second, demonum=demonum, mapName=demoDetail.mapName, modeName=Game.modes[demoDetail.modeName])
 	
 	ServerCore.saveDemoFile(fname)
 	
