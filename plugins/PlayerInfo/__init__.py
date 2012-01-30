@@ -128,4 +128,5 @@ def onGroupsCommand(cn, args):
 	
 @Events.eventHandler('player_disconnect')
 def onPlayerDisconnect(cn):
+	p = Players.player(cn)
 	messager.sendMessage('disconnected_ip', group=Players.HasMasterGroup, dictionary={"ip": p.ipString()})
