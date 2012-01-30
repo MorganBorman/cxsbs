@@ -73,6 +73,7 @@ class Player:
 	'''Represents a client on the server'''
 	def __init__(self, cn):
 		self.cn = cn
+		self.ip = ServerCore.playerIpLong(self.cn)
 		self.gamevars = {}
 	def logAction(self, action, level='info', **kwargs):
 		logPlayerAction(self.cn, action, level, **kwargs)
@@ -96,10 +97,10 @@ class Player:
 		return ServerCore.playerName(self.cn)
 	def ipLong(self):
 		'''Ip of client as long'''
-		return ServerCore.playerIpLong(self.cn)
+		return self.ip
 	def ipString(self):
 		'''Ip of client as decimal octet string'''
-		return Net.ipLongToString(self.ipLong())
+		return Net.ipLongToString(self.ip)
 	def groups(self):
 		'''Returns the groups which are based on server state'''
 		playerPriv = ServerCore.playerPrivilege(self.cn)
@@ -234,8 +235,17 @@ def seeInvisible():
 		if allowed and not denied:
 			listing.append(p)
 	return listing
+
+def hasMaster():
+	'''Get a list of those players who are permitted to see messages concerning invisible players'''
+	listing = []
+	for p in all():
+		if "__master__" in p.groups():
+			listing.append(p)
+	return listing
 		
 SeeInvisibleGroup = DynamicGroup(Player, seeInvisible)
+HasMasterGroup = DynamicGroup(Player, seeInvisible)
 AllPlayersGroup = DynamicGroup(Player, all)
 EmptyPlayersGroup = Group(Player, [])
 

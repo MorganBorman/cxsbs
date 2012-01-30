@@ -11,3 +11,4 @@ UserModelBase = 0.0.1
 Players = 0.0.1
 Commands = 0.0.1
 Messages = 0.0.1
+Events = 0.0.1

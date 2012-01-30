@@ -16,6 +16,7 @@ UserModelBase = cxsbs.getResource("UserModelBase")
 Players = cxsbs.getResource("Players")
 Commands = cxsbs.getResource("Commands")
 Messages = cxsbs.getResource("Messages")
+Events = cxsbs.getResource("Events")
 
 pluginCategory = "PlayerInfo"
 
@@ -41,6 +42,14 @@ Messages.addMessage	(
 						displayName="Group info", 
 						default="${info}Groups: ${green}${groups}${white}", 
 						doc="Message to print when a players groups are requested."
+					)
+
+Messages.addMessage	(
+						subcategory=pluginCategory, 
+						symbolicName="disconnected_ip", 
+						displayName="Disconnected Ip", 
+						default="${info}Disconnected player's ip: ${orange}${ip}${white}", 
+						doc="Message to print to moderators when a players disconnects."
 					)
 
 messager = Messages.getAccessor(subcategory=pluginCategory)
@@ -116,3 +125,7 @@ def onGroupsCommand(cn, args):
 		messager.sendPlayerMessage('group_info', p, dictionary={'groups':groups})
 	except:
 		raise
+	
+@Events.eventHandler('player_disconnect')
+def onPlayerDisconnect(cn):
+	messager.sendMessage('disconnected_ip', group=Players.HasMasterGroup, dictionary={"ip": p.ipString()})
