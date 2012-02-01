@@ -1199,6 +1199,7 @@ namespace server
     	if(actor->invisible) return;
         gamestate &ts = target->state;
         ts.dodamage(damage);
+        SbPy::triggerEventIntInt("player_inflict_damage", actor->clientnum, damage);
         actor->state.damage += damage;
 		sendf(-1, 1, "ri6", N_DAMAGE, target->clientnum, actor->clientnum, damage, ts.armour, ts.health);
         if(target==actor) target->setpushed();
@@ -1335,7 +1336,9 @@ namespace server
 		        int(to.x*DMF), int(to.y*DMF), int(to.z*DMF),
 		        ci->ownernum);
 	}
-        gs.shotdamage += guns[gun].damage*(gs.quadmillis ? 4 : 1)*(gun==GUN_SG ? SGRAYS : 1);
+        int tempdamage = guns[gun].damage*(gs.quadmillis ? 4 : 1)*(gun==GUN_SG ? SGRAYS : 1);
+        gs.shotdamage += tempdamage;
+        SbPy::triggerEventIntInt("player_spend_damage", ci->clientnum, tempdamage);
         gs.shots++;
         if (!allowShooting) return;
         switch(gun)

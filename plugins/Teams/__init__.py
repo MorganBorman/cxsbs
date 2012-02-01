@@ -33,7 +33,7 @@ ServerCore = cxsbs.getResource("ServerCore")
 SettingsManager = cxsbs.getResource("SettingsManager")
 Setting = cxsbs.getResource("Setting")
 
-import time
+import time, random
 
 pluginCategory = "Teams"
 
@@ -412,3 +412,25 @@ def setTeamsCmd(cn, args):
 			"sticky": teamManager.isStickyTeams(),
 			}
 	messager.sendMessage('team_control_status', dictionary=dictionary)
+	
+@Commands.commandHandler('teamshuffle')
+def onTeamShuffle(cn, args):
+	'''@description Shuffle the teams.
+	   @usage
+	   @allowGroups __master__ __admin__
+	   @denyGroup
+	   @doc Cause the teams to be shuffled.
+	   '''
+	players = Players.all()[:]
+	random.shuffle(players)
+	
+	half_way = int(len(players)/2)
+	
+	good_team = players[half_way:]
+	evil_team = players[:half_way]
+	
+	for p in good_team:
+		p.setTeam('good')
+		
+	for p in evil_team:
+		p.setTeam('evil')
