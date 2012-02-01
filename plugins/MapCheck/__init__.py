@@ -123,7 +123,7 @@ Base.metadata.create_all(DatabaseManager.dbmanager.engine)
 
 def mapModified(p):
 	if not p.isInvisible():
-		messager.sendPlayerMessage('map_modified', p, dictionary={'name':p.name()})
+		messager.sendMessage('map_modified', dictionary={'name':p.name()})
 	p.gamevars['modified_map'] = True
 	if not onUnspectate(p.cn, p.cn):
 		p.spectate()
