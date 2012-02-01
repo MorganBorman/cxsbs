@@ -279,7 +279,7 @@ def onShotHit(cn, damage):
 		stat.hit(damage)
 		session.add(stat)
 		session.commit()
-		ServerCore.message(("Current accuracy: %0.2f" %(stat.accuracy()*100)) + '%')
+		#ServerCore.message(("Current accuracy: %0.2f" %(stat.accuracy()*100)) + '%')
 	finally:
 		session.close()
 
