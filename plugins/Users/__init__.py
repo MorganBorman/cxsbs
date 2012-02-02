@@ -170,6 +170,12 @@ def onRegisterCommand(cn, args):
 	if not Email.isValidEmail(email):
 		raise Commands.ArgumentValueError('The email you provided is not valid.')
 	
+	try:
+		userId = UserModel.model.getUserId(email)
+		raise Commands.StateError("That email is already registered.")
+	except UserModelBase.InvalidEmail:
+		pass
+	
 	authenticationTokenSeed = args[1]
 	
 	if len(authenticationTokenSeed) < 5:
@@ -208,7 +214,7 @@ def onUnregisterCommand(cn, args):
 		messager.sendPlayerMessage('unregistration_successful', p)
 		
 	except UserModelBase.InvalidUserId:
-		raise Commands.StateError('You must be logged in to link a name to your account.')
+		raise Commands.StateError('You must be logged in to unregister your account.')
 	
 @Commands.commandHandler('verify')
 def onVerifyCommand(cn, args):
