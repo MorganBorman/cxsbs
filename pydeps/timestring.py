@@ -2,6 +2,7 @@ signs = ['+', '-', '=']
 
 #supported units and their second equivalents
 units = {
+		'y': 60*60*24*365,
 		'd': 60*60*24,
 		'h': 60*60,
 		'm': 60,
