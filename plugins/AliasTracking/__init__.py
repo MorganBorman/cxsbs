@@ -10,7 +10,7 @@ class Plugin(cxsbs.Plugin.Plugin):
 	def unload(self):
 		pass
 	
-from sqlalchemy import Column, Integer, String, func
+from sqlalchemy import Column, Integer, BigInteger, String, func
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -63,7 +63,7 @@ Base = declarative_base()
 
 class IpToName(Base):
 	__tablename__= tableSettings["table_name"]
-	ip = Column(Integer, index=True, primary_key=True)
+	ip = Column(BigInteger, index=True, primary_key=True)
 	name = Column(String(length=16), primary_key=True)
 	count = Column(Integer, nullable=False)
 	def __init__(self, ip, name):
