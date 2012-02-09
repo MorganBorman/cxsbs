@@ -77,7 +77,7 @@ Messages.addMessage	(
 messager = Messages.getAccessor(subcategory=pluginCategory)
 	
 def justify(width, text):
-	return text.ljust(width)[:width] + "    "
+	return str(text).ljust(width)[:width] + "    "
 
 def itemString(item):
 	#5    216.235.22.12:255.255.255.0    TrollDude    [FD]Chasm    Fri, Jul 29, 15:46:33    Wed, Jul 30, 15:46:33
@@ -98,7 +98,7 @@ def itemString(item):
 		expirationString = "beyond the foreseeable"
 		
 	return_string = ''.join	(	[
-									justify(8, identifier),
+									justify(10, identifier),
 									justify(30, Net.ipLongToString(item.ip) + ':' + Net.ipLongToString(item.mask)),
 									justify(24, item.reason),
 									justify(15, item.name),
