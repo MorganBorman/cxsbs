@@ -81,6 +81,8 @@ def onSearchCommand(cn, args):
 	try:
 		text = args
 		args = args.split()
+		if len(args) < 2:
+			raise Commands.UsageError()
 		handle = args[0]
 		term = text[len(args[0]) + 1:]
 		management.search(cn, handle, term)
@@ -99,6 +101,8 @@ def onSearchActionCommand(cn, args):
 	try:
 		text = args
 		args = args.split()
+		if len(args) < 2:
+			raise Commands.UsageError()
 		handle = args[0]
 		term = text[len(args[0]) + 1:]
 		management.searchAction(cn, handle, term)
