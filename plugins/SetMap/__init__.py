@@ -242,6 +242,18 @@ def onMapVote(cn, mapName, modeNumber):
 				messager.sendMessage('map_changing', dictionary={'map': mapName, 'mode': Game.modes[modeNumber], 'time': int(changeTime - time.time())})
 		else:
 			whenSetMap()
+			
+@Commands.commandHandler('setnextmap')
+def onSetNextMapCmd(cn, args):
+	'''
+	@description Set the next map in the rotation
+	@usage <map>
+	@allowGroups __admin__ __master__
+	@doc Command to set the next map in the rotation for this mode.
+	'''
+	p = Players.player(cn)
+	MapRotation.nextmap = args.split()[0]
+	messager.sendMessage('next_game_set', dictionary={'name': p.name(), 'mapName': MapRotation.nextmap, 'modeName': Game.modes[ServerCore.gameMode()]})
 		
 @Events.eventHandler('player_connect_delayed')
 def onDelayedConnect(cn):
