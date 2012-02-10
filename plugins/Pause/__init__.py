@@ -31,6 +31,15 @@ SettingsManager.addSetting(Setting.IntSetting	(
 												doc="Default number of seconds to count down before resuming."
 											))
 
+SettingsManager.addSetting(Setting.IntSetting	(
+												category=pluginCategory, 
+												subcategory=pluginSubcategory, 
+												symbolicName="max_count", 
+												displayName="Max count time", 
+												default=10,
+												doc="Max number of seconds to count down."
+											))
+
 settings = SettingsManager.getAccessor(pluginCategory, pluginSubcategory)
 
 Messages.addMessage	(
@@ -82,6 +91,8 @@ def onResume(cn, args):
 	'''
 	try:
 		count = int(args)
+		if count > settings['max_count']:
+			count = settings['max_count']
 	except:
 		count = settings['default_resume_count']
 		
