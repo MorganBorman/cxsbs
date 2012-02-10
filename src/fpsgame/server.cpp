@@ -999,6 +999,7 @@ namespace server
     int initmappacket(packetbuf &p, clientinfo *ci)
     {
     	ci->pending = false;
+    	ci->messages.setsize(0)
 		int hasmap = (m_edit && (clients.length()>1 || (ci && ci->local))) || (smapname[0] && (!m_timed || gamemillis<gamelimit || (ci && ci->state.state==CS_SPECTATOR && !ci->privilege && !ci->local) || numclients(ci ? ci->clientnum : -1, true, true, true)));
 		if(hasmap)
 		{
