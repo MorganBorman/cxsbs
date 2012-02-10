@@ -439,6 +439,28 @@ static PyObject *playerName(PyObject *self, PyObject *args)
 	return Py_BuildValue("s", ci->name);
 }
 
+static PyObject *playerConnectPwd(PyObject *self, PyObject *args)
+{
+	int cn;
+	server::clientinfo *ci;
+	if(!PyArg_ParseTuple(args, "i", &cn))
+		return 0;
+	ci = server::getinfo(cn);
+	if(!ci)
+	{
+		PyErr_SetString(PyExc_ValueError, "Invalid cn specified.");
+		return 0;
+	}
+	//if(!ci->connectpwd)
+	if(!ci->name)
+	{
+		PyErr_SetString(PyExc_RuntimeError, "Client cn is valid but has no connectpwd.");
+		return 0;
+	}
+	//return Py_BuildValue("s", ci->connectpwd);
+	return Py_BuildValue("s", ci->name);
+}
+
 static PyObject *playerSessionId(PyObject *self, PyObject *args)
 {
 	int cn;
@@ -529,6 +551,30 @@ static PyObject *playerDisc(PyObject *self, PyObject *args)
 		return 0;
 	}
 	disconnect_client(cn, DISC_NONE);
+	Py_INCREF(Py_None);
+	return Py_None;
+}
+
+static PyObject *playerDisconnect(PyObject *self, PyObject *args)
+{
+	int cn;
+	int reason;
+	server::clientinfo *ci;
+	if(!PyArg_ParseTuple(args, "ii", &cn, &reason))
+		return 0;
+	ci = server::getinfo(cn);
+	if(!ci)
+	{
+		PyErr_SetString(PyExc_ValueError, "Invalid cn specified");
+		return 0;
+	}
+	//enum { DISC_NONE = 0, DISC_EOP, DISC_CN, DISC_KICK, DISC_TAGT, DISC_IPBAN, DISC_PRIVATE, DISC_MAXCLIENTS, DISC_TIMEOUT, DISC_OVERFLOW, DISC_NUM };
+	if (reason < DISC_NONE || reason > DISC_NUM)
+	{
+		PyErr_SetString(PyExc_ValueError, "That is not a valid disconnect reason.");
+		return 0;
+	}
+	disconnect_client(cn, reason);
 	Py_INCREF(Py_None);
 	return Py_None;
 }
@@ -1336,8 +1382,9 @@ static PyMethodDef ModuleMethods[] = {
 	{"playerMessageAll", playerMessageAll, METH_VARARGS, "Send a message as a player(from, to, text)."},
 	{"playerMessageTeam", playerMessageTeam, METH_VARARGS, "Send a team message as a player(from, to, text)."},
 
-	{"playerName", playerName, METH_VARARGS, "Get name of player from cn."},
-	{"playerSessionId", playerSessionId, METH_VARARGS, "Session ID of player."},
+	{"playerName", playerName, METH_VARARGS, "Get name of player by cn."},
+	{"playerSessionId", playerSessionId, METH_VARARGS, "Session ID of player by cn."},
+	{"playerConnectPwd", playerConnectPwd, METH_VARARGS, "Get the connectpwd of player by cn."},
 	{"playerIpLong", playerIpLong, METH_VARARGS, "Get IP of player from cn."},
 	{"playerPrivilege", playerPrivilege, METH_VARARGS, "Integer representing player privilege"},
 	{"playerFrags", playerFrags, METH_VARARGS, "Number of frags by player in current match."},
@@ -1357,7 +1404,8 @@ static PyMethodDef ModuleMethods[] = {
 	{"playerMapName", playerMapName, METH_VARARGS, "Map name of player."},
 
 	{"playerKick", playerKick, METH_VARARGS, "Kick player from server."},
-	{"playerDisc", playerDisc, METH_VARARGS, "Disconnect player from server."},
+	{"playerDisc", playerDisc, METH_VARARGS, "Silently disconnect player from server."},
+	{"playerDisconnect", playerDisconnect, METH_VARARGS, "Disconnect player from server for a specified reason."},
 
 	{"requestPlayerAuth", requestPlayerAuth, METH_VARARGS, "Request that a players client autoauth."},
 

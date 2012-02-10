@@ -254,7 +254,3 @@ def onSetNextMapCmd(cn, args):
 	p = Players.player(cn)
 	MapRotation.nextmap = args.split()[0]
 	messager.sendMessage('next_game_set', dictionary={'name': p.name(), 'mapName': MapRotation.nextmap, 'modeName': Game.modes[ServerCore.gameMode()]})
-		
-@Events.eventHandler('player_connect_delayed')
-def onDelayedConnect(cn):
-	ServerCore.sendMapInit(cn)

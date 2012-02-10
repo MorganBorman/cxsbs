@@ -94,7 +94,7 @@ def onServerStart():
 
 @Events.eventHandler('player_connect')
 def onConnect(cn):
-	if Server.clientCount() == 0 and settings["resume_on_first_client"]:
+	if Server.clientCount() == 1 and settings["resume_on_first_client"]:
 		Server.setPaused(False)
 
 @Events.eventHandler('player_spectated')

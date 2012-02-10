@@ -943,6 +943,21 @@ namespace server
             sendstring(ci->team, p);
             putint(p, ci->playermodel);
         }
+        if(ci)
+        {
+            putint(p, N_SETTEAM);
+            putint(p, ci->clientnum);
+            sendstring(ci->team, p);
+            putint(p, -1);
+        }
+        if(ci && ci->state.state==CS_SPECTATOR)
+        {
+            putint(p, N_SPECTATOR);
+            putint(p, ci->clientnum);
+            putint(p, 1);
+            if(!ci->invisible)
+	                sendf(-1, 1, "ri3x", N_SPECTATOR, ci->clientnum, 1, ci->clientnum);
+        }
     }
 
     void welcomeinitclient(packetbuf &p, int exclude = -1)
@@ -957,6 +972,7 @@ namespace server
 
     int initmappacket(packetbuf &p, clientinfo *ci)
     {
+    	ci->pending = false;
 		int hasmap = (m_edit && (clients.length()>1 || (ci && ci->local))) || (smapname[0] && (!m_timed || gamemillis<gamelimit || (ci && ci->state.state==CS_SPECTATOR && !ci->privilege && !ci->local) || numclients(ci ? ci->clientnum : -1, true, true, true)));
 		if(hasmap)
 		{
@@ -988,18 +1004,6 @@ namespace server
             putint(p, m ? m->privilege : 0);
             putint(p, mastermode);
         }
-        if(gamepaused)
-        {
-            putint(p, N_PAUSEGAME);
-            putint(p, 1);
-        }
-        if(ci)
-        {
-            putint(p, N_SETTEAM);
-            putint(p, ci->clientnum);
-            sendstring(ci->team, p);
-            putint(p, -1);
-        }
         if(ci && (m_demo || m_mp(gamemode)) && ci->state.state!=CS_SPECTATOR)
         {
             if(smode && !smode->canspawn(ci, true))
@@ -1020,14 +1024,6 @@ namespace server
                 gs.lastspawn = gamemillis;
             }
         }
-        if(ci && ci->state.state==CS_SPECTATOR)
-        {
-            putint(p, N_SPECTATOR);
-            putint(p, ci->clientnum);
-            putint(p, 1);
-            if(!ci->invisible)
-	                sendf(-1, 1, "ri3x", N_SPECTATOR, ci->clientnum, 1, ci->clientnum);
-        }
         if(!ci || clients.length()>1)
         {
             putint(p, N_RESUME);
@@ -1047,6 +1043,12 @@ namespace server
             welcomeinitclient(p, ci ? ci->clientnum : -1);
         }
         if(smode) smode->initclient(ci, p, true);
+        SbPy::triggerEventInt("player_connect", ci->clientnum);
+        if(gamepaused)
+        {
+            putint(p, N_PAUSEGAME);
+            putint(p, 1);
+        }
 		return 1;
     }
 
@@ -1580,8 +1582,11 @@ namespace server
     void clientdisconnect(int n)
     {
         clientinfo *ci = getinfo(n);
-        SbPy::triggerEventInt("player_disconnect", n);
-        SbPy::triggerEventInt("player_disconnect_post", n);
+        if (!ci->pending)
+        {
+        	SbPy::triggerEventInt("player_disconnect", n);
+        	SbPy::triggerEventInt("player_disconnect_post", n);
+        }
         if(ci->connected)
         {
             if(ci->privilege) resetpriv(ci);
@@ -1600,7 +1605,7 @@ namespace server
     }
 
     int reserveclients() { return 3; }
-
+/*
     int allowconnect(clientinfo *ci, const char *pwd)
     {
         if(!m_mp(gamemode)) return DISC_PRIVATE;
@@ -1614,14 +1619,15 @@ namespace server
         {
         	return DISC_NONE;
         }
-        if(numclients(-1, false, true)>=getvar("maxclients")) return DISC_MAXCLIENTS;
-        uint ip = getclientip(ci->clientnum);
-        if(mastermode>=MM_PRIVATE && allowedips.find(ip)<0) return DISC_PRIVATE;
-        if(!SbPy::triggerPolicyEventIntString("connect_private", ci->clientnum, pwd)) return DISC_PRIVATE;
-        if(!SbPy::triggerPolicyEventIntString("connect_kick", ci->clientnum, pwd)) return DISC_KICK;
+        //if(numclients(-1, false, true)>=getvar("maxclients")) return DISC_MAXCLIENTS;
+        //uint ip = getclientip(ci->clientnum);
+        //if(mastermode>=MM_PRIVATE && allowedips.find(ip)<0) return DISC_PRIVATE;
+        //SbPy::triggerEventIntString("player_connect_password", ci->clientnum, pwd);
+        //if(!SbPy::triggerPolicyEventIntString("connect_private", ci->clientnum, pwd)) return DISC_PRIVATE;
+        //if(!SbPy::triggerPolicyEventIntString("connect_kick", ci->clientnum, pwd)) return DISC_KICK;
         return DISC_NONE;
     }
-
+*/
     bool allowbroadcast(int n)
     {
         clientinfo *ci = getinfo(n);
@@ -1704,14 +1710,16 @@ namespace server
                 ci->invisible = SbPy::triggerPolicyEventIntString("connect_invisible", ci->clientnum, text);
 
                 SbPy::triggerEventInt("player_connect_pre", ci->clientnum);
-                SbPy::triggerEventInt("player_connect", ci->clientnum);
+                //SbPy::triggerEventInt("player_connect", ci->clientnum);
 
-                int disc = allowconnect(ci, text);
-                if(disc)
-                {
-                    disconnect_client(sender, disc);
-                    return;
-                }
+                copystring(ci->connectpwd, text, strlen(text));
+
+                //int disc = allowconnect(ci, text);
+                //if(disc)
+                //{
+                //    disconnect_client(sender, disc);
+                //    return;
+                //}
 
                 ci->playermodel = getint(p);
 

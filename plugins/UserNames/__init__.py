@@ -255,10 +255,11 @@ def isNamePermitted(name, userId=None):
 				
 			userNames = query.all()
 			
+		permitted = False
 		for userName in userNames:
-			if userId != userName.userId:
-				return False
-		return True
+			if userId == userName.userId:
+				permitted = True
+		return permitted
 	finally:
 		session.close()
 
@@ -296,7 +297,7 @@ def warnNameReserved(cn, count, startTime=None):
 	Timers.addTimer(settings["warning_interval"]*1000, warnNameReserved, (cn, count+1, startTime))
 	
 @Events.eventHandler('player_name_changed')	
-@Events.eventHandler('player_connect_delayed')
+@Events.eventHandler('player_connect')
 def onPlayerActive(*args):
 	"""Trigger checks on tags to see whether the player must validate to use them."""
 	if len(args) < 1:

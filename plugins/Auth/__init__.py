@@ -41,7 +41,7 @@ SettingsManager.addSetting(Setting.Setting		(
 
 settings = SettingsManager.getAccessor(category=pluginCategory, subcategory="General")
 
-@Events.eventHandler("player_connect")
+@Events.eventHandler("player_connect_pre")
 def onConnect(cn):
 	if settings["automatically_request_auth"]:
 		p = Players.player(cn)

@@ -220,7 +220,8 @@ namespace server
         int modevote;
         int privilege;
         bool invisible;
-        bool connected, local, timesync, active;
+        bool connected, pending, local, timesync, active;
+        string connectpwd;
         int gameoffset, lastevent, pushed, exceeded;
         gamestate state;
         vector<gameevent *> events;
@@ -317,9 +318,10 @@ namespace server
 
         void reset()
         {
-            name[0] = team[0] = 0;
+            name[0] = team[0] = connectpwd[0] = 0;
             playermodel = -1;
             privilege = PRIV_NONE;
+            pending = true;
             connected = local = false;
             authreq = 0;
             position.setsize(0);
