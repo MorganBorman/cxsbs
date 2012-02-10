@@ -82,7 +82,6 @@ namespace server
              case 2: mastermask = MM_COOPSERV; break;
         }
     });
-    SVAR(servermotd, "");
 
     void *newclientinfo() { return new clientinfo; }
     void deleteclientinfo(void *ci) { delete (clientinfo *)ci; }
@@ -2518,7 +2517,7 @@ namespace server
         putint(p, gamemode);
         putint(p, max((gamelimit - gamemillis)/1000, 0));
         putint(p, getvar("maxclients"));
-        putint(p, serverpass[0] ? MM_PASSWORD : (!m_mp(gamemode) ? MM_PRIVATE : (mastermode || mastermask&MM_AUTOAPPROVE ? mastermode : MM_AUTH)));
+        putint(p, serverpass[0] ? MM_PASSWORD : (mastermode || mastermask&MM_AUTOAPPROVE ? mastermode : MM_AUTH));
         sendstring(smapname, p);
         sendstring(serverdesc, p);
         sendserverinforeply(p);
