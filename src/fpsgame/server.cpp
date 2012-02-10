@@ -943,21 +943,6 @@ namespace server
             sendstring(ci->team, p);
             putint(p, ci->playermodel);
         }
-        if(ci)
-        {
-            putint(p, N_SETTEAM);
-            putint(p, ci->clientnum);
-            sendstring(ci->team, p);
-            putint(p, -1);
-        }
-        if(ci && ci->state.state==CS_SPECTATOR)
-        {
-            putint(p, N_SPECTATOR);
-            putint(p, ci->clientnum);
-            putint(p, 1);
-            if(!ci->invisible)
-	                sendf(-1, 1, "ri3x", N_SPECTATOR, ci->clientnum, 1, ci->clientnum);
-        }
     }
 
     void welcomeinitclient(packetbuf &p, int exclude = -1)
@@ -1023,6 +1008,21 @@ namespace server
                 sendstate(gs, p);
                 gs.lastspawn = gamemillis;
             }
+        }
+        if(ci)
+        {
+            putint(p, N_SETTEAM);
+            putint(p, ci->clientnum);
+            sendstring(ci->team, p);
+            putint(p, -1);
+        }
+        if(ci && ci->state.state==CS_SPECTATOR)
+        {
+            putint(p, N_SPECTATOR);
+            putint(p, ci->clientnum);
+            putint(p, 1);
+            if(!ci->invisible)
+	                sendf(-1, 1, "ri3x", N_SPECTATOR, ci->clientnum, 1, ci->clientnum);
         }
         if(!ci || clients.length()>1)
         {
