@@ -766,6 +766,8 @@ namespace server
 
     void addclientstate(worldstate &ws, clientinfo &ci)
     {
+    	if (ci.pending) return;
+
         if(ci.position.empty()) ci.posoff = -1;
         else
         {
@@ -946,13 +948,52 @@ namespace server
     }
 
     void welcomeinitclient(packetbuf &p, int exclude = -1)
-    {
+    {//tells newly connected client about all the other clients
         loopv(clients)
         {
             clientinfo *ci = clients[i];
             if(!ci->connected || ci->clientnum == exclude || ci->invisible) continue;
             putinitclient(ci, p);
         }
+    }
+
+    int welcomepacket(packetbuf &p, clientinfo *ci)
+    {
+        int hasmap = (m_edit && (clients.length()>1 || (ci && ci->local))) || (smapname[0] && (!m_timed || gamemillis<gamelimit || (ci && ci->state.state==CS_SPECTATOR && !ci->privilege && !ci->local) || numclients(ci ? ci->clientnum : -1, true, true, true)));
+        putint(p, N_WELCOME);
+        putint(p, hasmap); //always tell the client if we have a map but don't send what it is until after a delay
+        return 1;
+    }
+
+    bool restorescore(clientinfo *ci)
+    {
+        //if(ci->local) return false;
+        savedscore &sc = findscore(ci, false);
+        if(&sc)
+        {
+            sc.restore(ci->state);
+            return true;
+        }
+        return false;
+    }
+
+    void sendresume(clientinfo *ci)
+    {
+        gamestate &gs = ci->state;
+        if(!ci->invisible)
+		sendf(-1, 1, "ri3i9vi", N_RESUME, ci->clientnum,
+		    gs.state, gs.frags, gs.flags, gs.quadmillis,
+		    gs.lifesequence,
+		    gs.health, gs.maxhealth,
+		    gs.armour, gs.armourtype,
+		    gs.gunselect, GUN_PISTOL-GUN_SG+1, &gs.ammo[GUN_SG], -1);
+    }
+
+    void sendinitclient(clientinfo *ci)
+    {
+        packetbuf p(MAXTRANS, ENET_PACKET_FLAG_RELIABLE);
+        putinitclient(ci, p);
+        sendpacket(-1, 1, p.finalize(), ci->clientnum);
     }
 
     int initmappacket(packetbuf &p, clientinfo *ci)
@@ -1049,47 +1090,11 @@ namespace server
             putint(p, N_PAUSEGAME);
             putint(p, 1);
         }
-		return 1;
-    }
-
-
-    int welcomepacket(packetbuf &p, clientinfo *ci)
-    {
-        int hasmap = (m_edit && (clients.length()>1 || (ci && ci->local))) || (smapname[0] && (!m_timed || gamemillis<gamelimit || (ci && ci->state.state==CS_SPECTATOR && !ci->privilege && !ci->local) || numclients(ci ? ci->clientnum : -1, true, true, true)));
-        putint(p, N_WELCOME);
-        putint(p, hasmap); //always tell the client if we have a map but don't send what it is until after a delay
-        return 1;
-    }
-
-    bool restorescore(clientinfo *ci)
-    {
-        //if(ci->local) return false;
-        savedscore &sc = findscore(ci, false);
-        if(&sc)
+        if (!ci->invisible)
         {
-            sc.restore(ci->state);
-            return true;
+            sendinitclient(ci);
         }
-        return false;
-    }
-
-    void sendresume(clientinfo *ci)
-    {
-        gamestate &gs = ci->state;
-        if(!ci->invisible)
-		sendf(-1, 1, "ri3i9vi", N_RESUME, ci->clientnum,
-		    gs.state, gs.frags, gs.flags, gs.quadmillis,
-		    gs.lifesequence,
-		    gs.health, gs.maxhealth,
-		    gs.armour, gs.armourtype,
-		    gs.gunselect, GUN_PISTOL-GUN_SG+1, &gs.ammo[GUN_SG], -1);
-    }
-
-    void sendinitclient(clientinfo *ci)
-    {
-        packetbuf p(MAXTRANS, ENET_PACKET_FLAG_RELIABLE);
-        putinitclient(ci, p);
-        sendpacket(-1, 1, p.finalize(), ci->clientnum);
+		return 1;
     }
 
     void changemap(const char *s, int mode)
@@ -1584,9 +1589,10 @@ namespace server
         clientinfo *ci = getinfo(n);
         if (!ci->pending)
         {
+        	//this is only the high level disconnect message
         	SbPy::triggerEventInt("player_disconnect", n);
-        	SbPy::triggerEventInt("player_disconnect_post", n);
         }
+    	SbPy::triggerEventInt("player_disconnect_post", n);
         if(ci->connected)
         {
             if(ci->privilege) resetpriv(ci);
@@ -1742,10 +1748,6 @@ namespace server
 
                 sendwelcome(ci);
                 if(restorescore(ci)) sendresume(ci);
-                if (!ci->invisible)
-                {
-	                sendinitclient(ci);
-	        }
 
                 aiman::addclient(ci);
 

@@ -28,7 +28,7 @@ Messages.addMessage	(
 
 messager = Messages.getAccessor(category=pluginCategory, subcategory="General")
 
-@Events.eventHandler('player_connect_delayed')
+@Events.eventHandler('player_connect')
 def greet(cn):
 	p = Players.player(cn)
 	messager.sendPlayerMessage('message_of_the_day', p)

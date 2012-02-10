@@ -11,7 +11,7 @@ class Plugin(cxsbs.Plugin.Plugin):
 		Events.registerServerEventHandler('autoteam', teamManager.autoTeam)
 		Events.registerServerEventHandler('player_switch_team', teamManager.onSwitchTeam)
 		Events.registerServerEventHandler('player_set_team', teamManager.onSetTeam)
-		Events.registerServerEventHandler('player_connect_delayed', teamManager.onConnect)
+		Events.registerServerEventHandler('player_connect', teamManager.onConnect)
 		Events.registerServerEventHandler('player_disconnect', teamManager.onDisconnect)
 		Events.registerServerEventHandler('player_spectated', teamManager.onSpectate)
 		Events.registerServerEventHandler('player_unspectated', teamManager.onUnspectate)
