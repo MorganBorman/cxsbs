@@ -75,8 +75,11 @@ def onPause(cn, args):
 	
 def resumeTimer(count, cn):
 	if count > 0:
-		messager.sendMessage('resuming', dictionary={'seconds': count})
-		Timers.addTimer(1000, resumeTimer, (count-1, cn))
+		if Server.isPaused():
+			messager.sendMessage('resuming', dictionary={'seconds': count})
+			Timers.addTimer(1000, resumeTimer, (count-1, cn))
+		else:
+			pass #we stop counting down if the server is not longer paused.
 	else:
 		Server.setPaused(False, cn)
 
@@ -89,6 +92,8 @@ def onResume(cn, args):
 	@denyGroups
 	@doc Resume the game with a counter.
 	'''
+	if not Server.isPaused():
+		raise Commands.UsageError("Server must be paused to issue the resume command.")
 	try:
 		count = int(args)
 		if count > settings['max_count']:
