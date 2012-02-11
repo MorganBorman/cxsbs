@@ -912,12 +912,12 @@ namespace server
     void postinitclient(clientinfo *ci)
     {
     	if (!ci->pending) return;
+    	SbPy::triggerEventInt("player_connect", ci->clientnum);
         ci->pending = false;
         ci->messages.setsize(0);
         packetbuf p(MAXTRANS, ENET_PACKET_FLAG_RELIABLE);
         int chan = putpostinitclient(p, ci);
         sendpacket(ci->clientnum, chan, p.finalize());
-        SbPy::triggerEventInt("player_connect", ci->clientnum);
     }
 
     void sendwelcome(clientinfo *ci)
@@ -1037,7 +1037,6 @@ namespace server
             putint(p, N_PAUSEGAME);
             putint(p, 1);
         }
-		return 1;
         if(ci)
         {
             putint(p, N_SETTEAM);
@@ -1095,6 +1094,7 @@ namespace server
         {
             sendinitclient(ci);
         }
+        return 1;
     }
 
     void changemap(const char *s, int mode)
