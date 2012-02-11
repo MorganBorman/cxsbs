@@ -74,18 +74,18 @@ def on_delayed_connect(cn):
 	p = Players.player(cn)
 	
 	if ( not Events.triggerPolicyEvent('connect_private', (cn, pwd)) ) and (not p.isPermitted(groupSettings['allow_groups_connect_private'], [])):
-		ServerCore.playerDisconnect(cn, DISC_PRIVATE)
+		Events.execLater(ServerCore.playerDisconnect, (cn, DISC_PRIVATE))
 		return
 		
 	if ( not Events.triggerPolicyEvent('connect_kick', (cn, pwd)) ) and (not p.isPermitted(groupSettings['allow_groups_connect_banned'], [])):
-		ServerCore.playerDisconnect(cn, DISC_IPBAN)
+		Events.execLater(ServerCore.playerDisconnect, (cn, DISC_IPBAN))
 		return
 		
 	if ( not Events.triggerPolicyEvent('connect_capacity', (cn, pwd)) ) and (not p.isPermitted(groupSettings['allow_groups_connect_oversize'], [])):
-		ServerCore.playerDisconnect(cn, DISC_MAXCLIENTS)
+		Events.execLater(ServerCore.playerDisconnect, (cn, DISC_MAXCLIENTS))
 		return
 	
-	ServerCore.postinitclient(cn)
+	Events.execLater(ServerCore.postinitclient, (cn,))
 	
 class ConnectionPolicyThread(threading.Thread):
 	def __init__(self):
