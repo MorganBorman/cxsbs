@@ -120,8 +120,8 @@ messager = Messages.getAccessor(subcategory=pluginCategory)
 
 @Events.eventHandler('server_start')
 def onServerStart():
-	if settings["public_server"]:
-		ServerCore.setMasterMask(3)
+	if not settings["public_server"]:
+		ServerCore.setMasterMask(1)
 	else:
 		ServerCore.setMasterMask(2)
 
