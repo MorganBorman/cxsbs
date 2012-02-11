@@ -6,3 +6,4 @@ Author = Chasm
 Enabled = True
 
 [Dependencies]
+CoreLoop = 0.0.1

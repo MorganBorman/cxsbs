@@ -80,7 +80,8 @@ PyObject *callPyStringFunc(PyObject *func, const char *text)
 }
 
 static PyObject *cxsbsModule, *loadPluginsFunction, *getResourceFunction;
-static PyObject *eventsModule, *triggerEventFunc, *triggerPolicyEventFunc, *updateFunc;
+static PyObject *eventsModule, *triggerEventFunc, *triggerPolicyEventFunc;
+static PyObject *coreLoopModule, *updateFunc;
 static PyObject *textModerationModule, *textModFunc;
 
 bool initPy()
@@ -131,7 +132,11 @@ bool initPy()
 		return false;
 	}
 
-	updateFunc = PyObject_GetAttrString(eventsModule, "update");
+	//Get the CoreLoop plugin
+	coreLoopModule = callPyStringFunc(getResourceFunction, "CoreLoop");
+	SBPY_ERR(coreLoopModule)
+
+	updateFunc = PyObject_GetAttrString(coreLoopModule, "update");
 	SBPY_ERR(updateFunc);
 	if(!PyCallable_Check(updateFunc))
 	{

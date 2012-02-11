@@ -7,8 +7,6 @@ class Plugin(cxsbs.Plugin.Plugin):
 		cxsbs.Plugin.Plugin.__init__(self)
 		
 	def load(self):
-		reactor.startRunning() #@UndefinedVariable
-		
 		import EventManager
 		import PolicyEventManager
 		
@@ -22,19 +20,14 @@ class Plugin(cxsbs.Plugin.Plugin):
 		#policyEventManager.events.clear()
 		
 	def unload(self):
-		global dont_iterate
-		dont_iterate = True
-		reactor.stop()
+		pass
 	
 import cxsbs
 Logging = cxsbs.getResource("Logging")
 EventInformation = cxsbs.getResource("EventInformation")
 
-import traceback
-
 eventManager = None
 policyEventManager = None
-exec_queue = []
 
 ##############################
 ##	Handler Registration	##
@@ -88,30 +81,6 @@ class policyHandler(object):
 		self.__name__ = f.__name__
 		registerPolicyEventHandler(self.name, f)
 		return f
-
-##############################
-##	Event loop stuff		##
-##############################
-
-def execLater(func, args):
-	'''Call function at a later time with arguments in tuple args.'''
-	exec_queue.append((func, args))
-
-def triggerExecQueue():
-	for event in exec_queue:
-		try:
-			event[0](*event[1])
-		except:
-			exceptionType, exceptionValue, exceptionTraceback = sys.exc_info()	
-			Logging.warn('Uncaught exception execLater queue.')
-			Logging.warn(traceback.format_exc())
-			Logging.warn(traceback.extract_tb(exceptionTraceback))
-	del exec_queue[:]
-
-def update():
-		reactor.runUntilCurrent() #@UndefinedVariable
-		reactor.doIteration(0) #@UndefinedVariable
-		triggerExecQueue()
 		
 ##############################
 ##	Other					##
