@@ -278,7 +278,7 @@ static PyObject *message(PyObject *self, PyObject *args)
 	return Py_None;
 }
 
-static PyObject *sendMapInit(PyObject *self, PyObject *args)
+static PyObject *postinitclient(PyObject *self, PyObject *args)
 {
 	int cn;
 	server::clientinfo *ci;
@@ -295,7 +295,7 @@ static PyObject *sendMapInit(PyObject *self, PyObject *args)
 		PyErr_SetString(PyExc_ValueError, "Cannot send map init to AI client");
 		return 0;
 	}
-	server::sendInitMap(ci);
+	server::postinitclient(ci);
 	return Py_None;
 }
 
@@ -1370,7 +1370,7 @@ static PyMethodDef ModuleMethods[] = {
 
 	{"message", message, METH_VARARGS, "Send a server message."},
 
-	{"sendMapInit", sendMapInit, METH_VARARGS, "Send the initial map change and items list to the client after they have connected."},
+	{"postinitclient", postinitclient, METH_VARARGS, "Send the rest of the game state to a client (map, items list, fellow players, team)."},
 
 	{"sendEditMap", sendEditMap, METH_VARARGS, "Send the initial map change and items list to the client after they have connected."},
 

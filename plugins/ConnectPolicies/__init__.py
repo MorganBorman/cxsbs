@@ -73,9 +73,6 @@ def on_delayed_connect(cn):
 	pwd = ServerCore.playerConnectPwd(cn)
 	p = Players.player(cn)
 	
-	#ServerCore.playerDisconnect(cn, DISC_PRIVATE)
-	#return
-	
 	if ( not Events.triggerPolicyEvent('connect_private', (cn, pwd)) ) and (not p.isPermitted(groupSettings['allow_groups_connect_private'], [])):
 		ServerCore.playerDisconnect(cn, DISC_PRIVATE)
 		return
@@ -88,7 +85,7 @@ def on_delayed_connect(cn):
 		ServerCore.playerDisconnect(cn, DISC_MAXCLIENTS)
 		return
 	
-	ServerCore.sendMapInit(cn)
+	ServerCore.postinitclient(cn)
 	
 class ConnectionPolicyThread(threading.Thread):
 	def __init__(self):
