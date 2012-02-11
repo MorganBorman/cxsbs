@@ -1,0 +1,8 @@
+[Plugin]
+Name = Core loop
+SymbolicName = CoreLoop
+Version = 0.0.1
+Author = Chasm
+Enabled = True
+
+[Dependencies]
