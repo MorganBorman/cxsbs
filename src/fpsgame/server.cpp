@@ -911,6 +911,7 @@ namespace server
 
     void postinitclient(clientinfo *ci)
     {
+    	if (!ci->pending) return;
         ci->pending = false;
         ci->messages.setsize(0);
         packetbuf p(MAXTRANS, ENET_PACKET_FLAG_RELIABLE);
