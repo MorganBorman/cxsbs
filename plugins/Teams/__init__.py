@@ -332,7 +332,8 @@ class TeamManager:
 			p = Players.player(cn)
 			Events.execLater(p.suicide, ())
 			p.setTeam(team)
-			messager.sendMessage('team_switch', dictionary={'teamName': p.team(), 'name': p.name()})
+			if not p.isSpectator():
+				messager.sendMessage('team_switch', dictionary={'teamName': p.team(), 'name': p.name()})
 			self.playerTeams[cn] = team
 			
 	def onSetTeam(self, cn, tcn, team):
