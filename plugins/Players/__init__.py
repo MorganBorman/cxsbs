@@ -353,7 +353,7 @@ def onPlayerDisconnect(cn):
 @Events.eventHandler('player_connect_pre')
 def onPlayerConnectPre(cn):
 	addPlayerForCn(cn)
-	Timers.addTimer(3000, triggerConnectDelayed, (cn,))
+	Timers.addTimer(2000, triggerConnectDelayed, (cn,))
 
 @Events.eventHandler('game_bot_added')
 def onBotConnect(cn):

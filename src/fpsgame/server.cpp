@@ -1030,6 +1030,18 @@ namespace server
             putint(p, m ? m->privilege : 0);
             putint(p, mastermode);
         }
+        if(gamepaused)
+        {
+            putint(p, N_PAUSEGAME);
+            putint(p, 1);
+        }
+        if(ci)
+        {
+            putint(p, N_SETTEAM);
+            putint(p, ci->clientnum);
+            sendstring(ci->team, p);
+            putint(p, -1);
+        }
         if(ci && (m_demo || m_mp(gamemode)) && ci->state.state!=CS_SPECTATOR)
         {
             if(smode && !smode->canspawn(ci, true))
@@ -1049,13 +1061,6 @@ namespace server
                 sendstate(gs, p);
                 gs.lastspawn = gamemillis;
             }
-        }
-        if(ci)
-        {
-            putint(p, N_SETTEAM);
-            putint(p, ci->clientnum);
-            sendstring(ci->team, p);
-            putint(p, -1);
         }
         if(ci && ci->state.state==CS_SPECTATOR)
         {
@@ -1083,17 +1088,11 @@ namespace server
             putint(p, -1);
             welcomeinitclient(p, ci ? ci->clientnum : -1);
         }
-        if(smode) smode->initclient(ci, p, true);
-        SbPy::triggerEventInt("player_connect", ci->clientnum);
-        if(gamepaused)
-        {
-            putint(p, N_PAUSEGAME);
-            putint(p, 1);
-        }
         if (!ci->invisible)
         {
             sendinitclient(ci);
         }
+        SbPy::triggerEventInt("player_connect", ci->clientnum);
 		return 1;
     }
 
