@@ -255,11 +255,10 @@ def isNamePermitted(name, userId=None):
 				
 			userNames = query.all()
 			
-		permitted = False
 		for userName in userNames:
-			if userId == userName.userId:
-				permitted = True
-		return permitted
+			if userId != userName.userId and (len(userName.name) >= settings['minimum_length'] or userName.name == name):
+				return False
+		return True
 	finally:
 		session.close()
 
