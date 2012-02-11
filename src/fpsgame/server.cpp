@@ -917,6 +917,7 @@ namespace server
         packetbuf p(MAXTRANS, ENET_PACKET_FLAG_RELIABLE);
         int chan = putpostinitclient(p, ci);
         sendpacket(ci->clientnum, chan, p.finalize());
+        SbPy::triggerEventInt("player_connect", ci->clientnum);
     }
 
     void sendwelcome(clientinfo *ci)
@@ -1031,6 +1032,12 @@ namespace server
             putint(p, m ? m->privilege : 0);
             putint(p, mastermode);
         }
+        if(gamepaused)
+        {
+            putint(p, N_PAUSEGAME);
+            putint(p, 1);
+        }
+		return 1;
         if(ci)
         {
             putint(p, N_SETTEAM);
@@ -1088,13 +1095,6 @@ namespace server
         {
             sendinitclient(ci);
         }
-        SbPy::triggerEventInt("player_connect", ci->clientnum);
-        if(gamepaused)
-        {
-            putint(p, N_PAUSEGAME);
-            putint(p, 1);
-        }
-		return 1;
     }
 
     void changemap(const char *s, int mode)
