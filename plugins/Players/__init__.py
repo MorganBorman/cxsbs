@@ -169,7 +169,7 @@ class Player:
 		ServerCore.playerMessage(self.cn, msg)
 	def kick(self):
 		'''Disconnect client from server'''
-		Events.execLater(ServerCore.playerKick, (self.cn,))
+		ServerCore.playerKick(self.cn)
 	def spectate(self):
 		'''Make client spectator'''
 		ServerCore.spectate(self.cn)

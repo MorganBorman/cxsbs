@@ -45,6 +45,7 @@ import traceback
 import os
 
 configuration_path = ServerCore.instanceRoot() + instance_config_foldername
+
 try:
 	os.makedirs(os.path.abspath(configuration_path))
 except OSError:

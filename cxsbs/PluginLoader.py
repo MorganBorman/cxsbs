@@ -155,7 +155,7 @@ class PluginLoader:
 		
 		#preliminary checks done. Start actually loading the plugin now
 		if not manifest.SymbolicName in self.plugins.keys():
-			
+			#logger.debug("trying to load plugin: " + manifest.SymbolicName)
 			#load the dependencies
 			self.loadDependencies(manifest, dependList)
 			

@@ -912,6 +912,7 @@ namespace server
     void postinitclient(clientinfo *ci)
     {
     	if (!ci->pending) return;
+    	SbPy::triggerEventInt("player_connect", ci->clientnum);
         ci->pending = false;
         ci->messages.setsize(0);
         packetbuf p(MAXTRANS, ENET_PACKET_FLAG_RELIABLE);
@@ -1031,6 +1032,11 @@ namespace server
             putint(p, m ? m->privilege : 0);
             putint(p, mastermode);
         }
+        if(gamepaused)
+        {
+            putint(p, N_PAUSEGAME);
+            putint(p, 1);
+        }
         if(ci)
         {
             putint(p, N_SETTEAM);
@@ -1087,12 +1093,6 @@ namespace server
         if (!ci->invisible)
         {
             sendinitclient(ci);
-        }
-        SbPy::triggerEventInt("player_connect", ci->clientnum);
-        if(gamepaused)
-        {
-            putint(p, N_PAUSEGAME);
-            putint(p, 1);
         }
 		return 1;
     }
@@ -1737,9 +1737,9 @@ namespace server
                 ci->connected = true;
                 ci->needclipboard = totalmillis;
                 
-                if(!SbPy::triggerPolicyEventIntInt("player_unspectate", ci->clientnum, ci->clientnum)) ci->state.state = CS_SPECTATOR;
+                //if(!SbPy::triggerPolicyEventIntInt("player_unspectate", ci->clientnum, ci->clientnum)) ci->state.state = CS_SPECTATOR;
                 
-                //if(mastermode>=MM_LOCKED) ci->state.state = CS_SPECTATOR;
+                ci->state.state = CS_SPECTATOR;
                 
                 ci->state.lasttimeplayed = lastmillis;
 

@@ -14,6 +14,7 @@ class Plugin(cxsbs.Plugin.Plugin):
 		global policyEventManager
 		
 		eventManager = EventManager.EventManager()
+		eventManager.start()
 		policyEventManager = PolicyEventManager.PolicyEventManager()
 		
 		#eventManager.events.clear()
