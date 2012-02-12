@@ -302,7 +302,7 @@ def onPlayerActive(*args):
 	if len(args) < 1:
 		return
 	cn = args[0]
-	Timers.addTimer(3*1000, warnNameReserved, (cn, 0))
+	Timers.addTimer(5*1000, warnNameReserved, (cn, 0))
 	
 @Commands.commandHandler('reservename')
 def onReserveNameCommand(cn, args):

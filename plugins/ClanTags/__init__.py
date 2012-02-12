@@ -215,7 +215,7 @@ def onPlayerActive(*args):
 	if len(args) < 1:
 		return
 	cn = args[0]
-	Timers.addTimer(3*1000, warnTagsReserved, (cn, 0))
+	Timers.addTimer(5*1000, warnTagsReserved, (cn, 0))
 	
 @Commands.commandHandler('addtag')
 def onAddTagCommand(cn, args):
