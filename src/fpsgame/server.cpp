@@ -1094,7 +1094,7 @@ namespace server
         {
             sendinitclient(ci);
         }
-        return 1;
+		return 1;
     }
 
     void changemap(const char *s, int mode)
@@ -1737,9 +1737,7 @@ namespace server
                 ci->connected = true;
                 ci->needclipboard = totalmillis;
                 
-                if(!SbPy::triggerPolicyEventIntInt("player_unspectate", ci->clientnum, ci->clientnum)) ci->state.state = CS_SPECTATOR;
-                
-                //if(mastermode>=MM_LOCKED) ci->state.state = CS_SPECTATOR;
+                ci->state.state = CS_SPECTATOR;
                 
                 ci->state.lasttimeplayed = lastmillis;
 

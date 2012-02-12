@@ -5,10 +5,7 @@ class Plugin(cxsbs.Plugin.Plugin):
 		cxsbs.Plugin.Plugin.__init__(self)
 		
 	def load(self):
-		connectionPolicyThread = ConnectionPolicyThread()
-		connectionPolicyThread.start()
-		
-		Events.registerServerEventHandler('player_connect_delayed', connectionPolicyThread.connect)
+		pass
 		
 	def unload(self):
 		pass
@@ -69,48 +66,21 @@ DISC_TIMEOUT = 8
 DISC_OVERFLOW = 9
 DISC_NUM = 10
 
+@Events.eventHandler("player_connect_delayed")
 def on_delayed_connect(cn):
 	pwd = ServerCore.playerConnectPwd(cn)
 	p = Players.player(cn)
 	
 	if ( not Events.triggerPolicyEvent('connect_private', (cn, pwd)) ) and (not p.isPermitted(groupSettings['allow_groups_connect_private'], [])):
-		Events.execLater(ServerCore.playerDisconnect, (cn, DISC_PRIVATE))
+		ServerCore.playerDisconnect(cn, DISC_PRIVATE)
 		return
 		
 	if ( not Events.triggerPolicyEvent('connect_kick', (cn, pwd)) ) and (not p.isPermitted(groupSettings['allow_groups_connect_banned'], [])):
-		Events.execLater(ServerCore.playerDisconnect, (cn, DISC_IPBAN))
+		ServerCore.playerDisconnect(cn, DISC_IPBAN)
 		return
 		
 	if ( not Events.triggerPolicyEvent('connect_capacity', (cn, pwd)) ) and (not p.isPermitted(groupSettings['allow_groups_connect_oversize'], [])):
-		Events.execLater(ServerCore.playerDisconnect, (cn, DISC_MAXCLIENTS))
+		ServerCore.playerDisconnect(cn, DISC_MAXCLIENTS)
 		return
 	
-	Events.execLater(ServerCore.postinitclient, (cn,))
-	
-class ConnectionPolicyThread(threading.Thread):
-	def __init__(self):
-		threading.Thread.__init__(self)
-		
-		self.running = True
-		self.event_queue = []
-		self.flag = threading.Event()
-		
-	def run(self):
-		while self.running:
-			
-			self.flag.clear()
-			self.flag.wait()
-			
-			while len(self.event_queue) > 0:
-				event = self.event_queue.pop(0)
-				#do something with it
-				try:
-					event[0](*(event[1]))
-				except:
-					exceptionType, exceptionValue, exceptionTraceback = sys.exc_info()	
-					Logging.error('Uncaught exception occurred in ConnectPolicy system.')
-					Logging.error(traceback.format_exc())
-				
-	def connect(self, cn):
-		self.event_queue.append((on_delayed_connect, (cn,)))
-		self.flag.set()
+	ServerCore.postinitclient(cn)

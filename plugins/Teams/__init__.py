@@ -330,9 +330,10 @@ class TeamManager:
 	def onSwitchTeam(self, cn, team):
 		if Events.triggerPolicyEvent('player_switch_team', (cn, team)):
 			p = Players.player(cn)
-			Events.execLater(p.suicide, ())
+			p.suicide()
 			p.setTeam(team)
-			messager.sendMessage('team_switch', dictionary={'teamName': p.team(), 'name': p.name()})
+			if not p.isSpectator():
+				messager.sendMessage('team_switch', dictionary={'teamName': p.team(), 'name': p.name()})
 			self.playerTeams[cn] = team
 			
 	def onSetTeam(self, cn, tcn, team):
@@ -341,7 +342,7 @@ class TeamManager:
 		elif Events.triggerPolicyEvent('player_set_team', (cn, tcn, team)):
 			p = Players.player(cn)
 			q = Players.player(tcn)
-			Events.execLater(q.suicide, ())
+			q.suicide()
 			q.setTeam(team)
 			messager.sendMessage('team_set', dictionary={'teamName': q.team(), 'actor': q.name(), 'director': p.name()})
 			self.playerTeams[tcn] = team

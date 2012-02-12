@@ -192,6 +192,14 @@ def onUnspectate(cn, tcn):
 			else:
 				UI.insufficientPermissions(cn)
 				return False
+			
+@Events.eventHandler('player_connect')
+def on_connect(cn):
+	if ServerCore.masterMode() > 1:
+		return
+	else:
+		if ( Events.triggerPolicyEvent("player_unspectate", (cn, cn)) ):
+			ServerCore.unspectate(cn)
 	
 @Commands.commandHandler('specall')
 def specAll(cn, args):

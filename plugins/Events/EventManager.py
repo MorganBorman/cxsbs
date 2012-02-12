@@ -1,5 +1,6 @@
 import sys
 import traceback
+import threading
 
 import cxsbs
 Logging = cxsbs.getResource("Logging")
@@ -15,8 +16,14 @@ def executeEvent(func, args):
 		Logging.error('Uncaught exception occurred in event handler.')
 		Logging.error(traceback.format_exc())
 
-class EventManager:
+class EventManager(threading.Thread):
 	def __init__(self, Players=None):
+		threading.Thread.__init__(self)
+		
+		self.running = True
+		self.event_queue = []
+		self.flag = threading.Event()
+		
 		self.Players = Players
 		self.events = {}
 		self.allHandlers = []
@@ -35,6 +42,10 @@ class EventManager:
 		self.events[event].append(func)
 		
 	def trigger(self, eventName, args=()):
+		self.event_queue.append((eventName, args))
+		self.flag.set()
+		
+	def triggerNow(self, eventName, args=()):
 		Logging.debug("Event: " + str(eventName) + " " + str(args))
 		for handler in self.allHandlers:
 			handler(eventName, args)
@@ -56,3 +67,21 @@ class EventManager:
 				executeEvent(event, args)
 		except KeyError:
 			pass
+		
+	def run(self):
+		while self.running:
+			
+			self.flag.clear()
+			self.flag.wait()
+			
+			while len(self.event_queue) > 0:
+				event = self.event_queue.pop(0)
+				#do something with it
+				try:
+					eventName = event[0]
+					args = event[1]
+					self.triggerNow(eventName, args)
+				except:
+					exceptionType, exceptionValue, exceptionTraceback = sys.exc_info()	
+					Logging.error('Uncaught exception occurred in ConnectPolicy system.')
+					Logging.error(traceback.format_exc())
