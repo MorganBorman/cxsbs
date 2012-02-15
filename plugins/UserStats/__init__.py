@@ -62,61 +62,53 @@ Messages.addMessage	(
 					)
 
 messager = Messages.getAccessor(subcategory=pluginCategory)
+		
+NOTUSER = -1
 
-class UserStat(Base):
-	"Store per day stats for each user account"
+class DamageDelt(Base):
+	"each damage delt event with a timestamp for each user account"
 	__table_args__ = {'extend_existing': True}
 	__tablename__= tableSettings["table_name"]
 	userId = Column(Integer, index=True)
-	date = Column(BigInteger, index=True)
+	targetId = Column(Integer, index=True)
+	timestamp = Column(BigInteger, index=True)
+	mode = Column(Integer, index=True)
+	amount = Column(Integer)
+	
+class DamageSpent(Base):
+	"each Damage spent event with a timestamp for each user account"
+	__table_args__ = {'extend_existing': True}
+	__tablename__= tableSettings["table_name"]
+	userId = Column(Integer, index=True)
+	timestamp = Column(BigInteger, index=True)
+	mode = Column(Integer, index=True)
+	amount = Column(Integer)
+		
+class FragEvent(Base):
+	"each frag event with a timestamp for each user account"
+	__table_args__ = {'extend_existing': True}
+	__tablename__= tableSettings["table_name"]
+	userId = Column(Integer, index=True)
+	targetId = Column(Integer, index=True)
+	timestamp = Column(BigInteger, index=True)
 	mode = Column(Integer, index=True)
 	
-	frags = Column(BigInteger)
-	suicides = Column(BigInteger)
-	deaths = Column(BigInteger)
-	teamkills = Column(BigInteger)
+	def __init__(self, cn, tcn, mode):
+		pass
 	
-	shot_damage = Column(BigInteger)
-	hit_damage = Column(BigInteger)
+SUICIDE = -2
+
+class DeathEvent(Base):
+	"each death event with a timestamp for each user account"
+	__table_args__ = {'extend_existing': True}
+	__tablename__= tableSettings["table_name"]
+	userId = Column(Integer, index=True)
+	causeId = Column(Integer, index=True)
+	timestamp = Column(BigInteger, index=True)
+	mode = Column(Integer, index=True)
 	
-	UniqueConstraint('userId', 'date', 'mode', name='uq_userid_date_mode')
-	__mapper_args__ = {'primary_key':[userId, date, mode]}
-	def __init__(self, userId, date, mode):
-		self.userId = userId
-		self.date = date
-		self.mode = mode
-		
-		self.frags = 0
-		self.suicides = 0
-		self.deaths = 0
-		self.teamkills = 0
-		
-		self.shot_damage = 0
-		self.hit_damage = 0
-		
-	def frag(self):
-		self.frags += 1
-		
-	def suicide(self):
-		self.suicides += 1
-		
-	def death(self):
-		self.deaths += 1
-		
-	def teamkill(self):
-		self.teamkills += 1
-		
-	def shot(self, damage):
-		self.shot_damage += damage
-		
-	def hit(self, damage):
-		self.hit_damage += damage
-		
-	def accuracy(self):
-		if self.shot_damage != 0:
-			return float(self.hit_damage)/float(self.shot_damage)
-		else:
-			return 1
+	def __init__(self, cn, cause, mode):
+		pass
 		
 Base.metadata.create_all(DatabaseManager.dbmanager.engine)
 
