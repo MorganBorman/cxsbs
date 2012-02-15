@@ -45,9 +45,36 @@ pluginCategory = "UserStats"
 SettingsManager.addSetting(Setting.Setting	(
 												category=DatabaseManager.getDbSettingsCategory(),
 												subcategory=pluginCategory, 
-												symbolicName="table_name", 
-												displayName="Table name", 
-												default="user_stats",
+												symbolicName="damage_spent_event_table_name", 
+												displayName="Damage Spent Table name", 
+												default="usermanager_damage_spent_events",
+												doc="Table name for storing the user stats."
+											))
+
+SettingsManager.addSetting(Setting.Setting	(
+												category=DatabaseManager.getDbSettingsCategory(),
+												subcategory=pluginCategory, 
+												symbolicName="damage_dealt_event_table_name", 
+												displayName="Damage Dealt Event Table name", 
+												default="usermanager_damage_dealt_events",
+												doc="Table name for storing the user stats."
+											))
+
+SettingsManager.addSetting(Setting.Setting	(
+												category=DatabaseManager.getDbSettingsCategory(),
+												subcategory=pluginCategory, 
+												symbolicName="frag_event_table_name", 
+												displayName="Frag Event Table name", 
+												default="usermanager_frag_events",
+												doc="Table name for storing the user stats."
+											))
+
+SettingsManager.addSetting(Setting.Setting	(
+												category=DatabaseManager.getDbSettingsCategory(),
+												subcategory=pluginCategory, 
+												symbolicName="death_event_table_name", 
+												displayName="Death Event Table name", 
+												default="usermanager_death_events",
 												doc="Table name for storing the user stats."
 											))
 
@@ -65,73 +92,79 @@ messager = Messages.getAccessor(subcategory=pluginCategory)
 		
 NOTUSER = -1
 
-class DamageDelt(Base):
-	"each damage delt event with a timestamp for each user account"
+class DamageSpentEvent(Base):
+	"each Damage spent event with a timestamp for each user account"
 	__table_args__ = {'extend_existing': True}
-	__tablename__= tableSettings["table_name"]
+	__tablename__= tableSettings["damage_spent_table_name"]
 	userId = Column(Integer, index=True)
-	targetId = Column(Integer, index=True)
 	timestamp = Column(BigInteger, index=True)
 	mode = Column(Integer, index=True)
 	amount = Column(Integer)
 	
-class DamageSpent(Base):
-	"each Damage spent event with a timestamp for each user account"
+	def __init__(self, userId, timestamp, mode, amount):
+		self.userId = userId
+		self.timestamp = timestamp
+		self.mode = mode
+		self.amount = amount
+
+class DamageDealtEvent(Base):
+	"each damage dealt event with a timestamp for each user account"
 	__table_args__ = {'extend_existing': True}
-	__tablename__= tableSettings["table_name"]
+	__tablename__= tableSettings["damage_dealt_table_name"]
 	userId = Column(Integer, index=True)
 	timestamp = Column(BigInteger, index=True)
 	mode = Column(Integer, index=True)
 	amount = Column(Integer)
+	
+	def __init__(self, userId, timestamp, mode, amount):
+		self.userId = userId
+		self.timestamp = timestamp
+		self.mode = mode
+		self.amount = amount
+	
+TEAMKILL = -2
 		
 class FragEvent(Base):
 	"each frag event with a timestamp for each user account"
 	__table_args__ = {'extend_existing': True}
-	__tablename__= tableSettings["table_name"]
+	__tablename__= tableSettings["frag_event_table_name"]
 	userId = Column(Integer, index=True)
 	targetId = Column(Integer, index=True)
 	timestamp = Column(BigInteger, index=True)
 	mode = Column(Integer, index=True)
 	
-	def __init__(self, cn, tcn, mode):
-		pass
+	def __init__(self, userId, targetId, timestamp, mode):
+		self.userId = userId
+		self.targetId = targetId
+		self.timestamp = timestamp
+		self.mode = mode
 	
-SUICIDE = -2
+SUICIDE = -3
 
 class DeathEvent(Base):
 	"each death event with a timestamp for each user account"
 	__table_args__ = {'extend_existing': True}
-	__tablename__= tableSettings["table_name"]
+	__tablename__= tableSettings["death_event_table_name"]
 	userId = Column(Integer, index=True)
 	causeId = Column(Integer, index=True)
 	timestamp = Column(BigInteger, index=True)
 	mode = Column(Integer, index=True)
 	
-	def __init__(self, cn, cause, mode):
-		pass
+	def __init__(self, userId, causeId, timestamp, mode):
+		self.userId = userId
+		self.causeId = causeId
+		self.timestamp = timestamp
+		self.mode = mode
 		
 Base.metadata.create_all(DatabaseManager.dbmanager.engine)
 
-def AccessCurrentStat(session, userId):
-	"""
-	Gets the UserStat object for the given user and the current mode/date
-	If one does not exist, initialize one and return that.
-	"""
-	epoch = datetime.datetime.utcfromtimestamp(0)
-	today = datetime.datetime.today()
-	d = today - epoch
-	
-	date = d.days # timedelta object
-	mode = Game.currentMode()
-	
-	try:
-		stat = session.query(UserStat).filter(UserStat.userId==userId).filter(UserStat.date==date).filter(UserStat.mode==mode).one()
-		return stat
-	except NoResultFound:
-		stat = UserStat(userId, date, mode)
-		session.add(stat)
-		session.commit()
-		return stat
+def get_timestamp():
+	"Get the current timestamp: the time since epoch in seconds."
+	return time.time()
+
+def get_gamemode():
+	"Get the current gamemode as its integer representation."
+	return Game.currentMode()
 
 class StatWriter(threading.Thread):
 	def __init__(self):
@@ -179,6 +212,42 @@ class StatWriter(threading.Thread):
 	def on_hit(self, cn, damage):
 		self.event_queue.append((on_hit, (cn, damage)))
 		self.flag.set()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def AccessCurrentStat(session, userId):
+	"""
+	Gets the UserStat object for the given user and the current mode/date
+	If one does not exist, initialize one and return that.
+	"""
+	epoch = datetime.datetime.utcfromtimestamp(0)
+	today = datetime.datetime.today()
+	d = today - epoch
+	
+	date = d.days # timedelta object
+	mode = Game.currentMode()
+	
+	try:
+		stat = session.query(UserStat).filter(UserStat.userId==userId).filter(UserStat.date==date).filter(UserStat.mode==mode).one()
+		return stat
+	except NoResultFound:
+		stat = UserStat(userId, date, mode)
+		session.add(stat)
+		session.commit()
+		return stat
+
+
 
 """
 @Events.eventHandler('player_disconnect')
