@@ -16,7 +16,7 @@ playerObjects = {}
 global totalEvents
 totalEvents = 0
 
-import random
+import random, time
 
 ips = random.sample(xrange(0, 4294967296), number_of_players)
 sessionIds = random.sample(xrange(0000000, 9999999), number_of_players)
