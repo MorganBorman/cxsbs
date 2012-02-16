@@ -62,7 +62,7 @@ SettingsManager.addSetting(Setting.Setting	(
 
 import sqlalchemy
 from sqlalchemy import create_engine
-from sqlalchemy.pool import NullPool, SingletonThreadPool
+from sqlalchemy.pool import NullPool, SingletonThreadPool, QueuePool
 import sys
 	
 class DatabaseManagerBackend(DatabaseManagerBase.DatabaseManagerBackend):
@@ -72,7 +72,7 @@ class DatabaseManagerBackend(DatabaseManagerBase.DatabaseManagerBackend):
 
 	def initEngine(self):
 		uri = self.protocol + self.user + ":" + self.password + "@" + self.host + ":" + self.port + "/" + self.database
-		self.engine = create_engine(uri, echo=False)
+		self.engine = create_engine(uri, echo=False, poolclass=QueuePool, pool_size=20, max_overflow=0)
 		self.sessionFactory = sqlalchemy.orm.sessionmaker(bind=self.engine, autocommit=False, autoflush=False)
 
 	def readConfiguration(self):

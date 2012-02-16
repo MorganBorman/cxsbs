@@ -25,6 +25,9 @@ class Plugin(cxsbs.Plugin.Plugin):
 		global dont_iterate
 		dont_iterate = True
 		reactor.stop()
+		
+		reactor.runUntilCurrent() #@UndefinedVariable
+		reactor.doIteration(0) #@UndefinedVariable
 	
 import cxsbs
 Logging = cxsbs.getResource("Logging")

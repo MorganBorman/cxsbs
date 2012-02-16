@@ -6,17 +6,19 @@ class Plugin(cxsbs.Plugin.Plugin):
 		
 	def load(self):
 
-		statWriter = StatWriter()
-		statWriter.start()
+		self.statWriter = StatWriter()
+		self.statWriter.start()
 		
-		Events.registerServerEventHandler('player_teamkill', statWriter.on_teamkill)
-		Events.registerServerEventHandler('player_frag', statWriter.on_frag)
-		Events.registerServerEventHandler('player_suicide', statWriter.on_suicide)
-		Events.registerServerEventHandler('player_spend_damage', statWriter.on_shot)
-		Events.registerServerEventHandler('player_inflict_damage', statWriter.on_hit)
+		Events.registerServerEventHandler('player_teamkill', self.statWriter.on_teamkill)
+		Events.registerServerEventHandler('player_frag', self.statWriter.on_frag)
+		Events.registerServerEventHandler('player_suicide', self.statWriter.on_suicide)
+		Events.registerServerEventHandler('player_spend_damage', self.statWriter.on_shot)
+		Events.registerServerEventHandler('player_inflict_damage', self.statWriter.on_hit)
+		Events.registerServerEventHandler('player_connect', self.statWriter.on_connect)
+		Events.registerServerEventHandler('player_disconnect', self.statWriter.on_disconnect)
 		
 	def unload(self):
-		pass
+		self.statWriter.stop()
 
 from sqlalchemy import Column, Integer, BigInteger, String, Boolean, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
@@ -25,7 +27,7 @@ from sqlalchemy.orm import relation, mapper
 from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.sql.expression import func
 
-import datetime, threading
+import time, threading
 
 Base = declarative_base()
 
@@ -46,7 +48,7 @@ SettingsManager.addSetting(Setting.Setting	(
 												category=DatabaseManager.getDbSettingsCategory(),
 												subcategory=pluginCategory, 
 												symbolicName="damage_spent_event_table_name", 
-												displayName="Damage Spent Table name", 
+												displayName="Damage Spent Event Table name", 
 												default="usermanager_damage_spent_events",
 												doc="Table name for storing the user stats."
 											))
@@ -78,6 +80,15 @@ SettingsManager.addSetting(Setting.Setting	(
 												doc="Table name for storing the user stats."
 											))
 
+SettingsManager.addSetting(Setting.Setting	(
+												category=DatabaseManager.getDbSettingsCategory(),
+												subcategory=pluginCategory, 
+												symbolicName="connections_table_name", 
+												displayName="Connections Table name", 
+												default="usermanager_connection_history",
+												doc="Table name for storing the time periods that the user is on the server."
+											))
+
 tableSettings = SettingsManager.getAccessor(DatabaseManager.getDbSettingsCategory(), pluginCategory)
 
 Messages.addMessage	(
@@ -95,7 +106,8 @@ NOTUSER = -1
 class DamageSpentEvent(Base):
 	"each Damage spent event with a timestamp for each user account"
 	__table_args__ = {'extend_existing': True}
-	__tablename__= tableSettings["damage_spent_table_name"]
+	__tablename__= tableSettings["damage_spent_event_table_name"]
+	id = Column(Integer, primary_key=True)
 	userId = Column(Integer, index=True)
 	timestamp = Column(BigInteger, index=True)
 	mode = Column(Integer, index=True)
@@ -110,7 +122,8 @@ class DamageSpentEvent(Base):
 class DamageDealtEvent(Base):
 	"each damage dealt event with a timestamp for each user account"
 	__table_args__ = {'extend_existing': True}
-	__tablename__= tableSettings["damage_dealt_table_name"]
+	__tablename__= tableSettings["damage_dealt_event_table_name"]
+	id = Column(Integer, primary_key=True)
 	userId = Column(Integer, index=True)
 	timestamp = Column(BigInteger, index=True)
 	mode = Column(Integer, index=True)
@@ -128,6 +141,7 @@ class FragEvent(Base):
 	"each frag event with a timestamp for each user account"
 	__table_args__ = {'extend_existing': True}
 	__tablename__= tableSettings["frag_event_table_name"]
+	id = Column(Integer, primary_key=True)
 	userId = Column(Integer, index=True)
 	targetId = Column(Integer, index=True)
 	timestamp = Column(BigInteger, index=True)
@@ -145,6 +159,7 @@ class DeathEvent(Base):
 	"each death event with a timestamp for each user account"
 	__table_args__ = {'extend_existing': True}
 	__tablename__= tableSettings["death_event_table_name"]
+	id = Column(Integer, primary_key=True)
 	userId = Column(Integer, index=True)
 	causeId = Column(Integer, index=True)
 	timestamp = Column(BigInteger, index=True)
@@ -155,6 +170,20 @@ class DeathEvent(Base):
 		self.causeId = causeId
 		self.timestamp = timestamp
 		self.mode = mode
+		
+class UserConnection(Base):
+	"each death event with a timestamp for each user account"
+	__table_args__ = {'extend_existing': True}
+	__tablename__= tableSettings["connections_table_name"]
+	id = Column(Integer, primary_key=True)
+	userId = Column(Integer, index=True)
+	connect_timestamp = Column(BigInteger, index=True)
+	disconnect_timestamp = Column(BigInteger, index=True)
+	
+	def __init__(self, userId, connect_timestamp, disconnect_timestamp):
+		self.userId = userId
+		self.connect_timestamp = connect_timestamp
+		self.disconnect_timestamp = disconnect_timestamp
 		
 Base.metadata.create_all(DatabaseManager.dbmanager.engine)
 
@@ -173,13 +202,22 @@ class StatWriter(threading.Thread):
 		self.event_queue = []
 		self.flag = threading.Event()
 		
+		self.max_queue_size = 0
+		
 	def run(self):
-		while self.running:
+		while self.running or len(self.event_queue) > 0:
 			
 			self.flag.clear()
 			self.flag.wait()
 			
-			while len(self.event_queue) > 0:
+			queue_size = len(self.event_queue)
+			while queue_size > 0:
+				
+				if queue_size > self.max_queue_size:
+					self.max_queue_size = queue_size
+					print "Hit new max queue size of: %d" % queue_size
+				
+				
 				event = self.event_queue.pop(0)
 				#do something with it
 				try:
@@ -187,206 +225,143 @@ class StatWriter(threading.Thread):
 				except:
 					pass
 				
+				queue_size = len(self.event_queue)
+				
 	def stop(self):
 		self.running = False
 		self.flag.set()
 		
 	def on_teamkill(self, cn, tcn):
-		self.event_queue.append((on_teamkill, (cn, tcn)))
-		self.event_queue.append((on_death, (tcn,)))
-		self.flag.set()
+		if not Users.isLoggedIn(cn):
+			teamkillerId = NOTUSER
+		else:
+			user = Players.player(cn)
+			teamkillerId = user.userId
+					
+		if not Users.isLoggedIn(tcn):
+			teamkilleeId = NOTUSER
+		else:
+			tuser = Players.player(tcn)
+			teamkilleeId = tuser.userId
+			
+		timestamp = get_timestamp()
+		mode = get_gamemode()
+		
+		if teamkillerId != NOTUSER:
+			self.event_queue.append((on_frag, (teamkillerId, TEAMKILL, timestamp, mode)))
+			self.flag.set()
+			
+		if teamkilleeId != NOTUSER:
+			self.event_queue.append((on_death, (teamkilleeId, TEAMKILL, timestamp, mode)))
+			self.flag.set()
 	
 	def on_frag(self, cn, tcn):
-		self.event_queue.append((on_frag, (cn, tcn)))
-		self.event_queue.append((on_death, (tcn,)))
-		self.flag.set()
+		if not Users.isLoggedIn(cn):
+			killerId = NOTUSER
+		else:
+			user = Players.player(cn)
+			killerId = user.userId
+					
+		if not Users.isLoggedIn(tcn):
+			killeeId = NOTUSER
+		else:
+			tuser = Players.player(tcn)
+			killeeId = tuser.userId
+			
+		timestamp = get_timestamp()
+		mode = get_gamemode()
+		
+		if killerId != NOTUSER:
+			self.event_queue.append((on_frag, (killerId, killeeId, timestamp, mode)))
+			self.flag.set()
+			
+		if killeeId != NOTUSER:
+			self.event_queue.append((on_death, (killeeId, killerId, timestamp, mode)))
+			self.flag.set()
 	
 	def on_suicide(self, cn):
-		self.event_queue.append((on_suicide, (cn,)))
-		self.flag.set()
+		if not Users.isLoggedIn(cn):
+			return
+		else:
+			timestamp = get_timestamp()
+			mode = get_gamemode()
+			user = Players.player(cn)
+			self.event_queue.append((on_death, (user.userId, SUICIDE, timestamp, mode)))
+			self.flag.set()
 	
 	def on_shot(self, cn, damage):
-		self.event_queue.append((on_shot, (cn, damage)))
-		self.flag.set()
+		if not Users.isLoggedIn(cn):
+			return
+		else:
+			timestamp = get_timestamp()
+			mode = get_gamemode()
+			user = Players.player(cn)
+			self.event_queue.append((on_shot, (user.userId, timestamp, mode, damage)))
+			self.flag.set()
 	
 	def on_hit(self, cn, damage):
-		self.event_queue.append((on_hit, (cn, damage)))
-		self.flag.set()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-def AccessCurrentStat(session, userId):
-	"""
-	Gets the UserStat object for the given user and the current mode/date
-	If one does not exist, initialize one and return that.
-	"""
-	epoch = datetime.datetime.utcfromtimestamp(0)
-	today = datetime.datetime.today()
-	d = today - epoch
-	
-	date = d.days # timedelta object
-	mode = Game.currentMode()
-	
-	try:
-		stat = session.query(UserStat).filter(UserStat.userId==userId).filter(UserStat.date==date).filter(UserStat.mode==mode).one()
-		return stat
-	except NoResultFound:
-		stat = UserStat(userId, date, mode)
-		session.add(stat)
-		session.commit()
-		return stat
-
-
-
-"""
-@Events.eventHandler('player_disconnect')
-def onPlayerDisconnect(cn):
-	if not Users.isLoggedIn(cn):
-		return
-	user = Players.player(cn)
-	session = DatabaseManager.dbmanager.session()
-	try:
-		stat = AccessCurrentStat(session, user.userId)
-		stat.death()
-		session.commit()
-	finally:
-		session.close()
+		if not Users.isLoggedIn(cn):
+			return
+		else:
+			timestamp = get_timestamp()
+			mode = get_gamemode()
+			user = Players.player(cn)
+			self.event_queue.append((on_hit, (user.userId, timestamp, mode, damage)))
+			self.flag.set()
 		
-@Events.eventHandler('player_connect')
-def onPlayerConnect(cn):
-	if not Users.isLoggedIn(cn):
-		return
-	user = Players.player(cn)
-	session = DatabaseManager.dbmanager.session()
-	try:
-		stat = AccessCurrentStat(session, user.userId)
-		stat.death()
-		session.commit()
-	finally:
-		session.close()
-"""
-
-def on_death(cn):
-	if not Users.isLoggedIn(cn):
-		return
-	user = Players.player(cn)
-	session = DatabaseManager.dbmanager.session()
-	try:
-		stat = AccessCurrentStat(session, user.userId)
-		stat.death()
-		session.add(stat)
-		session.commit()
-	finally:
-		session.close()
-
-def on_teamkill(cn, tcn):
-	if not Users.isLoggedIn(cn):
-		return
-	user = Players.player(cn)
-	session = DatabaseManager.dbmanager.session()
-	try:
-		stat = AccessCurrentStat(session, user.userId)
-		stat.teamkill()
-		session.add(stat)
-		session.commit()
-	finally:
-		session.close()
-
-def on_frag(cn, tcn):
-	if not Users.isLoggedIn(cn):
-		return
-	user = Players.player(cn)
-	session = DatabaseManager.dbmanager.session()
-	try:
-		stat = AccessCurrentStat(session, user.userId)
-		stat.frag()
-		session.add(stat)
-		session.commit()
-	finally:
-		session.close()
-
-def on_suicide(cn):
-	if not Users.isLoggedIn(cn):
-		return
-	user = Players.player(cn)
-	session = DatabaseManager.dbmanager.session()
-	try:
-		stat = AccessCurrentStat(session, user.userId)
-		stat.suicide()
-		session.add(stat)
-		session.commit()
-	finally:
-		session.close()
-
-"""
-@Events.eventHandler('player_shot')
-def onShot(cn, shotid, gun):
-	if not Users.isLoggedIn(cn):
-		return
+	def on_connect(self, cn):
+		p = Players.player(cn)
+		p.connect_timestamp = get_timestamp()
 	
-	user = Players.player(cn)
+	def on_disconnect(self, cn):
+		if not Users.isLoggedIn(cn):
+			return
+		else:
+			user = Players.player(cn)
+			self.event_queue.append((on_disconnect, (user.userId, user.connect_timestamp, get_timestamp() )))
+			self.flag.set()
+
+def on_disconnect(userId, connect_timestamp, disconnect_timestamp):
 	session = DatabaseManager.dbmanager.session()
 	try:
-		stat = AccessCurrentStat(session, user.userId)
-		stat.shot()
+		stat = UserConnection(userId, connect_timestamp, disconnect_timestamp)
+		session.add(stat)
+		session.commit()
+	finally:
+		session.close()
+
+def on_death(userId, causeId, timestamp, mode):
+	session = DatabaseManager.dbmanager.session()
+	try:
+		stat = DeathEvent(userId, causeId, timestamp, mode)
+		session.add(stat)
+		session.commit()
+	finally:
+		session.close()
+
+def on_frag(userId, targetId, timestamp, mode):
+	session = DatabaseManager.dbmanager.session()
+	try:
+		stat = FragEvent(userId, targetId, timestamp, mode)
+		session.add(stat)
+		session.commit()
+	finally:
+		session.close()
+
+def on_shot(userId, timestamp, mode, amount):
+	session = DatabaseManager.dbmanager.session()
+	try:
+		stat = DamageSpentEvent(userId, timestamp, mode, amount)
 		session.add(stat)
 		session.commit()
 	finally:
 		session.close()
 		
-@Events.eventHandler('player_shot_hit')
-def onShotHit(cn, tcn, lifesequence, dist, hitrays):
-	if not Users.isLoggedIn(cn):
-		return
-	
-	user = Players.player(cn)
+def on_hit(userId, timestamp, mode, amount):
 	session = DatabaseManager.dbmanager.session()
 	try:
-		stat = AccessCurrentStat(session, user.userId)
-		stat.hit()
+		stat = DamageDealtEvent(userId, timestamp, mode, amount)
 		session.add(stat)
 		session.commit()
-		ServerCore.message(("Current accuracy: %0.2f" %(stat.accuracy()*100)) + '%')
-	finally:
-		session.close()
-"""
-
-def on_shot(cn, damage):
-	if not Users.isLoggedIn(cn):
-		return
-	
-	user = Players.player(cn)
-	session = DatabaseManager.dbmanager.session()
-	try:
-		stat = AccessCurrentStat(session, user.userId)
-		stat.shot(damage)
-		session.add(stat)
-		session.commit()
-	finally:
-		session.close()
-		
-def on_hit(cn, damage):
-	if not Users.isLoggedIn(cn):
-		return
-	
-	user = Players.player(cn)
-	session = DatabaseManager.dbmanager.session()
-	try:
-		stat = AccessCurrentStat(session, user.userId)
-		stat.hit(damage)
-		session.add(stat)
-		session.commit()
-		#ServerCore.message(("Current accuracy: %0.2f" %(stat.accuracy()*100)) + '%')
 	finally:
 		session.close()

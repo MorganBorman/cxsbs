@@ -753,7 +753,7 @@ static PyObject *playerScore(PyObject *self, PyObject *args)
 	return Py_BuildValue("i", ci->state.flags);
 }
 
-static PyObject *playerDamageDelt(PyObject *self, PyObject *args)
+static PyObject *playerDamageDealt(PyObject *self, PyObject *args)
 {
 	int cn;
 	server::clientinfo *ci;
@@ -1342,13 +1342,13 @@ static PyMethodDef ModuleMethods[] = {
 	{"playerPrivilege", playerPrivilege, METH_VARARGS, "Integer representing player privilege"},
 	{"playerFrags", playerFrags, METH_VARARGS, "Number of frags by player in current match."},
 	{"playerTeamkills", playerTeamkills, METH_VARARGS, "Number of teamkills by player in current match."},
-	{"playerDeaths", playerDeaths, METH_VARARGS, "Number of deatds by player in current match."},
+	{"playerDeaths", playerDeaths, METH_VARARGS, "Number of deaths by player in current match."},
 	{"playerShots", playerShots, METH_VARARGS, "Shots by player in current match."},
 	{"playerHits", playerHits, METH_VARARGS, "Hits by player in current match."},
 	{"playerPing", playerPing, METH_VARARGS, "Current ping of player."},
 	{"playerScore", playerScore, METH_VARARGS, "Flags player has scored."},
-	{"playerDamageDelt", playerDamageDelt, METH_VARARGS, "Damage delt by player in current game."},
-	{"playerDamageRecieved", playerDamageRecieved, METH_VARARGS, "Damage recieved by player in current game."},
+	{"playerDamageDealt", playerDamageDealt, METH_VARARGS, "Damage dealt by player in current game."},
+	{"playerDamageRecieved", playerDamageRecieved, METH_VARARGS, "Damage received by player in current game."},
 	{"playerTeam", playerTeam, METH_VARARGS, "Team player is member of."},
 	{"playerIsSpectator", playerIsSpectator, METH_VARARGS, "Player is a spectator"},
 	{"playerIsInvisible", playerIsInvisible, METH_VARARGS, "Player is invisible."},
@@ -1373,6 +1373,7 @@ static PyMethodDef ModuleMethods[] = {
 	{"setMaster", setMaster, METH_VARARGS, "Set cn to master."},
 	{"setAdmin", setAdmin, METH_VARARGS, "Set cn to admin."},
 	{"resetPrivilege", resetPrivilege, METH_VARARGS, "Set cn to non-privileged."},
+
 	{"setPaused", setPaused, METH_VARARGS, "Set game to be paused."},
 	{"isPaused", isPaused, METH_VARARGS, "Is the game currently paused."},
 	{"setMap", setMap, METH_VARARGS, "Set to map and mode."},
@@ -1389,13 +1390,14 @@ static PyMethodDef ModuleMethods[] = {
 
 	{"authChallenge", authChal, METH_VARARGS, "Send auth challenge to client."},
 
-	{"setSecondsRemaining", setSecondsLeft, METH_VARARGS, "Set the number of seconds remaining in current game."},
 	{"sendMapReload", sendMapReload, METH_VARARGS, "Causes all users to send vote on next map."},
 
 	{"secondsRemaining", secondsLeft, METH_VARARGS, "seconds remaining in current match."},
+	{"setSecondsRemaining", setSecondsLeft, METH_VARARGS, "Set the number of seconds remaining in current game."},
 
 	{"persistentIntermission", persistentIntermission, METH_VARARGS, "Get whether or not persistent intermission is enabled."},
 	{"setPersistentIntermission", setPersistentIntermission, METH_VARARGS, "Set whether or not persistent intermission is enabled."},
+
 	{"allowShooting", allowShooting, METH_VARARGS, "get whether or not shooting is allowed."},
 	{"setAllowShooting", setAllowShooting, METH_VARARGS, "set whether or not shooting is allowed."},
 	{"setTeam", setTeam, METH_VARARGS, "Set team of player."},
