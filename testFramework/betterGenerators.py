@@ -130,6 +130,11 @@ for cn in range(1, number_of_players):
 import cxsbs
 orchestrator.addEventGenerator(TimedEventGenerator(FunctionEvent(cxsbs.shutdown, ()), waitFrames=totalFrames))
 
+actualStartTime = time.time()
+
 orchestrator.run()
 
+actualEndTime = time.time()
+
 print "This test run executed %d events." % totalEvents
+print "The the server run time for %d frames with a target fps of %d was %.2f" %(totalFrames, 30, (actualEndTime-actualStartTime))

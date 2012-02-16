@@ -8,7 +8,7 @@ sys.path.append(cxsbsPath)
 os.chdir(cxsbsPath)
 
 from debugServerOrchestrator import Orchestrator, TimedEventGenerator, DataRequestHandler, RepeatingEventGenerator, ServerEvent, FunctionEvent
-orchestrator = Orchestrator(maxFrames=1800, printFrame=False, printEvents=False, printFps=True)
+orchestrator = Orchestrator(maxFrames=1800, printFrame=False, printEvents=False, printFps=False)
 
 import sbserver
 
