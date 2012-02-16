@@ -126,7 +126,6 @@ class Server:
 		pass
 	
 	def shutdown(self, time, frame, args):
-		print "server.shutdown() called"
 		#exit_status = args[0]
 		#sys.exit(exit_status)
 	
