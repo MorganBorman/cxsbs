@@ -1702,6 +1702,7 @@ namespace server
                 copystring(ci->connectpwd, text, strlen(text));
 
                 //ci->invisible = SbPy::triggerPolicyEventIntString("connect_invisible", ci->clientnum, text);
+                ci->invisible = false;
 
                 SbPy::triggerEventInt("player_connect_pre", ci->clientnum);
 
