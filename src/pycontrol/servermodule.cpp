@@ -278,7 +278,7 @@ static PyObject *message(PyObject *self, PyObject *args)
 	return Py_None;
 }
 
-static PyObject *sendMapInit(PyObject *self, PyObject *args)
+static PyObject *sendClientInitialization(PyObject *self, PyObject *args)
 {
 	int cn;
 	server::clientinfo *ci;
@@ -292,10 +292,10 @@ static PyObject *sendMapInit(PyObject *self, PyObject *args)
 	}
 	if(ci->state.aitype != AI_NONE)
 	{
-		PyErr_SetString(PyExc_ValueError, "Cannot send map init to AI client");
+		PyErr_SetString(PyExc_ValueError, "Cannot send client init to AI client");
 		return 0;
 	}
-	server::sendInitMap(ci);
+	server::sendClientInitialization(ci);
 	return Py_None;
 }
 
@@ -439,6 +439,28 @@ static PyObject *playerName(PyObject *self, PyObject *args)
 	return Py_BuildValue("s", ci->name);
 }
 
+static PyObject *playerConnectPwd(PyObject *self, PyObject *args)
+{
+	int cn;
+	server::clientinfo *ci;
+	if(!PyArg_ParseTuple(args, "i", &cn))
+		return 0;
+	ci = server::getinfo(cn);
+	if(!ci)
+	{
+		PyErr_SetString(PyExc_ValueError, "Invalid cn specified.");
+		return 0;
+	}
+	//if(!ci->connectpwd)
+	if(!ci->name)
+	{
+		PyErr_SetString(PyExc_RuntimeError, "Client cn is valid but has no connectpwd.");
+		return 0;
+	}
+	//return Py_BuildValue("s", ci->connectpwd);
+	return Py_BuildValue("s", ci->name);
+}
+
 static PyObject *playerSessionId(PyObject *self, PyObject *args)
 {
 	int cn;
@@ -499,6 +521,7 @@ static PyObject *playerIpLong(PyObject *self, PyObject *args)
 	return Py_BuildValue("k", getclientip(ci->clientnum));
 }
 
+/*
 static PyObject *playerKick(PyObject *self, PyObject *args)
 {
 	int cn;
@@ -529,6 +552,31 @@ static PyObject *playerDisc(PyObject *self, PyObject *args)
 		return 0;
 	}
 	disconnect_client(cn, DISC_NONE);
+	Py_INCREF(Py_None);
+	return Py_None;
+}
+*/
+
+static PyObject *playerDisconnect(PyObject *self, PyObject *args)
+{
+	int cn;
+	int reason;
+	server::clientinfo *ci;
+	if(!PyArg_ParseTuple(args, "ii", &cn, &reason))
+		return 0;
+	ci = server::getinfo(cn);
+	if(!ci)
+	{
+		PyErr_SetString(PyExc_ValueError, "Invalid cn specified");
+		return 0;
+	}
+	//enum { DISC_NONE = 0, DISC_EOP, DISC_CN, DISC_KICK, DISC_TAGT, DISC_IPBAN, DISC_PRIVATE, DISC_MAXCLIENTS, DISC_TIMEOUT, DISC_OVERFLOW, DISC_NUM };
+	if (reason < DISC_NONE || reason > DISC_NUM)
+	{
+		PyErr_SetString(PyExc_ValueError, "That is not a valid disconnect reason.");
+		return 0;
+	}
+	disconnect_client(cn, reason);
 	Py_INCREF(Py_None);
 	return Py_None;
 }
@@ -701,6 +749,23 @@ static PyObject *unspectate(PyObject *self, PyObject *args)
 		return 0;
 	}
 	server::spectate(ci, false, spectator);
+	Py_INCREF(Py_None);
+	return Py_None;
+}
+
+static PyObject *setStateDead(PyObject *self, PyObject *args)
+{
+	int spectator;
+	server::clientinfo *ci;
+	if(!PyArg_ParseTuple(args, "i", &spectator))
+		return 0;
+	ci = server::getinfo(spectator);
+	if(!ci)
+	{
+		PyErr_SetString(PyExc_ValueError, "Invalid cn specified");
+		return 0;
+	}
+	ci->state.state = CS_DEAD;
 	Py_INCREF(Py_None);
 	return Py_None;
 }
@@ -1324,7 +1389,7 @@ static PyMethodDef ModuleMethods[] = {
 
 	{"message", message, METH_VARARGS, "Send a server message."},
 
-	{"sendMapInit", sendMapInit, METH_VARARGS, "Send the initial map change and items list to the client after they have connected."},
+	{"sendClientInitialization", sendClientInitialization, METH_VARARGS, "Send the initial map change and items list to the client after they have connected."},
 
 	{"sendEditMap", sendEditMap, METH_VARARGS, "Send the initial map change and items list to the client after they have connected."},
 
@@ -1337,6 +1402,7 @@ static PyMethodDef ModuleMethods[] = {
 	{"playerMessageTeam", playerMessageTeam, METH_VARARGS, "Send a team message as a player(from, to, text)."},
 
 	{"playerName", playerName, METH_VARARGS, "Get name of player from cn."},
+	{"playerConnectPwd", playerConnectPwd, METH_VARARGS, "Get the connectpwd of player by cn."},
 	{"playerSessionId", playerSessionId, METH_VARARGS, "Session ID of player."},
 	{"playerIpLong", playerIpLong, METH_VARARGS, "Get IP of player from cn."},
 	{"playerPrivilege", playerPrivilege, METH_VARARGS, "Integer representing player privilege"},
@@ -1356,8 +1422,9 @@ static PyMethodDef ModuleMethods[] = {
 	{"playerMapCrc", playerMapCrc, METH_VARARGS, "Map CRC of player."},
 	{"playerMapName", playerMapName, METH_VARARGS, "Map name of player."},
 
-	{"playerKick", playerKick, METH_VARARGS, "Kick player from server."},
-	{"playerDisc", playerDisc, METH_VARARGS, "Disconnect player from server."},
+	//{"playerKick", playerKick, METH_VARARGS, "Kick player from server."},
+	//{"playerDisc", playerDisc, METH_VARARGS, "Disconnect player from server."},
+	{"playerDisconnect", playerDisconnect, METH_VARARGS, "Disconnect player from server for a specified reason."},
 
 	{"requestPlayerAuth", requestPlayerAuth, METH_VARARGS, "Request that a players client autoauth."},
 
@@ -1365,6 +1432,8 @@ static PyMethodDef ModuleMethods[] = {
 	{"setVisible", setVisible, METH_VARARGS, "Set the player visible."},
 	{"spectate", spectate, METH_VARARGS, "Spectate player."},
 	{"unspectate", unspectate, METH_VARARGS, "Set player to unspectated."},
+	{"setStateDead", setStateDead, METH_VARARGS, "Set player state to unspectated and dead."},
+
 	{"setPlayerTeam", setPlayerTeam, METH_VARARGS, "Set team of player."},
 	{"setBotLimit", setBotLimit, METH_VARARGS, "Set server bot limit."},
 	{"hashPassword", hashPass, METH_VARARGS, "Return hash for user + password"},

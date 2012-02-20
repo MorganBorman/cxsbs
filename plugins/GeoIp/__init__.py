@@ -55,7 +55,7 @@ def getCountry(ip):
 			country = 'Unknown'
 	return country
 
-@Events.eventHandler('player_connect_delayed')
+@Events.eventHandler('player_connect')
 def announce(cn):
 	p = Players.player(cn)
 	messager.sendMessage('connection_message', dictionary={'name':p.name(), 'country':getCountry(p.ipLong())})

@@ -118,6 +118,13 @@ Messages.addMessage	(
 
 messager = Messages.getAccessor(subcategory=pluginCategory)
 
+@Events.eventHandler('server_start')
+def onServerStart():
+	if not settings["public_server"]:
+		ServerCore.setMasterMask(1)
+	else:
+		ServerCore.setMasterMask(2)
+
 def setSimpleMaster(cn, auth=False):
 	p = Players.player(cn)
 	if not settings["public_server"] and not auth:

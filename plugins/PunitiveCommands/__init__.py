@@ -184,7 +184,7 @@ def onDiscCommand(cn, args):
 		p = Players.player(cn)
 		t = Players.player(tcn)
 		p.logAction('Silently disconnected: ' + t.name() + '@' + t.ipString())
-		ServerCore.playerDisc(tcn)
+		Events.execLater(PlayerDisconnect.disconnect, (tcn, PlayerDisconnect.DISC_NONE))
 	except (KeyError):
 		raise UsageError()
 	

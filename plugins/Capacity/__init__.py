@@ -92,7 +92,7 @@ def onServerStart():
 		Server.setPaused(True)
 	Server.setMaxClients(settings["default_size"])
 
-@Events.eventHandler('player_connect')
+@Events.eventHandler('player_connect_pre')
 def onConnect(cn):
 	if Server.clientCount() == 0 and settings["resume_on_first_client"]:
 		Server.setPaused(False)

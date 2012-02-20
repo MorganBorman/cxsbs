@@ -1,5 +1,5 @@
 totalFrames = 1800
-number_of_players = 10
+number_of_players = 50
 is_instagib = False
 
 ##############################################################
@@ -45,7 +45,7 @@ class Weapon:
 			
 			if random.choice([True, False]):
 				if self.weapon_data['partial']:
-					hits = random.choice(range(self.weapon_data['increment'],self.weapon_data['damage'],self.weapon_data['increment']))
+					hits = random.choice(range(1,self.weapon_data['damage']/self.weapon_data['increment']))
 					
 					damage = hits * self.weapon_data['increment']
 				else:
@@ -88,19 +88,19 @@ def take_action(cn):
 def frag(cn):
 	weapon = getWeapon()
 	frame = weapon.activate(cn, 0)
-	orchestrator.addEventGenerator(TimedEventGenerator(ServerEvent("player_frag", (player.cn, random.randint(1,number_of_players-1))), waitFrames=frame))
+	orchestrator.addEventGenerator(TimedEventGenerator(ServerEvent("player_frag", (cn, random.randint(1,number_of_players-1))), waitFrames=frame))
 	
 def teamkill(cn):
 	weapon = getWeapon()
 	frame = weapon.activate(cn, 0)
-	orchestrator.addEventGenerator(TimedEventGenerator(ServerEvent("player_teamkill", (player.cn, random.randint(1,number_of_players-1))), waitFrames=frame))
+	orchestrator.addEventGenerator(TimedEventGenerator(ServerEvent("player_teamkill", (cn, random.randint(1,number_of_players-1))), waitFrames=frame))
 	
 def suicide(cn):
 	frame = 0
 	if random.choice([True, False]) and not is_instagib:
 		weapon = getWeapon(True)
 		frame = weapon.activate(cn, frame)
-	orchestrator.addEventGenerator(TimedEventGenerator(ServerEvent("player_suicide", (player.cn, )), waitFrames=frame))
+	orchestrator.addEventGenerator(TimedEventGenerator(ServerEvent("player_suicide", (cn, )), waitFrames=frame))
 
 for cn in range(1, number_of_players):
 	name = "testing" + str(cn)
@@ -136,5 +136,5 @@ orchestrator.run()
 
 actualEndTime = time.time()
 
-print "This test run executed %d events." % totalEvents
-print "The the server run time for %d frames with a target fps of %d was %.2f" %(totalFrames, 30, (actualEndTime-actualStartTime))
+print "This test run executed %d CXSBS events." % totalEvents
+print "The Main loop ran %d iterations in %.2f seconds." %(orchestrator.frameCount, (actualEndTime-actualStartTime))

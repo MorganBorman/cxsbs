@@ -15,3 +15,4 @@ SettingsManager = 0.0.1
 Messages = 0.0.1
 Logging = 0.0.1
 Commands = 0.0.1
+ProcessingThread = 0.0.1

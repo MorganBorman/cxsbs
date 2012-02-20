@@ -30,6 +30,7 @@ Auth = cxsbs.getResource("Auth")
 ServerCore = cxsbs.getResource("ServerCore")
 Email = cxsbs.getResource("Email")
 CommandInformation = cxsbs.getResource("CommandInformation")
+ProcessingThread = cxsbs.getResource("ProcessingThread")
 
 pluginCategory = 'Users'
 pluginSubcategory = 'General'
@@ -270,6 +271,9 @@ def onChangeKeyCommand(cn, args):
 		raise Commands.StateError('You must be logged in to change your authentication key.')
 	
 @Events.eventHandler('player_auth_request')
+def on_authRequest_sync(cn, name, desc):
+	ProcessingThread.queue(authRequest, (cn, name, desc))
+
 def authRequest(cn, name, desc):
 	p = Players.player(cn)
 	if desc == Auth.settings["automatic_request_description"]:
@@ -303,6 +307,9 @@ def authRequest(cn, name, desc):
 			messager.sendPlayerMessage('authlogin_unsuccessful', p)
 			
 @Events.eventHandler('player_auth_challenge_response')
+def on_authChallengeResponse_sync(cn, reqid, response):
+	ProcessingThread.queue(authChallengeResponse, (cn, reqid, response))
+
 def authChallengeResponse(cn, reqid, response):
 	p = Players.player(cn)
 	try:

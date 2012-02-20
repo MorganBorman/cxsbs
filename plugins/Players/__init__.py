@@ -26,6 +26,7 @@ Logging = cxsbs.getResource("Logging")
 Net = cxsbs.getResource("Net")
 Setting = cxsbs.getResource("Setting")
 SettingsManager = cxsbs.getResource("SettingsManager")
+PlayerDisconnect = cxsbs.getResource('PlayerDisconnect')
 
 permissionsCategory = 'Permissions'
 pluginSubcategory = 'Invisibility'
@@ -167,9 +168,9 @@ class Player:
 	def message(self, msg):
 		'''Send message to client'''
 		ServerCore.playerMessage(self.cn, msg)
-	def kick(self):
+	def disconnect(self, reason=PlayerDisconnect.DISC_NONE):
 		'''Disconnect client from server'''
-		Events.execLater(ServerCore.playerKick, (self.cn,))
+		Events.execLater(PlayerDisconnect.disconnect, (self.cn, reason))
 	def spectate(self):
 		'''Make client spectator'''
 		ServerCore.spectate(self.cn)

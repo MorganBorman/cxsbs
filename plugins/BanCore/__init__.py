@@ -21,6 +21,7 @@ SettingsManager = cxsbs.getResource("SettingsManager")
 Setting = cxsbs.getResource("Setting")
 Net = cxsbs.getResource("Net")
 SetMaster = cxsbs.getResource("SetMaster")
+PlayerDisconnect = cxsbs.getResource("PlayerDisconnect")
 
 from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, BigInteger
 from sqlalchemy.ext.declarative import declarative_base
@@ -147,8 +148,8 @@ def addBan(cn, seconds, reason, responsible_cn=-1, maskString="255.255.255.255")
 		session.commit()
 	finally:
 		session.close()
-	
-	Timers.addTimer(200, ServerCore.playerKick, (cn,))
+		
+	Events.execLater(PlayerDisconnect.disconnect, (cn, PlayerDisconnect.DISC_KICK))
 	Events.triggerServerEvent("player_punished", ("banned", Net.ipLongToString(ip)+ ":" + maskString, seconds, expiration, reason, nick, responsible_ip, responsible_nick, theTime))
 	
 @Events.policyHandler('connect_kick')

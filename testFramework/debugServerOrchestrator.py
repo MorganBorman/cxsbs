@@ -1,5 +1,7 @@
 import time
 
+eventRunTimes = {}
+
 def notStale(generator):
 	return not generator.stale
 
@@ -30,7 +32,16 @@ class ServerEvent:
 	def trigger(self):
 		import cxsbs
 		Events = cxsbs.getResource("Events")
+		startTime = time.time()
 		Events.triggerServerEvent(self.type, self.args)
+		endTime = time.time()
+		
+		totalEventTime = endTime - startTime
+		
+		if not self.type in eventRunTimes.keys():
+			eventRunTimes[self.type] = []
+			
+		eventRunTimes[self.type].append(totalEventTime)
 		
 class PolicyEvent:
 	def __init__(self, callback, type, args):
@@ -145,7 +156,7 @@ class DataRequestHandler:
 		return self.func(time, frame, args)
 
 class Orchestrator:
-	def __init__(self, maxFps=30, maxFrames=None, printFrame=False, printEvents=False, printFps=False, printAverageFps=True):
+	def __init__(self, maxFps=30, maxFrames=None, printFrame=False, printEvents=False, printFps=False, printAverageFps=True, printTargetFps=True):
 		self.maxFps = maxFps
 		self.secondsPerFrame = 1.00/maxFps
 		self.maxFrames = maxFrames
@@ -153,6 +164,7 @@ class Orchestrator:
 		
 		self.fpsData = []
 		
+		self.printTargetFps = printTargetFps
 		self.printFrame = printFrame
 		self.printEvents = printEvents
 		self.printFps = printFps
@@ -235,5 +247,17 @@ class Orchestrator:
 			elif frameDelay > 0:
 				time.sleep(frameDelay)
 				
+		if self.printTargetFps:
+			print "The main loop target was %.2f iterations/second." % float(self.maxFps)
+				
 		if self.printAverageFps:
-			print "The test ran at an average fps of %.2f" % (sum(self.fpsData)/float(len(self.fpsData)))
+			print "The main loop ran at an average of %.2f iterations/second." % (sum(self.fpsData)/float(len(self.fpsData)))
+			
+		for eventName in eventRunTimes.keys():
+			runTimes = eventRunTimes[eventName]
+			number = len(runTimes)
+			average = float(sum(runTimes))/float(len(runTimes))
+			maximum = max(runTimes)
+			minimum = min(runTimes)
+			
+			print "{:<30} \tcount: {:<16} \taverage: {:.2f} seconds, \tmax: {:.2f} \tseconds, \tmin: {:.2f} seconds.".format(eventName, str(number)+",", average, maximum, minimum)

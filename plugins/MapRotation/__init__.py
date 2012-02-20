@@ -190,7 +190,7 @@ def onFirstEverClient():
 		except Commands.StateError:
 			Logging.warning('Start server map set tried to change the map while server was frozen.')
 			
-@Events.eventHandler('player_connect')
+@Events.eventHandler('player_connect_pre')
 def onConnect(cn):
 	global rotationLoaded
 	if not rotationLoaded:

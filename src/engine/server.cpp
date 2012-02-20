@@ -217,12 +217,6 @@ void sendpacket(int n, int chan, ENetPacket *packet, int exclude)
             enet_peer_send(clients[n]->peer, chan, packet);
             break;
         }
-
-#ifndef STANDALONE
-        case ST_LOCAL:
-            localservertoclient(chan, packet);
-            break;
-#endif
     }
 }
 
@@ -335,13 +329,6 @@ void process(ENetPacket *packet, int sender, int chan)   // sender may be -1
     packetbuf p(packet);
     server::parsepacket(sender, chan, p);
     if(p.overread()) { disconnect_client(sender, DISC_EOP); return; }
-}
-
-void localclienttoserver(int chan, ENetPacket *packet)
-{
-    client *c = NULL;
-    loopv(clients) if(clients[i]->type==ST_LOCAL) { c = clients[i]; break; }
-    if(c) process(packet, c->num, chan);
 }
 
 client &addclient()

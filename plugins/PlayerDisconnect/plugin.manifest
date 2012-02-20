@@ -1,0 +1,9 @@
+[Plugin]
+Name = Player Disconnect
+SymbolicName = PlayerDisconnect
+Version = 0.0.1
+Author = Chasm
+Enabled = True
+
+[Dependencies]
+ServerCore = 0.0.1

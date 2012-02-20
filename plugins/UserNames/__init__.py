@@ -256,7 +256,7 @@ def isNamePermitted(name, userId=None):
 			userNames = query.all()
 			
 		for userName in userNames:
-			if userId != userName.userId:
+			if userId != userName.userId and (len(userName.name) > settings['minimum_length'] or userName.name.lower() == name.lower()):
 				return False
 		return True
 	finally:

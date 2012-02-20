@@ -3,7 +3,7 @@ Name = Command Pipe
 SymbolicName = CommandPipe
 Version = 0.0.1
 Author = Chasm
-Enabled = False
+Enabled = True
 
 [Dependencies]
 SettingsManager = 0.0.1

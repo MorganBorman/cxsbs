@@ -111,12 +111,14 @@ class DamageSpentEvent(Base):
 	userId = Column(Integer, index=True)
 	timestamp = Column(BigInteger, index=True)
 	mode = Column(Integer, index=True)
+	gun = Column(Integer)
 	amount = Column(Integer)
 	
-	def __init__(self, userId, timestamp, mode, amount):
+	def __init__(self, userId, timestamp, mode, gun, amount):
 		self.userId = userId
 		self.timestamp = timestamp
 		self.mode = mode
+		self.gun = gun
 		self.amount = amount
 
 class DamageDealtEvent(Base):
@@ -127,12 +129,14 @@ class DamageDealtEvent(Base):
 	userId = Column(Integer, index=True)
 	timestamp = Column(BigInteger, index=True)
 	mode = Column(Integer, index=True)
+	gun = Column(Integer)
 	amount = Column(Integer)
 	
-	def __init__(self, userId, timestamp, mode, amount):
+	def __init__(self, userId, timestamp, mode, gun, amount):
 		self.userId = userId
 		self.timestamp = timestamp
 		self.mode = mode
+		self.gun = gun
 		self.amount = amount
 	
 TEAMKILL = -2
@@ -194,11 +198,12 @@ def get_timestamp():
 def get_gamemode():
 	"Get the current gamemode as its integer representation."
 	return Game.currentMode()
-
+		
 class StatWriter(threading.Thread):
 	def __init__(self):
 		threading.Thread.__init__(self)
 		self.running = True
+		
 		self.event_queue = []
 		self.flag = threading.Event()
 		
@@ -215,8 +220,7 @@ class StatWriter(threading.Thread):
 				
 				if queue_size > self.max_queue_size:
 					self.max_queue_size = queue_size
-					print "Hit new max queue size of: %d" % queue_size
-				
+					#print "Hit new max queue size of: %d" % queue_size
 				
 				event = self.event_queue.pop(0)
 				#do something with it
@@ -226,6 +230,8 @@ class StatWriter(threading.Thread):
 					pass
 				
 				queue_size = len(self.event_queue)
+				
+		print "The StatWriter thread hit a max queue size of %d" % self.max_queue_size
 				
 	def stop(self):
 		self.running = False
@@ -289,24 +295,24 @@ class StatWriter(threading.Thread):
 			self.event_queue.append((on_death, (user.userId, SUICIDE, timestamp, mode)))
 			self.flag.set()
 	
-	def on_shot(self, cn, damage):
+	def on_shot(self, cn, gun, damage):
 		if not Users.isLoggedIn(cn):
 			return
 		else:
 			timestamp = get_timestamp()
 			mode = get_gamemode()
 			user = Players.player(cn)
-			self.event_queue.append((on_shot, (user.userId, timestamp, mode, damage)))
+			self.event_queue.append((on_shot, (user.userId, timestamp, mode, gun, damage)))
 			self.flag.set()
 	
-	def on_hit(self, cn, damage):
+	def on_hit(self, cn, gun, damage):
 		if not Users.isLoggedIn(cn):
 			return
 		else:
 			timestamp = get_timestamp()
 			mode = get_gamemode()
 			user = Players.player(cn)
-			self.event_queue.append((on_hit, (user.userId, timestamp, mode, damage)))
+			self.event_queue.append((on_hit, (user.userId, timestamp, mode, gun, damage)))
 			self.flag.set()
 		
 	def on_connect(self, cn):
@@ -348,19 +354,19 @@ def on_frag(userId, targetId, timestamp, mode):
 	finally:
 		session.close()
 
-def on_shot(userId, timestamp, mode, amount):
+def on_shot(userId, timestamp, mode, gun, amount):
 	session = DatabaseManager.dbmanager.session()
 	try:
-		stat = DamageSpentEvent(userId, timestamp, mode, amount)
+		stat = DamageSpentEvent(userId, timestamp, mode, gun, amount)
 		session.add(stat)
 		session.commit()
 	finally:
 		session.close()
 		
-def on_hit(userId, timestamp, mode, amount):
+def on_hit(userId, timestamp, mode, gun, amount):
 	session = DatabaseManager.dbmanager.session()
 	try:
-		stat = DamageDealtEvent(userId, timestamp, mode, amount)
+		stat = DamageDealtEvent(userId, timestamp, mode, gun, amount)
 		session.add(stat)
 		session.commit()
 	finally:

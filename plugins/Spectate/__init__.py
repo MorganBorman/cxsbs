@@ -21,6 +21,7 @@ Setting = cxsbs.getResource("Setting")
 SettingsManager = cxsbs.getResource("SettingsManager")
 Messages = cxsbs.getResource("Messages")
 Commands = cxsbs.getResource("Commands")
+ProcessingThread = cxsbs.getResource("ProcessingThread")
 
 permissionsCategory = 'Permissions'
 pluginSubcategory = 'Spectate'
@@ -192,6 +193,19 @@ def onUnspectate(cn, tcn):
 			else:
 				UI.insufficientPermissions(cn)
 				return False
+			
+"""
+@Events.eventHandler('player_connect')
+def on_connect_sync(cn):
+	ProcessingThread.queue(on_connect, (cn,))
+
+def on_connect(cn):
+	if ServerCore.masterMode() > 1:
+		return
+	else:
+		if Events.triggerPolicyEvent("player_unspectate", (cn, cn)):
+			ServerCore.unspectate(cn)
+"""
 	
 @Commands.commandHandler('specall')
 def specAll(cn, args):

@@ -219,8 +219,10 @@ namespace server
         int playermodel;
         int modevote;
         int privilege;
+        int connectstage;
         bool invisible;
         bool connected, local, timesync, active;
+        string connectpwd;
         int gameoffset, lastevent, pushed, exceeded;
         gamestate state;
         vector<gameevent *> events;
@@ -317,7 +319,8 @@ namespace server
 
         void reset()
         {
-            name[0] = team[0] = 0;
+            name[0] = team[0] = connectpwd[0] = 0;
+            connectstage = 0;
             playermodel = -1;
             privilege = PRIV_NONE;
             connected = local = false;
@@ -459,7 +462,7 @@ namespace server
 	void setmastermode(int);
 	void challengeauth(clientinfo *, uint, const char *);
 	bool setteam(clientinfo *, char *);
-	void sendInitMap(clientinfo *);
+	void sendClientInitialization(clientinfo *);
 	bool pregame_setteam(clientinfo *, char *);
 	bool spectate(clientinfo *, bool, int);
 	void setSecondsLeft(int seconds);

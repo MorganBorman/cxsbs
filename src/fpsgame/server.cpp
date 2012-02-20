@@ -141,11 +141,6 @@ namespace server
     {
         if(arg[0]=='-') switch(arg[1])
         {
-//          case 'n': setsvar("serverdesc", &arg[2]); return true;
-//          case 'y': setsvar("serverpass", &arg[2]); return true;
-//          case 'p': setsvar("adminpass", &arg[2]); return true;
-//          case 'o': setvar("publicserver", atoi(&arg[2])); return true;
-//          case 'g': setvar("serverbotlimit", atoi(&arg[2])); return true;
             case 'r': setsvar("pythonRoot", &arg[2]); return true;
             case 'p': setsvar("pluginPath", &arg[2]); return true;
             case 'i': setsvar("instanceRoot", &arg[2]); return true;
@@ -402,6 +397,9 @@ namespace server
     int welcomepacket(packetbuf &p, clientinfo *ci);
     void sendwelcome(clientinfo *ci);
 
+    int initclientpacket(packetbuf &p, clientinfo *ci);
+    void sendClientInitialization(clientinfo *ci);
+
 /** Demo Recording **/
     void writedemo(int chan, void *data, int len)
     {
@@ -482,6 +480,7 @@ namespace server
 
         packetbuf p(MAXTRANS, ENET_PACKET_FLAG_RELIABLE);
         welcomepacket(p, NULL);
+        initclientpacket(p, NULL);
         writedemo(1, p.buf, p.len);
     }
 
@@ -906,13 +905,13 @@ namespace server
         gs.lastspawn = gamemillis;
     }
 
-    int initmappacket(packetbuf &p, clientinfo *ci);
-
-    void sendInitMap(clientinfo *ci)
+    void sendClientInitialization(clientinfo *ci)
     {
         packetbuf p(MAXTRANS, ENET_PACKET_FLAG_RELIABLE);
-        int chan = initmappacket(p, ci);
+        int chan = initclientpacket(p, ci);
         sendpacket(ci->clientnum, chan, p.finalize());
+        ci->connectstage = 2;
+        SbPy::triggerEventInt("player_connect", ci->clientnum);
     }
 
     void sendwelcome(clientinfo *ci)
@@ -920,6 +919,7 @@ namespace server
         packetbuf p(MAXTRANS, ENET_PACKET_FLAG_RELIABLE);
         int chan = welcomepacket(p, ci);
         sendpacket(ci->clientnum, chan, p.finalize());
+        ci->connectstage = 1;
     }
 
     void putinitclient(clientinfo *ci, packetbuf &p)
@@ -955,7 +955,7 @@ namespace server
         }
     }
 
-    int initmappacket(packetbuf &p, clientinfo *ci)
+    int initclientpacket(packetbuf &p, clientinfo *ci)
     {
 		int hasmap = (m_edit && (clients.length()>1 || (ci && ci->local))) || (smapname[0] && (!m_timed || gamemillis<gamelimit || (ci && ci->state.state==CS_SPECTATOR && !ci->privilege && !ci->local) || numclients(ci ? ci->clientnum : -1, true, true, true)));
 		if(hasmap)
@@ -1049,7 +1049,6 @@ namespace server
         if(smode) smode->initclient(ci, p, true);
 		return 1;
     }
-
 
     int welcomepacket(packetbuf &p, clientinfo *ci)
     {
@@ -1199,7 +1198,7 @@ namespace server
     	if(actor->invisible) return;
         gamestate &ts = target->state;
         ts.dodamage(damage);
-        SbPy::triggerEventIntInt("player_inflict_damage", actor->clientnum, damage);
+        SbPy::triggerEventIntIntInt("player_inflict_damage", actor->clientnum, gun, damage);
         actor->state.damage += damage;
 		sendf(-1, 1, "ri6", N_DAMAGE, target->clientnum, actor->clientnum, damage, ts.armour, ts.health);
         if(target==actor) target->setpushed();
@@ -1338,7 +1337,7 @@ namespace server
 	}
         int tempdamage = guns[gun].damage*(gs.quadmillis ? 4 : 1)*(gun==GUN_SG ? SGRAYS : 1);
         gs.shotdamage += tempdamage;
-        SbPy::triggerEventIntInt("player_spend_damage", ci->clientnum, tempdamage);
+        SbPy::triggerEventIntIntInt("player_spend_damage", ci->clientnum, gun, tempdamage);
         gs.shots++;
         if (!allowShooting) return;
         switch(gun)
@@ -1572,7 +1571,6 @@ namespace server
         ci->sessionid = (rnd(0x1000000)*((totalmillis%10000)+1))&0xFFFFFF;
 
         connects.add(ci);
-        if(!m_mp(gamemode)) return DISC_PRIVATE;
         sendservinfo(ci);
         return DISC_NONE;
     }
@@ -1625,7 +1623,7 @@ namespace server
     bool allowbroadcast(int n)
     {
         clientinfo *ci = getinfo(n);
-        return ci && ci->connected;
+        return ci && ci->connected && ci->connectstage == 2;
     }
 
     clientinfo *findauth(uint id)
@@ -1701,17 +1699,11 @@ namespace server
 
                 getstring(text, p);
                 
-                ci->invisible = SbPy::triggerPolicyEventIntString("connect_invisible", ci->clientnum, text);
+                copystring(ci->connectpwd, text, strlen(text));
+
+                //ci->invisible = SbPy::triggerPolicyEventIntString("connect_invisible", ci->clientnum, text);
 
                 SbPy::triggerEventInt("player_connect_pre", ci->clientnum);
-                SbPy::triggerEventInt("player_connect", ci->clientnum);
-
-                int disc = allowconnect(ci, text);
-                if(disc)
-                {
-                    disconnect_client(sender, disc);
-                    return;
-                }
 
                 ci->playermodel = getint(p);
 
@@ -1723,9 +1715,7 @@ namespace server
                 ci->connected = true;
                 ci->needclipboard = totalmillis;
                 
-                if(!SbPy::triggerPolicyEventIntInt("player_unspectate", ci->clientnum, ci->clientnum)) ci->state.state = CS_SPECTATOR;
-                
-                //if(mastermode>=MM_LOCKED) ci->state.state = CS_SPECTATOR;
+                ci->state.state = CS_SPECTATOR;
                 
                 ci->state.lasttimeplayed = lastmillis;
 
@@ -1737,7 +1727,7 @@ namespace server
                 if (!ci->invisible)
                 {
 	                sendinitclient(ci);
-	        }
+	            }
 
                 aiman::addclient(ci);
 

@@ -48,7 +48,7 @@ def shutdown(waitTime=0):
 	if waitTime == 0:
 		messager.sendMessage('on_shutdown')
 		for cn in ServerCore.clients():
-			cxsbs.AsyncronousExecutor.dispatch(ServerCore.playerDisc, (cn,))
+			cxsbs.AsyncronousExecutor.dispatch(ServerCore.playerDisconnect, (cn, 0))
 		cxsbs.AsyncronousExecutor.dispatch(shutdown, (waitTime-1,), time=1)
 	else:
 		messager.sendMessage('shutdown_imminent', dictionary={'seconds':waitTime})
