@@ -22,6 +22,7 @@ SettingsManager = cxsbs.getResource("SettingsManager")
 Logging = cxsbs.getResource("Logging")
 Events = cxsbs.getResource("Events")
 Players = cxsbs.getResource("Players")
+PlayerDisconnect = cxsbs.getResource("PlayerDisconnect")
 
 pluginCategory = 'PunitiveActions'
 
