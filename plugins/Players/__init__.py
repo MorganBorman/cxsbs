@@ -70,17 +70,26 @@ def logPlayerAction(cn, action, level='info', **kwargs):
 			msg += " " + key + ":" + value
 	Logging.log(Logging.LEVELS[level], msg)
 
+import copy
+
+game_vars_template = {}
+
+def update_game_vars_template(dictionary):
+	global game_vars_template
+	game_vars_template.update(dictionary)
+
 class Player:
 	'''Represents a client on the server'''
 	def __init__(self, cn):
 		self.cn = cn
 		self.ip = ServerCore.playerIpLong(self.cn)
 		self.gamevars = {}
+		self.sessionvars = {}
 	def logAction(self, action, level='info', **kwargs):
 		logPlayerAction(self.cn, action, level, **kwargs)
 	def newGame(self):
 		'''Reset game variables'''
-		self.gamevars.clear()
+		self.gamevars = copy.deepcopy(game_vars_template)
 	def sessionId(self):
 		'''Session ID of client'''
 		return ServerCore.playerSessionId(self.cn)
@@ -213,10 +222,10 @@ class Player:
 		'''Flags the player has scored'''
 		return ServerCore.playerScore(self.cn)
 
-@Events.eventHandler('map_changed')
-def onMapChanged(mapname, mapmode):
+@Events.eventHandler('map_changed_pre')
+def onMapChanged():
 	for player in players.values():
-		player.newGame();
+		player.newGame()
 
 def all():
 	'''Get list of all clients'''
