@@ -164,7 +164,7 @@ def onRecentCommand(cn, args):
 		if len(args) < 4:
 			reason = None
 		else:
-			reason = args[3]
+			reason = ' '.join(args[3:])
 			
 		management.insert(cn, handle, ip, mask, actionTime, reason)
 	except (ValueError, KeyError, IndexError):
