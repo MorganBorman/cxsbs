@@ -62,6 +62,10 @@ modes = [
 	'effichold',
 ]
 
+item_modes = [0, 1, 9, 11, 13, 15]
+flag_modes = [11, 12, 13, 14, 15, 16, 17, 18, 19]
+capture_modes = [9, 10]
+
 def modeName(modenum):
 	'''String representing game mode number'''
 	return modes[modenum]

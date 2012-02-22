@@ -521,42 +521,6 @@ static PyObject *playerIpLong(PyObject *self, PyObject *args)
 	return Py_BuildValue("k", getclientip(ci->clientnum));
 }
 
-/*
-static PyObject *playerKick(PyObject *self, PyObject *args)
-{
-	int cn;
-	server::clientinfo *ci;
-	if(!PyArg_ParseTuple(args, "i", &cn))
-		return 0;
-	ci = server::getinfo(cn);
-	if(!ci)
-	{
-		PyErr_SetString(PyExc_ValueError, "Invalid cn specified");
-		return 0;
-	}
-	disconnect_client(cn, DISC_KICK);
-	Py_INCREF(Py_None);
-	return Py_None;
-}
-
-static PyObject *playerDisc(PyObject *self, PyObject *args)
-{
-	int cn;
-	server::clientinfo *ci;
-	if(!PyArg_ParseTuple(args, "i", &cn))
-		return 0;
-	ci = server::getinfo(cn);
-	if(!ci)
-	{
-		PyErr_SetString(PyExc_ValueError, "Invalid cn specified");
-		return 0;
-	}
-	disconnect_client(cn, DISC_NONE);
-	Py_INCREF(Py_None);
-	return Py_None;
-}
-*/
-
 static PyObject *playerDisconnect(PyObject *self, PyObject *args)
 {
 	int cn;
@@ -1074,6 +1038,30 @@ static PyObject *setMap(PyObject *self, PyObject *args)
 	return Py_None;
 }
 
+static PyObject *setMapItems(PyObject *self, PyObject *args)
+{
+	if (!server::is_item_mode())
+	{
+		PyErr_SetString(PyExc_StandardError, "Can only set items during item modes.");
+		return 0;
+	}
+
+	server::setServMapItems(args);
+
+	Py_INCREF(Py_None);
+	return Py_None;
+}
+
+static PyObject *setMapFlags(PyObject *self, PyObject *args)
+{
+	return server::setServMapFlags(args);
+}
+
+static PyObject *setMapBases(PyObject *self, PyObject *args)
+{
+	return server::setServMapBases(args);
+}
+
 static PyObject *setMasterMode(PyObject *self, PyObject *args)
 {
 	int mm;
@@ -1422,8 +1410,6 @@ static PyMethodDef ModuleMethods[] = {
 	{"playerMapCrc", playerMapCrc, METH_VARARGS, "Map CRC of player."},
 	{"playerMapName", playerMapName, METH_VARARGS, "Map name of player."},
 
-	//{"playerKick", playerKick, METH_VARARGS, "Kick player from server."},
-	//{"playerDisc", playerDisc, METH_VARARGS, "Disconnect player from server."},
 	{"playerDisconnect", playerDisconnect, METH_VARARGS, "Disconnect player from server for a specified reason."},
 
 	{"requestPlayerAuth", requestPlayerAuth, METH_VARARGS, "Request that a players client autoauth."},
@@ -1445,10 +1431,17 @@ static PyMethodDef ModuleMethods[] = {
 
 	{"setPaused", setPaused, METH_VARARGS, "Set game to be paused."},
 	{"isPaused", isPaused, METH_VARARGS, "Is the game currently paused."},
+
+	{"sendMapReload", sendMapReload, METH_VARARGS, "Causes all users to send vote on next map."},
 	{"setMap", setMap, METH_VARARGS, "Set to map and mode."},
-	{"setMasterMode", setMasterMode, METH_VARARGS, "Set server master mode."},
+	{"setMapItems", setMapItems, METH_VARARGS, "Populate the servers entity spawn tracking data."},
+	{"setMapFlags", setMapFlags, METH_VARARGS, "Populate the servers flag spawn tracking data for flag modes."},
+	{"setMapBases", setMapBases, METH_VARARGS, "Populate the servers base spawn tracking data for capture modes."},
+
 	{"masterMode", masterMode, METH_VARARGS, "Server master mode."},
+	{"setMasterMode", setMasterMode, METH_VARARGS, "Set server master mode."},
 	{"setMasterMask", setMasterMask, METH_VARARGS, "Set maximum master mode a master can set."},
+
 	{"gameMode", gameMode, METH_VARARGS, "Current game mode."},
 	{"mapName", mapName, METH_VARARGS, "Current map name."},
 	{"modeName", modeName, METH_VARARGS, "Name of game mode."},
@@ -1458,8 +1451,6 @@ static PyMethodDef ModuleMethods[] = {
 	{"uptime", uptime, METH_VARARGS, "Number of milliseconds server has been running."},
 
 	{"authChallenge", authChal, METH_VARARGS, "Send auth challenge to client."},
-
-	{"sendMapReload", sendMapReload, METH_VARARGS, "Causes all users to send vote on next map."},
 
 	{"secondsRemaining", secondsLeft, METH_VARARGS, "seconds remaining in current match."},
 	{"setSecondsRemaining", setSecondsLeft, METH_VARARGS, "Set the number of seconds remaining in current game."},

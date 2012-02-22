@@ -5,6 +5,7 @@ import cxsbs
 Logging = cxsbs.getResource("Logging")
 UI = cxsbs.getResource("UI")
 EventInformation = cxsbs.getResource("EventInformation")
+ProcessingThread = cxsbs.getResource("ProcessingThread")
 
 def executeEvent(func, args):
 	"""Used to execute the event itself"""
@@ -53,6 +54,10 @@ class EventManager:
 								return
 						except:
 							Logging.error("Players probably was not bootstrapped into the event framework. Make sure a Players modules is loaded and does this.")
-				executeEvent(event, args)
+				
+				if info != None and info.threaded:
+					ProcessingThread.queue(executeEvent, (event, args))
+				else:
+					executeEvent(event, args)
 		except KeyError:
 			pass

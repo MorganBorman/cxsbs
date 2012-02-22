@@ -182,7 +182,7 @@ def onNextMapCmd(cn, args):
 		except (KeyError, ValueError):
 			messager.sendPlayerMessage('nextmap_unknown', p)
 
-def onFirstEverClient():
+def loadMapRotation():
 		startMapName = rotations[settings['start_mode']][0]
 		startModeNumber = Game.modeNumber(settings['start_mode'])
 		try:
@@ -190,11 +190,18 @@ def onFirstEverClient():
 		except Commands.StateError:
 			Logging.warning('Start server map set tried to change the map while server was frozen.')
 			
+@Events.eventHandler('server_start')
+def onServerStart():
+	global rotationLoaded
+	if not rotationLoaded:
+		loadMapRotation()
+		rotationLoaded = True
+	
 @Events.eventHandler('player_connect_pre')
 def onConnect(cn):
 	global rotationLoaded
 	if not rotationLoaded:
-		onFirstEverClient()
+		loadMapRotation()
 		rotationLoaded = True
 		
 	elif settings['use_preset_rotation']:

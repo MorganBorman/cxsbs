@@ -450,6 +450,13 @@ namespace server
 	};
 
 	extern servmode *smode;
+	extern void setServMapItems(PyObject *args);
+	extern PyObject *setServMapFlags(PyObject *args);
+	extern PyObject *setServMapBases(PyObject *args);
+
+	extern bool is_item_mode();
+	extern bool is_capture_mode();
+	extern bool is_flag_mode();
 
 	int numclients(int exclude = -1, bool nospec = true, bool noai = true, bool priv = false);
 	void sendservmsg(const char *s);

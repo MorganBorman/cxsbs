@@ -149,6 +149,7 @@ def onBanCommand(cn, args):
 @Events.eventHandler('player_kick')
 def onKick(cn, tcn):
 	'''
+	@threaded
 	@commandType
 	@allowGroups __admin__ __master__
 	@denyGroups
@@ -172,6 +173,7 @@ def onSpecCommand(cn, args):
 @Commands.commandHandler('disc')
 def onDiscCommand(cn, args):
 	'''
+	@threaded
 	@description Silently disconnect a player
 	@usage <cn>
 	@allowGroups __admin__ __master__
@@ -192,6 +194,7 @@ def onDiscCommand(cn, args):
 @Commands.commandHandler('smite')
 def onSmiteCommand(cn, args):
 	'''
+	@threaded
 	@description Cause a player to suicide
 	@usage <cn>
 	@allowGroups __admin__
@@ -204,11 +207,12 @@ def onSmiteCommand(cn, args):
 	t = Players.player(int(args))
 	p.logAction('Smited: ' + t.name() + '@' + t.ipString())
 	messager.sendMessage('player_smited', dictionary={'smiter':p.name(), 'smited':t.name()})
-	t.suicide()
+	Events.execLater(t.suicide, ())
 	
 @Commands.commandHandler('mutespectators')
 def toggleMuteSpectators(cn, args):
 	'''
+	@threaded
 	@description Toggle muting of spectators
 	@usage
 	@allowGroups __admin__ __master__
@@ -229,6 +233,7 @@ def toggleMuteSpectators(cn, args):
 @Events.eventHandler('server_clear_bans')
 def reqClearBans(cn):
 	'''
+	@threaded
 	@commandType
 	@allowGroups __admin__ __master__
 	@denyGroups

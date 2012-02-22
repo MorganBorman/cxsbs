@@ -245,6 +245,72 @@ namespace server
         return true;
     }
 
+    void setServMapItems(PyObject *args)
+    {
+    	int numitems = 0;
+    	PyObject *tuple;
+    	int item_type;
+    	PyArg_ParseTuple(args, "O", &tuple);
+
+    	numitems = PyTuple_Size(tuple);
+
+    	loopi(numitems)
+    	{
+    		item_type = PyInt_AsLong(PyTuple_GetItem(tuple,i));
+
+    		server_entity se = { item_type, 0, false };
+    		sents.add(se);
+
+    		if(item_type && canspawnitem(sents[i].type))
+    		{
+    			if(m_mp(gamemode) && delayspawn(sents[i].type))
+    			{
+    				sents[i].spawntime = spawntime(sents[i].type);
+    			}
+    			else
+    			{
+    				sents[i].spawned = true;
+    			}
+    		}
+    	}
+
+    	notgotitems = false;
+    }
+
+    bool is_item_mode()
+    {
+    	return !m_noitems;
+    }
+
+
+    PyObject *setServMapFlags(PyObject *args)
+    {
+    	if (!m_ctf)
+    	{
+    		PyErr_SetString(PyExc_StandardError, "Can only set map flags during flag modes.");
+    		return 0;
+    	}
+
+    	ctfmode.setServMapFlags(args);
+
+    	Py_INCREF(Py_None);
+    	return Py_None;
+    }
+
+    PyObject *setServMapBases(PyObject *args)
+    {
+    	if (!m_capture)
+    	{
+    		PyErr_SetString(PyExc_StandardError, "Can only set map bases during capture modes.");
+    		return 0;
+    	}
+
+    	capturemode.setServMapBases(args);
+
+    	Py_INCREF(Py_None);
+    	return Py_None;
+    }
+
     clientinfo *choosebestclient(float &bestrank)
     {
         clientinfo *best = NULL;
@@ -1847,7 +1913,11 @@ namespace server
             case N_EDITMODE:
             {
                 int val = getint(p);
-                if(!ci->local && !m_edit) break;
+                if(!m_edit)
+                {
+                	SbPy::triggerEventIntString("player_cheat", ci->clientnum, "N_EDITMODE during non-edit gamemode.");
+                	break;
+                }
                 if(val ? ci->state.state!=CS_ALIVE && ci->state.state!=CS_DEAD : ci->state.state!=CS_EDITING) break;
                 if(smode)
                 {
@@ -1907,7 +1977,12 @@ namespace server
             case N_GUNSELECT:
             {
                 int gunselect = getint(p);
-                if(!cq || cq->state.state!=CS_ALIVE || gunselect<GUN_FIST || gunselect>GUN_PISTOL) break;
+                if(!cq || cq->state.state!=CS_ALIVE) break;
+                if(gunselect<GUN_FIST || gunselect>GUN_PISTOL)
+                {
+                	SbPy::triggerEventIntString("player_cheat", ci->clientnum, "Weapon out of valid range.");
+                	break;
+                }
                 cq->state.gunselect = gunselect;
                 QUEUE_AI;
                 QUEUE_MSG;
@@ -1918,6 +1993,11 @@ namespace server
             {
                 int ls = getint(p), gunselect = getint(p);
                 if(!cq || (cq->state.state!=CS_ALIVE && cq->state.state!=CS_DEAD) || ls!=cq->state.lifesequence || cq->state.lastspawn<0) break;
+                if(gunselect<GUN_FIST || gunselect>GUN_PISTOL)
+                {
+                	SbPy::triggerEventIntString("player_cheat", ci->clientnum, "Weapon out of valid range.");
+                	break;
+                }
                 cq->state.lastspawn = -1;
                 cq->state.state = CS_ALIVE;
                 cq->state.gunselect = gunselect;
@@ -1947,9 +2027,15 @@ namespace server
                 shot->id = getint(p);
                 shot->millis = cq ? cq->geteventmillis(gamemillis, shot->id) : 0;
                 shot->gun = getint(p);
+                if(shot->gun<GUN_FIST || shot->gun>GUN_PISTOL)
+                {
+                	SbPy::triggerEventIntString("player_cheat", ci->clientnum, "Weapon out of valid range.");
+                	while(!p.overread()) getint(p);
+                	break;
+                }
                 loopk(3) shot->from[k] = getint(p)/DMF;
                 loopk(3) shot->to[k] = getint(p)/DMF;
-                SbPy::triggerEventIntIntInt("player_shot", cq->clientnum, shot->id, shot->gun);
+                SbPy::triggerEventIntIntInt("player_shot", cq->clientnum, shot->millis, shot->gun);
                 int hits = getint(p);
                 loopk(hits)
                 {
@@ -1978,9 +2064,15 @@ namespace server
                 int cmillis = getint(p);
                 exp->millis = cq ? cq->geteventmillis(gamemillis, cmillis) : 0;
                 exp->gun = getint(p);
+                if(exp->gun<GUN_FIST || exp->gun>GUN_PISTOL)
+                {
+                	SbPy::triggerEventIntString("player_cheat", ci->clientnum, "Weapon out of valid range.");
+                	while(!p.overread()) getint(p);
+                	break;
+                }
                 exp->id = getint(p);
                 int hits = getint(p);
-                SbPy::triggerEventIntIntInt("player_explode", cq->clientnum, cmillis, exp->gun);
+                SbPy::triggerEventIntIntInt("player_explode", cq->clientnum, exp->millis, exp->gun);
 				loopk(hits)
 				{
 					if(p.overread()) break;
@@ -2117,22 +2209,40 @@ namespace server
 
             case N_ITEMLIST:
             {
-                if((ci->state.state==CS_SPECTATOR && !ci->privilege && !ci->local) || !notgotitems || strcmp(ci->clientmap, smapname)) { while(getint(p)>=0 && !p.overread()) getint(p); break; }
+                if(m_noitems)
+                {
+                	SbPy::triggerEventIntString("player_cheat", ci->clientnum, "Sending item list during game mode without items.");
+                    int n;
+                    while((n = getint(p))>=0 && n<MAXENTS && !p.overread()) {getint(p);}
+                	break;
+                }
+
+            	std::vector<int> item_types;
+
                 int n;
                 while((n = getint(p))>=0 && n<MAXENTS && !p.overread())
                 {
-                    server_entity se = { NOTUSED, 0, false };
-                    while(sents.length()<=n) sents.add(se);
-                    sents[n].type = getint(p);
-                    if(canspawnitem(sents[n].type))
-                    {
-                        if(m_mp(gamemode) && delayspawn(sents[n].type)) sents[n].spawntime = spawntime(sents[n].type);
-                        else sents[n].spawned = true;
-                    }
-                }
-                notgotitems = false;
-                break;
-            }
+                    while(item_types.size()<n) item_types.push_back(NOTUSED);
+                    item_types.push_back(getint(p));
+				}
+
+				PyObject *pTuple_entities = PyTuple_New(item_types.size());
+
+				n = 0;
+				std::vector<int>::const_iterator itr;
+				for(itr = item_types.begin(); itr != item_types.end(); itr++)
+				{
+					PyTuple_SetItem(pTuple_entities, n, PyInt_FromLong(*itr));
+					n++;
+				}
+
+				std::vector<PyObject*> args;
+				args.push_back(PyInt_FromLong(ci->clientnum));
+				args.push_back(pTuple_entities);
+
+				SbPy::triggerEvent("player_item_list", &args);
+				break;
+			}
 
             case N_EDITF:              // coop editing messages
             case N_EDITT:

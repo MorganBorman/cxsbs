@@ -22,6 +22,7 @@ class EventInfo:
 		self.event = event
 		self.id = id(handler)
 		self.isCommandType = False
+		self.threaded = False
 		self.allowGroups = []
 		self.denyGroups = []
 		self.allowFunctionGroups = {}
@@ -112,6 +113,9 @@ def loadEventHandlerInfo(event, handler):
 						doc = False
 					elif tag == '@denygroups':
 						info.denyGroups += text.split()
+						doc = False
+					elif tag == '@threaded':
+						info.threaded = True
 						doc = False
 					elif tag == '@allowfunctiongroup':
 						args = text.split()

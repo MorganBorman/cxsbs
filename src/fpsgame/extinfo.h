@@ -50,6 +50,8 @@
         putint(q, ci->state.state);
         uint ip = getclientip(ci->clientnum);
         q.put((uchar*)&ip, 3);
+        //uchar zero = 0;
+        //q.put((uchar*)&zero, 3);
         sendserverinforeply(q);
     }
 
