@@ -107,12 +107,12 @@ class Mute(Base):
 	id = Column(Integer, primary_key=True)
 	ip = Column(BigInteger, index=True)
 	mask = Column(BigInteger, index=True)
-	expiration = Column(Integer, index=True) # Epoch seconds
+	expiration = Column(BigInteger, index=True) # Epoch seconds
 	reason = Column(String(length=64))
 	name = Column(String(length=16))
 	responsible_ip = Column(BigInteger)
 	responsible_nick= Column(String(length=16))
-	time = Column(Integer)
+	time = Column(BigInteger)
 	expired = Column(Boolean)
 	def __init__(self, ip, mask, expiration, reason, name, responsible_ip, responsible_nick, time):
 		self.ip = ip

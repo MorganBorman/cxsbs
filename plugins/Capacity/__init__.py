@@ -96,6 +96,10 @@ def onServerStart():
 def onConnect(cn):
 	if Server.clientCount() == 0 and settings["resume_on_first_client"]:
 		Server.setPaused(False)
+		
+@Events.policyHandler('connect_capacity')
+def on_connect_capacity(cn, pwd):
+	 return Server.clientCount() <= Server.maxClients()
 
 @Events.eventHandler('player_spectated')
 @Events.eventHandler('player_connect')

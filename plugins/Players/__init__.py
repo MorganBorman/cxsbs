@@ -73,18 +73,23 @@ def logPlayerAction(cn, action, level='info', **kwargs):
 import copy
 
 game_vars_template = {}
+session_vars_template = {}
 
 def update_game_vars_template(dictionary):
 	global game_vars_template
 	game_vars_template.update(dictionary)
+	
+def update_session_vars_template(dictionary):
+	global session_vars_template
+	session_vars_template.update(dictionary)
 
 class Player:
 	'''Represents a client on the server'''
 	def __init__(self, cn):
 		self.cn = cn
 		self.ip = ServerCore.playerIpLong(self.cn)
-		self.gamevars = {}
-		self.sessionvars = {}
+		self.gamevars = copy.deepcopy(game_vars_template)
+		self.sessionvars = copy.deepcopy(session_vars_template)
 	def logAction(self, action, level='info', **kwargs):
 		logPlayerAction(self.cn, action, level, **kwargs)
 	def newGame(self):

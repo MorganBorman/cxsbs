@@ -16,9 +16,11 @@ Events = cxsbs.getResource("Events")
 ServerCore = cxsbs.getResource("ServerCore")
 SettingsManager = cxsbs.getResource("SettingsManager")
 Setting = cxsbs.getResource("Setting")
+Messages = cxsbs.getResource("Messages")
 Logging = cxsbs.getResource("Logging")
 ProcessingThread = cxsbs.getResource("ProcessingThread")
 PlayerDisconnect = cxsbs.getResource("PlayerDisconnect")
+Timers = cxsbs.getResource("Timers")
 
 pluginCategory = 'ConnectPolicies'
 permissionsCategory = 'Permissions'
@@ -52,6 +54,18 @@ SettingsManager.addSetting(Setting.ListSetting	(
 
 groupSettings = SettingsManager.getAccessor(category=permissionsCategory, subcategory=pluginCategory)
 
+pluginCategory = "ConnectPolicies"
+
+Messages.addMessage	(
+						subcategory=pluginCategory, 
+						symbolicName='connect_banned', 
+						displayName='Connect banned', 
+						default="${notice}Your ip or subnet have been banned. If you believe this is in error contact us at ${green}example.com${white} or ${blue}#clan ${white}on ${blue}irc.server.com${white}.",
+						doc="Message to print before a client who is banned is disconnected."
+					)
+
+messager = Messages.getAccessor(subcategory=pluginCategory)
+
 def on_connect_delayed_sync(cn):
 	ProcessingThread.queue(on_connect_delayed, (cn,))
 
@@ -64,7 +78,8 @@ def on_connect_delayed(cn):
 		return
 		
 	if ( not Events.triggerPolicyEvent('connect_kick', (cn, pwd)) ) and (not p.isPermitted(groupSettings['allow_groups_connect_banned'], [])):
-		Events.execLater(PlayerDisconnect.disconnect, (cn, PlayerDisconnect.DISC_IPBAN))
+		Events.execLater(messager.sendPlayerMessage, ('connect_banned', p))
+		Timers.addTimer(100, PlayerDisconnect.disconnect, (cn, PlayerDisconnect.DISC_IPBAN))
 		return
 		
 	if ( not Events.triggerPolicyEvent('connect_capacity', (cn, pwd)) ) and (not p.isPermitted(groupSettings['allow_groups_connect_oversize'], [])):
