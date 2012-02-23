@@ -1,5 +1,5 @@
 totalFrames = 1800
-number_of_players = 50
+number_of_players = 80
 is_instagib = False
 
 ##############################################################
@@ -40,7 +40,7 @@ class Weapon:
 		global totalEvents
 		
 		for i in range(random.randint(3, 10)):
-			orchestrator.addEventGenerator(TimedEventGenerator(ServerEvent("player_spend_damage", (cn, self.weapon_data['damage'])), waitFrames=frame))
+			orchestrator.addEventGenerator(TimedEventGenerator(ServerEvent("player_spend_damage", (cn, self.type, self.weapon_data['damage'])), waitFrames=frame))
 			totalEvents += 1
 			
 			if random.choice([True, False]):
@@ -52,7 +52,7 @@ class Weapon:
 					damage = self.weapon_data['damage']
 			
 			
-				orchestrator.addEventGenerator(TimedEventGenerator(ServerEvent("player_inflict_damage", (cn, damage)), waitFrames=frame))
+				orchestrator.addEventGenerator(TimedEventGenerator(ServerEvent("player_inflict_damage", (cn, self.type, damage)), waitFrames=frame))
 				totalEvents += 1
 			
 			frame += self.weapon_data['reload']
