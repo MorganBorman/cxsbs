@@ -1,5 +1,5 @@
 totalFrames = 1800
-number_of_players = 80
+number_of_players = 14
 is_instagib = False
 
 ##############################################################

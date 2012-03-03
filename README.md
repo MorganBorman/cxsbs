@@ -11,7 +11,7 @@ That said, design is an iterative process and in working on XSBS I have seen man
 
 The goals of this restructuring process are as follows:
 
-* Completely modularize the plugin architecture, turning everything into a plugin which have version dependencies on each other.
-* Canonicalize the plugin structure to better support advanced operations like reloading server configurations.
+* Completely modularize the plug-in architecture, turning everything into a plug-in which have version dependencies on each other.
+* Canonicalize the plug-in structure to better support advanced operations like reloading server configurations.
 * Promote a better documented and more maintainable Sauerbraten server mod.
 * Provide a feature complete server for single and multiple instance applications.
