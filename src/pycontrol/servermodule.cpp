@@ -33,9 +33,9 @@ int intlen(int val)
 namespace SbPy
 {
 
-static PyObject *reinitializeHandlers(PyObject *self, PyObject *args)
+static PyObject *reload(PyObject *self, PyObject *args)
 {
-	SbPy::reinitPy();
+	SbPy::reload_on_update = true;
 	return Py_None;
 }
 
@@ -1366,7 +1366,7 @@ static PyObject *shutdown(PyObject *self, PyObject *args)
 }
 
 static PyMethodDef ModuleMethods[] = {
-	{"reinitializeHandlers", reinitializeHandlers, METH_VARARGS, "Re-retreive python functions for the c++ handlers."},
+	{"reload", reload, METH_VARARGS, "Re-retreive python functions for the c++ handlers."},
 
 	{"getVariable", getVariable, METH_VARARGS, "Get a server variable."},
 	{"setVariable", setVariable, METH_VARARGS, "Set a server variable."},

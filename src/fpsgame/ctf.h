@@ -156,14 +156,14 @@ struct ctfservmode : servmode
             if(m_protect && insidebase(f, ci->state.o))
             {
                 returnflag(i);
-                SbPy::triggerEventIntInt("flag_replaced", ci->clientnum, i);
+                SbPy::triggerEventf("client_replaced_flag", "ii", ci->clientnum, i);
                 sendf(-1, 1, "ri4", N_RETURNFLAG, ci->clientnum, i, ++f.version);
             }
             else
             {
                 ivec o(vec(ci->state.o).mul(DMF));
                 sendf(-1, 1, "ri7", N_DROPFLAG, ci->clientnum, i, ++f.version, o.x, o.y, o.z);
-                SbPy::triggerEventIntInt("flag_dropped", ci->clientnum, i);
+                SbPy::triggerEventf("client_dropped_flag", "ii", ci->clientnum, i);
 		ci->state.flags_droped++;
                 dropflag(i, o.tovec().div(DMF), lastmillis, ci->clientnum);
             }
@@ -181,9 +181,9 @@ struct ctfservmode : servmode
         dropflag(ci);
         loopv(flags) if(flags[i].dropper == ci->clientnum)
         {
-		flags[i].dropper = -1;
-		if (actor != NULL) SbPy::triggerEventIntInt("flagger_stopped", ci->clientnum, actor->clientnum);
-	}
+            flags[i].dropper = -1;
+            if (actor != NULL) SbPy::triggerEventf("client_stopped_flag", "ii", ci->clientnum, actor->clientnum);
+        }
     }
 
     bool canchangeteam(clientinfo *ci, const char *oldteam, const char *newteam)
@@ -206,7 +206,7 @@ struct ctfservmode : servmode
             if(spawnindex != flags[i].spawnindex) break;
         }
         flags[i].spawnindex = spawnindex;
-        SbPy::triggerEventInt("flag_spawned", i);
+        SbPy::triggerEventf("flag_spawned", "i", i);
     }
 
     void scoreflag(clientinfo *ci, int goal, int relay = -1)
@@ -217,7 +217,7 @@ struct ctfservmode : servmode
         int team = ctfteamflag(ci->team), score = addscore(team, 1);
         if(m_hold) spawnflag(goal);
         sendf(-1, 1, "rii9", N_SCOREFLAG, ci->clientnum, relay, relay >= 0 ? ++flags[relay].version : -1, goal, ++flags[goal].version, flags[goal].spawnindex, team, score, ci->state.flags);
-	SbPy::triggerEventIntInt("flag_scored", ci->clientnum, relay);
+	SbPy::triggerEventf("client_scored_flag", "ii", ci->clientnum, relay);
         if(score >= FLAGLIMIT) startintermission();
     }
 
@@ -233,7 +233,7 @@ struct ctfservmode : servmode
             loopvj(flags) if(flags[j].owner==ci->clientnum) return;
             ownflag(i, ci->clientnum, lastmillis);
             sendf(-1, 1, "ri4", N_TAKEFLAG, ci->clientnum, i, ++f.version);
-            SbPy::triggerEventIntInt("flag_taken", ci->clientnum, i);
+            SbPy::triggerEventf("client_took_flag", "ii", ci->clientnum, i);
         }
         else if(m_protect)
         {
@@ -261,13 +261,13 @@ struct ctfservmode : servmode
                 returnflag(i, m_protect ? lastmillis : 0);
                 if(m_hold) spawnflag(i);
                 sendf(-1, 1, "ri6", N_RESETFLAG, i, ++f.version, f.spawnindex, m_hold ? 0 : f.team, m_hold ? 0 : addscore(f.team, m_protect ? -1 : 0));
-                SbPy::triggerEventInt("flag_reset", i);
+                SbPy::triggerEventf("flag_reset", "i", i);
             }
             if(f.invistime && lastmillis - f.invistime >= INVISFLAGTIME)
             {
                 f.invistime = 0;
                 sendf(-1, 1, "ri3", N_INVISFLAG, i, 0);
-                SbPy::triggerEventInt("flag_solidified", i);
+                SbPy::triggerEventf("flag_solidified", "i", i);
             }
             if(m_hold && f.owner>=0 && lastmillis - f.owntime >= HOLDSECS*1000)
             {
@@ -277,7 +277,7 @@ struct ctfservmode : servmode
                 {
                     spawnflag(i);
                     sendf(-1, 1, "ri6", N_RESETFLAG, i, ++f.version, f.spawnindex, 0, 0);
-                    SbPy::triggerEventInt("flag_reset", i);
+                    SbPy::triggerEventf("flag_reset", "i", i);
                 }
             }
         }
@@ -370,7 +370,7 @@ struct ctfservmode : servmode
     	args.push_back(pCn);
     	args.push_back(pTuple_flags);
 
-        SbPy::triggerEvent("player_flag_list", &args);
+        SbPy::triggerEvent("client_flag_list", &args);
     }
 
 };
@@ -394,7 +394,7 @@ case N_TAKEFLAG:
 case N_INITFLAGS:
     if(!(smode==&ctfmode))
     {
-    	SbPy::triggerEventIntString("player_cheat", ci->clientnum, "Flag list in non-flag mode.");
+    	SbPy::triggerEventf("client_cheat", "is", ci->clientnum, "Flag list in non-flag mode.");
     	int numflags = getint(p);
     	loopi(numflags){loopk(4){getint(p);}}
     	break;

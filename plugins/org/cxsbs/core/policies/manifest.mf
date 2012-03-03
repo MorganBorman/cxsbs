@@ -1,0 +1,24 @@
+[Plug-in]
+SymbolicName = org.cxsbs.core.policies
+Version = 0.0.2
+Author = Morgan Borman
+Enabled = True
+
+[Interfaces]
+IQuery
+IPolicyManager
+
+[Resources]
+Query[IQuery]
+policy_manager(IPolicyManager)
+query_policy
+policy_handler
+
+[Implements]
+pyTensible.Plugin = [1.0.0,1.0.0]
+
+[Dependencies]
+#None
+
+[Requests]
+#None

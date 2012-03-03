@@ -1,0 +1,12 @@
+[Plug-in]
+SymbolicName = pyTensible
+Version = 1.0.0
+Author = Morgan Borman
+Enabled = True
+
+[Interfaces]
+Plugin
+IPluginLoader
+
+[Resources]
+plugin_loader(IPluginLoader)

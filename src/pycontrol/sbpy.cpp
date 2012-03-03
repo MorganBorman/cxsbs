@@ -20,6 +20,8 @@
 #include "sbpy.h"
 #include "server.h"
 
+#include <stdio.h>
+#include <stdarg.h>
 #include <string>
 #include <iostream>
 
@@ -79,161 +81,106 @@ PyObject *callPyStringFunc(PyObject *func, const char *text)
 	return val;
 }
 
-static PyObject *cxsbsModule, *loadPluginsFunction, *getResourceFunction;
-static PyObject *eventsModule, *triggerEventFunc, *triggerPolicyEventFunc, *updateFunc;
-static PyObject *textModerationModule, *textModFunc;
+//Objects associated with pyTensible
+static PyObject *pyTensibleModule, *PluginLoaderClass, *plugin_loaderObject, *setup_loggingFunction, *load_pluginsFunction, *get_resourceFunction;
+
+//Objects associated with org.cxsbs.system
+static PyObject *trigger_eventFunction, *updateFunction;
 
 bool initPy()
 {
-	PyRun_SimpleString("import sys\nimport os\nsys.path.append(os.getcwd())");
+	PyRun_SimpleString("import sys, os");
+	//PyRun_SimpleString("sys.path.append(os.getcwd())");
+	PyRun_SimpleString("sys.path.append(os.path.abspath('pydeps'))");
 
-	cxsbsModule = PyImport_ImportModule("cxsbs");
-	SBPY_ERR(cxsbsModule)
+	//import pyTensible
+	pyTensibleModule = PyImport_ImportModule("pyTensible");
+	SBPY_ERR(pyTensibleModule)
 
-	loadPluginsFunction = PyObject_GetAttrString(cxsbsModule, "loadPlugins");
-	SBPY_ERR(loadPluginsFunction);
-	if(!PyCallable_Check(loadPluginsFunction))
+	//get the setup_logging function
+	setup_loggingFunction = PyObject_GetAttrString(pyTensibleModule, "setup_logging");
+	SBPY_ERR(setup_loggingFunction)
+	if(!PyCallable_Check(setup_loggingFunction))
 	{
-		fprintf(stderr, "Error: loadPlugins function could not be loaded.\n");
+		fprintf(stderr, "Error: setup_logging function could not be loaded from pyTensible.\n");
+		return false;
+	}
+
+	//set the logging path for pyTensible
+	callPyStringFunc(setup_loggingFunction, "plugin_loader.log");
+
+	//plugin_loader = pyTensible.PluginLoader()
+	PluginLoaderClass = PyObject_GetAttrString(pyTensibleModule, "PluginLoader");
+	SBPY_ERR(PluginLoaderClass)
+	if(!PyCallable_Check(PluginLoaderClass))
+	{
+		fprintf(stderr, "Error: PluginLoader class could not be loaded from pyTensible.\n");
+		return false;
+	}
+
+	//"instantiate" the plugin_loader (really bootstraps one out of the base pyTensible plug-ins)
+	plugin_loaderObject = PyObject_CallObject(PluginLoaderClass, PyTuple_New(0));
+	SBPY_ERR(plugin_loaderObject);
+
+	//get the function to load plug-ins from the plugin_loader object
+	load_pluginsFunction = PyObject_GetAttrString(plugin_loaderObject, "load_plugins");
+	SBPY_ERR(load_pluginsFunction);
+	if(!PyCallable_Check(load_pluginsFunction))
+	{
+		fprintf(stderr, "Error: load_plugins function could not be loaded from the plugin_loader object.\n");
 		return false;
 	}
 
 	//Actually load the plugins...
-	callPyStringFunc(loadPluginsFunction, plugin_path);
+	callPyStringFunc(load_pluginsFunction, plugin_path);
 
-	//get the rest of the c++ accessible resources
-	getResourceFunction = PyObject_GetAttrString(cxsbsModule, "getResource");
-	SBPY_ERR(getResourceFunction);
-	if(!PyCallable_Check(getResourceFunction))
+	//get the get_resource function
+	get_resourceFunction = PyObject_GetAttrString(plugin_loaderObject, "get_resource");
+	SBPY_ERR(get_resourceFunction);
+	if(!PyCallable_Check(get_resourceFunction))
 	{
-		fprintf(stderr, "Error: getResource function could not be loaded.\n");
+		fprintf(stderr, "Error: get_resource function could not be loaded.\n");
 		return false;
 	}
+
+	//get the rest of the c++ accessible resources
+
 	
-	//Get the Events plugin
-	eventsModule = callPyStringFunc(getResourceFunction, "Events");
-	SBPY_ERR(eventsModule)
-
-	//get the stuff we need out of the Events plugin
-	triggerEventFunc = PyObject_GetAttrString(eventsModule, "triggerServerEvent");
-	SBPY_ERR(triggerEventFunc);
-	if(!PyCallable_Check(triggerEventFunc))
+	//Get trigger_event function
+	trigger_eventFunction = callPyStringFunc(get_resourceFunction, "org.cxsbs.core.events.trigger_event");
+	SBPY_ERR(trigger_eventFunction)
+	if(!PyCallable_Check(trigger_eventFunction))
 	{
-		fprintf(stderr, "Error: triggerEvent function could not be loaded.\n");
+		fprintf(stderr, "Error: trigger_event function could not be loaded from 'org.cxsbs.core.events.trigger_event'.\n");
 		return false;
 	}
 
-	triggerPolicyEventFunc = PyObject_GetAttrString(eventsModule, "triggerPolicyEvent");
-	SBPY_ERR(triggerPolicyEventFunc);
-	if(!PyCallable_Check(triggerPolicyEventFunc))
+	//get the update function to call on each server slice
+	updateFunction = callPyStringFunc(get_resourceFunction, "org.cxsbs.core.slice.update");
+	SBPY_ERR(updateFunction);
+	if(!PyCallable_Check(updateFunction))
 	{
-		fprintf(stderr, "Error: triggerPolicyEvent function could not be loaded.\n");
-		return false;
-	}
-
-	updateFunc = PyObject_GetAttrString(eventsModule, "update");
-	SBPY_ERR(updateFunc);
-	if(!PyCallable_Check(updateFunc))
-	{
-		fprintf(stderr, "Error: update function could not be loaded.\n");
-		return false;
-	}
-
-	//Get the textModeration plugin
-	textModerationModule = callPyStringFunc(getResourceFunction, "TextModeration");
-	SBPY_ERR(textModerationModule)
-
-	textModFunc = PyObject_GetAttrString(textModerationModule, "textModerate");
-	SBPY_ERR(textModFunc);
-	if(!PyCallable_Check(textModFunc))
-	{
-		fprintf(stderr, "Error: textModerate function could not be loaded.\n");
+		fprintf(stderr, "Error: update function could not be loaded from 'org.cxsbs.core.slice.update'.\n");
 		return false;
 	}
 
 	return true;
-}
-
-bool reinitPy()
-{
-	cxsbsModule = PyImport_ImportModule("cxsbs");
-	SBPY_ERR(cxsbsModule)
-
-	loadPluginsFunction = PyObject_GetAttrString(cxsbsModule, "loadPlugins");
-	SBPY_ERR(loadPluginsFunction);
-	if(!PyCallable_Check(loadPluginsFunction))
-	{
-		fprintf(stderr, "Error: loadPlugins function could not be loaded.\n");
-		return false;
-	}
-
-	//get the rest of the c++ accessible resources
-	getResourceFunction = PyObject_GetAttrString(cxsbsModule, "getResource");
-	SBPY_ERR(getResourceFunction);
-	if(!PyCallable_Check(getResourceFunction))
-	{
-		fprintf(stderr, "Error: getResource function could not be loaded.\n");
-		return false;
-	}
-
-	//Get the Events plugin
-	eventsModule = callPyStringFunc(getResourceFunction, "Events");
-	SBPY_ERR(eventsModule)
-
-	//get the stuff we need out of the Events plugin
-	triggerEventFunc = PyObject_GetAttrString(eventsModule, "triggerServerEvent");
-	SBPY_ERR(triggerEventFunc);
-	if(!PyCallable_Check(triggerEventFunc))
-	{
-		fprintf(stderr, "Error: triggerEvent function could not be loaded.\n");
-		return false;
-	}
-
-	triggerPolicyEventFunc = PyObject_GetAttrString(eventsModule, "triggerPolicyEvent");
-	SBPY_ERR(triggerPolicyEventFunc);
-	if(!PyCallable_Check(triggerPolicyEventFunc))
-	{
-		fprintf(stderr, "Error: triggerPolicyEvent function could not be loaded.\n");
-		return false;
-	}
-
-	updateFunc = PyObject_GetAttrString(eventsModule, "update");
-	SBPY_ERR(updateFunc);
-	if(!PyCallable_Check(updateFunc))
-	{
-		fprintf(stderr, "Error: update function could not be loaded.\n");
-		return false;
-	}
-
-	//Get the textModeration plugin
-	textModerationModule = callPyStringFunc(getResourceFunction, "TextModeration");
-	SBPY_ERR(textModerationModule)
-
-	textModFunc = PyObject_GetAttrString(textModerationModule, "textModerate");
-	SBPY_ERR(textModFunc);
-	if(!PyCallable_Check(textModFunc))
-	{
-		fprintf(stderr, "Error: textModerate function could not be loaded.\n");
-		return false;
-	}
-
-	return true;
-
 }
 
 void deinitPy()
 {
-	Py_XDECREF(cxsbsModule);
-	Py_XDECREF(loadPluginsFunction);
-	Py_XDECREF(getResourceFunction);
 
-	Py_XDECREF(eventsModule);
-	Py_XDECREF(triggerEventFunc);
-	Py_XDECREF(triggerPolicyEventFunc);
-	Py_XDECREF(updateFunc);
+	Py_XDECREF(pyTensibleModule);
 
-	Py_XDECREF(textModerationModule);
-	Py_XDECREF(textModFunc);
+	Py_XDECREF(PluginLoaderClass);
+	Py_XDECREF(plugin_loaderObject);
+	Py_XDECREF(setup_loggingFunction);
+
+	Py_XDECREF(load_pluginsFunction);
+	Py_XDECREF(get_resourceFunction);
+
+	Py_XDECREF(trigger_eventFunction);
+	Py_XDECREF(updateFunction);
 
 	Py_Finalize();
 }
@@ -287,42 +234,6 @@ PyObject *callPyFunc(PyObject *func, PyObject *args)
 	return val;
 }
 
-const char *textModerate(const char *type, int cn, const char *text, PyObject *func)
-{
-	PyObject *pArgs, *pType, *pCn, *pText, *pValue;
-	std::vector<PyObject*>::const_iterator itr;
-	int i = 0;
-	
-	if(!func)
-	{
-		//fprintf(stderr, "Python Error: Invalid handler to triggerEvent function.\n");
-		std::cerr << "Python Error: Invalid handler to triggerEvent function when triggering text moderator type:" << type << std::endl;
-		return false;
-	}
-	pArgs = PyTuple_New(3);
-	
-	pType = PyString_FromString(type);
-	pCn = PyInt_FromLong(cn);
-	pText = PyString_FromString(text);
-	
-	SBPY_ERR(pType)
-	SBPY_ERR(pText)
-	
-	PyTuple_SetItem(pArgs, 0, pType);
-	PyTuple_SetItem(pArgs, 1, pCn);
-	PyTuple_SetItem(pArgs, 2, pText);
-
-	pValue = callPyFunc(func, pArgs);
-
-	if(!pValue)
-	{
-		fprintf(stderr, "Error moderating text.\n");
-		return false;
-	}
-
-    	return PyString_AsString(pValue);
-}
-
 bool triggerFuncEvent(const char *name, std::vector<PyObject*> *args, PyObject *func)
 {
 	PyObject *pArgs, *pArgsArgs, *pName, *pValue;
@@ -368,209 +279,80 @@ bool triggerFuncEvent(const char *name, std::vector<PyObject*> *args, PyObject *
 
 #undef SBPY_ERR
 
-bool triggerFuncEventInt(const char *name, int cn, PyObject *func)
-{
-	std::vector<PyObject*> args;
-	PyObject *pCn = PyInt_FromLong(cn);
-	args.push_back(pCn);
-	return triggerFuncEvent(name, &args, func);
-}
-
-bool triggerFuncEventString(const char *name, const char *str, PyObject *func)
-{
-	std::vector<PyObject*> args;
-	PyObject *pCn = PyString_FromString(str);
-	args.push_back(pCn);
-	return triggerFuncEvent(name, &args, func);
-}
-
-bool triggerFuncEventIntBool(const char *name, int cn, bool b, PyObject *func)
-{
-	std::vector<PyObject*> args;
-	PyObject *pCn = PyInt_FromLong(cn);
-	PyObject *pB;
-	if(b)
-		pB = Py_True;
-	else
-		pB = Py_False;
-	args.push_back(pCn);
-	args.push_back(pB);
-	
-	return triggerFuncEvent(name, &args, func);
-}
-
-bool triggerFuncEventIntString(const char *name, int cn, const char *text, PyObject *func)
-{
-	std::vector<PyObject*> args;
-	PyObject *pText = PyString_FromString(text);
-	PyObject *pCn = PyInt_FromLong(cn);
-	args.push_back(pCn);
-	args.push_back(pText);
-	return triggerFuncEvent(name, &args, func);
-}
-
-bool triggerFuncEventIntStringInt(const char *name, int cn, const char *text, int cn2, PyObject *func)
-{
-	std::vector<PyObject*> args;
-	PyObject *pText = PyString_FromString(text);
-	PyObject *pCn = PyInt_FromLong(cn);
-	PyObject *pCn2 = PyInt_FromLong(cn2);
-	args.push_back(pCn);
-	args.push_back(pText);
-	args.push_back(pCn2);
-	return triggerFuncEvent(name, &args, func);
-}
-
-bool triggerFuncEventIntInt(const char *name, int cn, int cn2, PyObject *func)
-{
-	std::vector<PyObject*> args;
-	PyObject *pCn = PyInt_FromLong(cn);
-	PyObject *pCn2 = PyInt_FromLong(cn2);
-	args.push_back(pCn);
-	args.push_back(pCn2);
-	return triggerFuncEvent(name, &args, func);
-}
-
-bool triggerFuncEventIntIntInt(const char *name, int cn1, int cn2, int cn3, PyObject *func)
-{
-	std::vector<PyObject*> args;
-	PyObject *pCn1 = PyInt_FromLong(cn1);
-	PyObject *pCn2 = PyInt_FromLong(cn2);
-	PyObject *pCn3 = PyInt_FromLong(cn3);
-	args.push_back(pCn1);
-	args.push_back(pCn2);
-	args.push_back(pCn3);
-	return triggerFuncEvent(name, &args, func);
-}
-
-bool triggerFuncEventIntIntIntIntInt(const char *name, int cn1, int cn2, int cn3, int cn4, int cn5, PyObject *func)
-{
-	std::vector<PyObject*> args;
-	PyObject *pCn1 = PyInt_FromLong(cn1);
-	PyObject *pCn2 = PyInt_FromLong(cn2);
-	PyObject *pCn3 = PyInt_FromLong(cn3);
-	PyObject *pCn4 = PyInt_FromLong(cn4);
-	PyObject *pCn5 = PyInt_FromLong(cn5);
-	args.push_back(pCn1);
-	args.push_back(pCn2);
-	args.push_back(pCn3);
-	args.push_back(pCn4);
-	args.push_back(pCn5);
-	return triggerFuncEvent(name, &args, func);
-}
-
-bool triggerFuncEventIntStringString(const char *name, int cn, const char *text, const char *text2, PyObject *func)
-{
-	std::vector<PyObject*> args;
-	PyObject *pText2 = PyString_FromString(text2);
-	PyObject *pText = PyString_FromString(text);
-	PyObject *pCn = PyInt_FromLong(cn);
-	args.push_back(pCn);
-	args.push_back(pText);
-	args.push_back(pText2);
-	return triggerFuncEvent(name, &args, func);
-}
-
-const char *moderateText(const char *type, int cn, const char *text)
-{
-	return textModerate(type, cn, text, textModFunc);
-}
-
 bool triggerEvent(const char*name, std::vector<PyObject*>* args)
 {
-	return triggerFuncEvent(name, args, triggerEventFunc);
+	return triggerFuncEvent(name, args, trigger_eventFunction);
 }
 
-bool triggerEventInt(const char *name, int cn)
+bool triggerEventf(const char *event_name, const char* format, ... )
 {
-	return triggerFuncEventInt(name, cn, triggerEventFunc);
+      va_list arguments;
+      va_start(arguments, format);
+
+      std::vector<PyObject*> args;
+
+      for(int i = 0; format[i] != '\0'; ++i )
+      {
+            if (format[i] == 'b')
+            {
+            	args.push_back(PyBool_FromLong(va_arg(arguments, int)));
+            }
+            else if (format[i] == 'f')
+            {
+            	args.push_back(PyFloat_FromDouble(va_arg(arguments, double)));
+            }
+            else if (format[i] == 'i')
+            {
+            	args.push_back(PyInt_FromLong(va_arg(arguments, int)));
+            }
+            else if (format[i] == 'l')
+            {
+            	args.push_back(PyLong_FromLong(va_arg(arguments, long)));
+            }
+            else if (format[i] == 'p')
+            {
+            	args.push_back(va_arg(arguments, PyObject *));
+            }
+            else if (format[i] == 'c')
+            {
+            	args.push_back(PyString_FromFormat("%c", va_arg(arguments, int)));
+            }
+            else if (format[i] == 's')
+            {
+            	args.push_back(PyString_FromString(va_arg(arguments, char *)));
+            }
+      }
+      va_end(arguments);
+
+      return triggerFuncEvent(event_name, &args, trigger_eventFunction);
+
 }
 
-bool triggerEventIntBool(const char *name, int cn, bool b)
-{
-	return triggerFuncEventIntBool(name, cn, b, triggerEventFunc);
-}
+bool reload_on_update = false;
 
-bool triggerEventStr(const char *name, const char *str)
+bool update()
 {
-	return triggerFuncEventString(name, str, triggerEventFunc);
-}
+	if (reload_on_update)
+	{
+		// Deinitialize
+		deinitPy();
+		// Initialize
+		Py_Initialize();
+		initModule();
+		if(!initPy())
+		{
+			fprintf(stderr, "Error retrieving core Python resources modules on reload.\n");
+			return false;
+		}
+		reload_on_update = false;
+	}
 
-bool triggerEventIntString(const char *name, int cn, const char *text)
-{
-	return triggerFuncEventIntString(name, cn, text, triggerEventFunc);
-}
-
-bool triggerEventIntStringInt(const char *name, int n, const char *str, int n2)
-{
-	return triggerFuncEventIntStringInt(name, n, str, n2, triggerEventFunc);
-}
-
-bool triggerEventIntStringString(const char *name, int cn, const char *text, const char *text2)
-{
-	return triggerFuncEventIntStringString(name, cn, text, text2, triggerEventFunc);
-}
-
-bool triggerEventIntInt(const char *name, int cn1, int cn2)
-{
-	return triggerFuncEventIntInt(name, cn1, cn2, triggerEventFunc);
-}
-
-bool triggerEventIntIntInt(const char *name, int cn1, int cn2, int cn3)
-{
-	return triggerFuncEventIntIntInt(name, cn1, cn2, cn3, triggerEventFunc);
-}
-
-bool triggerEventIntIntIntIntInt(const char *name, int cn1, int cn2, int cn3, int cn4, int cn5)
-{
-	return triggerFuncEventIntIntIntIntInt(name, cn1, cn2, cn3, cn4, cn5, triggerEventFunc);
-}
-
-bool triggerEventIntIntString(const char *name, int cn1, int cn2, const char *text)
-{
-	std::vector<PyObject*> args;
-	PyObject *pCn1 = PyInt_FromLong(cn1);
-	PyObject *pCn2 = PyInt_FromLong(cn2);
-	PyObject *pTxt = PyString_FromString(text);
-	args.push_back(pCn1);
-	args.push_back(pCn2);
-	args.push_back(pTxt);
-	return triggerFuncEvent(name, &args, triggerEventFunc);
-}
-
-bool triggerEventStrInt(const char *name, const char *str, int n)
-{
-	std::vector<PyObject*> args;
-	PyObject *pstr, *pn;
-	pstr = PyString_FromString(str);
-	pn = PyInt_FromLong(n);
-	args.push_back(pstr);
-	args.push_back(pn);
-	return triggerFuncEvent(name, &args, triggerEventFunc);
-}
-
-bool triggerPolicyEventInt(const char *name, int cn)
-{
-	return triggerFuncEventInt(name, cn, triggerPolicyEventFunc);
-}
-
-bool triggerPolicyEventIntInt(const char *name, int cn, int tcn)
-{
-	return triggerFuncEventIntInt(name, cn, tcn, triggerPolicyEventFunc);
-}
-
-bool triggerPolicyEventIntString(const char *name, int cn, const char *text)
-{
-	return triggerFuncEventIntString(name, cn, text, triggerPolicyEventFunc);
-}
-
-void update()
-{
 	PyObject *pargs, *pvalue;
 	pargs = PyTuple_New(0);
-	pvalue = callPyFunc(updateFunc, pargs);
+	pvalue = callPyFunc(updateFunction, pargs);
 	if(pvalue)
 		Py_DECREF(pvalue);
+	return true;
 }
 
 }

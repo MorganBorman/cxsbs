@@ -551,7 +551,7 @@ struct captureservmode : servmode
     	args.push_back(pCn);
     	args.push_back(pTuple_bases);
 
-        SbPy::triggerEvent("player_base_list", &args);
+        SbPy::triggerEvent("client_base_list", &args);
     }
 
     bool extinfoteam(const char *team, ucharbuf &p)
@@ -569,7 +569,7 @@ struct captureservmode : servmode
 case N_BASES:
     if(!(smode==&capturemode))
     {
-    	SbPy::triggerEventIntString("player_cheat", ci->clientnum, "Base list in non-capture mode.");
+    	SbPy::triggerEventf("client_cheat", "is", ci->clientnum, "Base list in non-capture mode.");
     	int numbases = getint(p);
     	loopi(numbases){loopk(4){getint(p);}}
     	break;

@@ -28,26 +28,14 @@ namespace SbPy
 
 bool init(const char*, const char*, const char*, const char*);
 bool initPy();
-bool reinitPy();
 void deinitPy();
 bool restartPy();
-const char *moderateText(const char *type, int cn, const char *text);
 bool triggerEvent(const char *event_name, std::vector<PyObject*> *args);
-bool triggerEventInt(const char *event_name, int cn);
-bool triggerEventIntBool(const char *event_name, int cn, bool b);
-bool triggerEventStr(const char *event_name, const char *str);
-bool triggerEventIntString(const char *event_name, int cn, const char *text);
-bool triggerEventIntStringInt(const char *event_name, int cn, const char *text, int cn2);
-bool triggerEventIntStringString(const char *event_name, int cn, const char *text, const char *text2);
-bool triggerEventIntInt(const char *name, int cn1, int cn2);
-bool triggerEventIntIntInt(const char *name, int cn1, int cn2, int cn3);
-bool triggerEventIntIntIntIntInt(const char *name, int cn1, int cn2, int cn3, int cn4, int cn5);
-bool triggerEventIntIntString(const char *name, int cn1, int cn2, const char *text);
-bool triggerEventStrInt(const char *name, const char *str, int n);
-bool triggerPolicyEventInt(const char *name, int cn);
-bool triggerPolicyEventIntInt(const char *name, int cn, int tcn);
-bool triggerPolicyEventIntString(const char *event_name, int cn, const char *text);
-void update();
+
+bool triggerEventf(const char *event_name, const char* format, ... );
+
+extern bool reload_on_update;
+bool update();
 
 }
 #endif

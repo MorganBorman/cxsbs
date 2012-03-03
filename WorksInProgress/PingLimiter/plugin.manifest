@@ -3,7 +3,7 @@ Name = Ping Limiter
 SymbolicName = PingLimiter
 Version = 0.0.1
 Author = Chasm
-Enabled = True
+Enabled = False
 
 [Dependencies]
 Timers = 0.0.1
