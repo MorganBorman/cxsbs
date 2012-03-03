@@ -154,7 +154,7 @@ void filtertext(char *dst, const char *src, bool whitespace, int len)
 {
     for(int c = *src; c; c = *++src)
     {
-    	if(c == '\f')
+        if(c == '\f')
         {
             if(!*++src) break;
             continue;

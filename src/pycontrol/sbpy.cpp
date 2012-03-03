@@ -1,4 +1,9 @@
 /*
+ *   Copyright (C) 2012 Morgan Borman <morgan.borman@gmail.com>
+ *
+ *   This is a derivative work as permitted under the GPL license.
+ *   Which included the following copyright notice;
+ *
  *   Copyright (C) 2009 Gregory Haynes <greg@greghaynes.net>
  *
  *   This program is free software; you can redistribute it and/or modify
