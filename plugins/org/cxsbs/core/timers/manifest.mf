@@ -1,13 +1,16 @@
 [Plug-in]
-SymbolicName = org.cxsbs.core.slice
-Version = 0.0.2
+SymbolicName = org.cxsbs.core.timers
+Version = 1.0.0
 Author = Morgan Borman
 Enabled = True
 
 [Interfaces]
+ITimer
+ITimerManager
 
 [Resources]
-update
+Timer[ITimer]
+timer_manager(ITimerManager)
 
 [Implements]
 pyTensible.Plugin = [1.0.0,1.0.0]

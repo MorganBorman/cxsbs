@@ -35,23 +35,16 @@ namespace server
     string smapname = "";
     int interm = 0;
     bool mapreload = false;
-    bool persistentIntermission = false;
-    bool private_editing = false;
-    bool allowShooting = true;
     enet_uint32 lastsend = 0;
     int mastermode = MM_OPEN, mastermask = MM_PRIVSERV;
     int currentmaster = -1;
     stream *mapdata = NULL;
 
-    vector<uint> allowedips;
     vector<clientinfo *> connects, clients, bots;
     vector<worldstate *> worldstates;
     bool reliablemessages = false;
     bool checkexecqueue = false;
     bool allow_modevote = false;
-
-#define MAXDEMOS 5
-    vector<demofile> demos;
 
     bool demonextmatch = false;
     stream *demotmp = NULL, *demorecord = NULL, *demoplayback = NULL;
@@ -66,7 +59,10 @@ namespace server
     ctfservmode ctfmode;
     servmode *smode = NULL;
 
-    VAR(exthideips, 0, 0, 1);
+    VAR(exthideips, 0, 1, 1);
+    VAR(allowshooting, 0, 1, 1);
+    VAR(privateediting, 0, 0, 1);
+    VAR(persistentIntermission, 0, 0, 1);
     SVAR(serverdesc, "");
     SVAR(serverpass, "");
     SVAR(adminpass, "");
@@ -369,7 +365,7 @@ namespace server
         vector<clientinfo *> team[2];
         float teamrank[2] = {0, 0};
         int remaining = clients.length();
-        SbPy::triggerEvent("autoteam", 0);
+        SbPy::triggerEventf("autoteam", "");
         // We arent going to set clients already assigned a team
         clientinfo *ci;
         loopv(clients)
@@ -478,43 +474,16 @@ namespace server
     void enddemorecord()
     {
         if(!demorecord) return;
-
         DELETEP(demorecord);
-
         if(!demotmp) return;
-
         int len = demotmp->size();
-        if(demos.length()>=MAXDEMOS)
-        {
-            delete[] demos[0].data;
-            demos.remove(0);
-        }
-        demofile &d = demos.add();
-        time_t t = time(NULL);
-        char *timestr = ctime(&t), *trim = timestr + strlen(timestr);
-        while(trim>timestr && isspace(*--trim)) *trim = '\0';
-        formatstring(d.info)("%s: %s, %s, %.2f%s", timestr, modename(gamemode), smapname, len > 1024*1024 ? len/(1024*1024.f) : len/1024.0f, len > 1024*1024 ? "MB" : "kB");
-        defformatstring(msg)("demo \"%s\" recorded", d.info);
-        sendservmsg(msg);
-        d.data = new uchar[len];
-        d.len = len;
-        demotmp->seek(0, SEEK_SET);
-        demotmp->read(d.data, len);
-        DELETEP(demotmp);
-        SbPy::triggerEventf("demo_recorded", "i", demos.ulen - 1);
-    }
-    
-    void savedemofile(const char* path)
-    {
-        stream *f = openfile(path, "wb");
-        if(!f) return;
-        
-	int countdemo = demos.length();
-        if(countdemo==0) return;
-	demofile &d = demos[countdemo-1];
 
-	f->write(d.data, d.len);
-	f->close();
+        data = new uchar[len];
+        demotmp->seek(0, SEEK_SET);
+        demotmp->read(data, len);
+        DELETEP(demotmp);
+        
+        SbPy::triggerEventf("demo_recorded", "sip", smapname, gamemode, Py_BuildValue("s#", data, len));
     }
 
     void setupdemorecord()
@@ -527,7 +496,7 @@ namespace server
         stream *f = opengzfile(NULL, "wb", demotmp);
         if(!f) { DELETEP(demotmp); return; }
 
-        sendservmsg("recording demo");
+        SbPy::triggerEventf("recording_demo", "");
 
         demorecord = f;
 
@@ -543,7 +512,7 @@ namespace server
         initclientpacket(p, NULL);
         writedemo(1, p.buf, p.len);
     }
-
+    /*
     void listdemos(int cn)
     {
         packetbuf p(MAXTRANS, ENET_PACKET_FLAG_RELIABLE);
@@ -577,6 +546,7 @@ namespace server
         demofile &d = demos[num-1];
         sendf(cn, 2, "rim", N_SENDDEMO, d.len, d.data);
     }
+*/
 
     void enddemoplayback()
     {
@@ -1151,7 +1121,7 @@ namespace server
 
     void changemap(const char *s, int mode)
     {
-        SbPy::triggerEvent("map_changed_pre", 0);
+        SbPy::triggerEventf("map_changed_pre", "");
         stopdemo();
         if(smode) smode->reset(false);
         aiman::clearai();
@@ -1212,11 +1182,6 @@ namespace server
     void setmastermode(int mm)
     {
         mastermode = mm;
-        allowedips.setsize(0);
-        if(mastermode>=MM_PRIVATE)
-        {
-            loopv(clients) allowedips.add(getclientip(clients[i]->clientnum));
-        }
         sendf(-1, 1, "rii", N_MASTERMODE, mastermode);
         SbPy::triggerEventf("server_mastermode_changed", "i", mastermode);
     }
@@ -1224,11 +1189,6 @@ namespace server
     void forcemap(const char *map, int mode)
     {
         stopdemo();
-        if(hasnonlocalclients() && !mapreload)
-        {
-            defformatstring(msg)("local player forced %s on map %s", modename(mode), map);
-            sendservmsg(msg);
-        }
         sendf(-1, 1, "risii", N_MAPCHANGE, map, mode, 1);
         changemap(map, mode);
     }
@@ -1243,7 +1203,7 @@ namespace server
     {
         if(gamemillis >= gamelimit && !interm)
         {
-            SbPy::triggerEvent("intermission_begin", 0);
+            SbPy::triggerEventf("intermission_begin", "");
             sendf(-1, 1, "ri2", N_TIMEUP, 0);
             if(smode) smode->intermission();
             interm = gamemillis + 10000;
@@ -1538,7 +1498,7 @@ namespace server
         {
             if(demorecord) enddemorecord();
             interm = -1;
-            SbPy::triggerEvent("intermission_ended", 0);
+            SbPy::triggerEventf("intermission_ended", "");
             //if(clients.length()) sendf(-1, 1, "ri", N_MAPRELOAD);
         }
     }
@@ -1593,7 +1553,7 @@ namespace server
          {
          	sendf(-1, 1, "ri3", N_SPECTATOR, spectator, val);
          }
-         if(!val && mapreload && !spinfo->privilege && !spinfo->local) sendf(spectator, 1, "ri", N_MAPRELOAD);
+         if(!val && mapreload && !spinfo->privilege) sendf(spectator, 1, "ri", N_MAPRELOAD);
         if(spectated)
             SbPy::triggerEventf("client_spectate", "i", spinfo->clientnum);
         else if(unspectated)
@@ -1604,7 +1564,7 @@ namespace server
     void noclients()
     {
         aiman::clearai();
-        SbPy::triggerEvent("no_clients", 0);
+        SbPy::triggerEventf("no_clients", "");
     }
 
     void localconnect(int n)
@@ -1697,13 +1657,7 @@ namespace server
         if(!mapdata) { sendf(sender, 1, "ris", N_SERVMSG, "failed to open temporary file for map"); return; }
         mapdata->write(data, len);
 
-    	std::vector<PyObject*> args;
-    	PyObject *pCn = PyInt_FromLong(sender);
-    	PyObject *pData = Py_BuildValue("s#", data, len);
-    	args.push_back(pCn);
-    	args.push_back(pData);
-
-        SbPy::triggerEvent("client_uploaded_map", &args);
+        SbPy::triggerEventf("client_uploaded_map", "ip", sender, Py_BuildValue("s#", data, len));
     }
 
     void sendclipboard(clientinfo *ci)
@@ -2158,11 +2112,7 @@ namespace server
 					n++;
 				}
 
-				std::vector<PyObject*> args;
-				args.push_back(PyInt_FromLong(ci->clientnum));
-				args.push_back(pTuple_entities);
-
-				SbPy::triggerEvent("client_item_list", &args);
+				SbPy::triggerEventf("client_item_list", "ip", ci->clientnum, pTuple_entities);
 				break;
 			}
 
@@ -2295,29 +2245,25 @@ namespace server
 
             case N_STOPDEMO:
             {
-                if(ci->privilege<PRIV_ADMIN && !ci->local) break;
-                stopdemo();
+                SbPy::triggerEventf("client_stop_demo", "ii", ci->clientnum, demo);
                 break;
             }
 
             case N_CLEARDEMOS:
             {
                 int demo = getint(p);
-                if(ci->privilege<PRIV_ADMIN && !ci->local) break;
-                cleardemos(demo);
+                SbPy::triggerEventf("client_clear_demo", "ii", ci->clientnum, demo);
                 break;
             }
 
             case N_LISTDEMOS:
-                if(!ci->privilege && !ci->local && ci->state.state==CS_SPECTATOR) break;
-                listdemos(sender);
+            	SbPy::triggerEventf("client_list_demos", "i", ci->clientnum);
                 break;
 
             case N_GETDEMO:
             {
-                int n = getint(p);
-                if(!ci->privilege  && !ci->local && ci->state.state==CS_SPECTATOR) break;
-                senddemo(sender, n);
+                int demo = getint(p);
+                SbPy::triggerEventf("client_get_demo", "ii", ci->clientnum, demo);
                 break;
             }
 
@@ -2350,10 +2296,7 @@ namespace server
             {
                 int val = getint(p);
                 getstring(text, p);
-                if(val!=0)
-                    SbPy::triggerEventf("client_setmaster", "is", ci->clientnum, text);
-                else
-                    SbPy::triggerEventf("client_setmaster_off", "i", ci->clientnum);
+                SbPy::triggerEventf("client_setmaster", "is", ci->clientnum, text);
                 break;
             }
 

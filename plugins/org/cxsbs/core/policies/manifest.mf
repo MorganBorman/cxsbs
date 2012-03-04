@@ -1,6 +1,6 @@
 [Plug-in]
 SymbolicName = org.cxsbs.core.policies
-Version = 0.0.2
+Version = 1.0.0
 Author = Morgan Borman
 Enabled = True
 

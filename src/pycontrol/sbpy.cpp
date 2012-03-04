@@ -111,8 +111,11 @@ bool initPy()
 		return false;
 	}
 
+	char *logging_path = new char[strlen(server::instanceRoot) + strlen("/plugin_loader.log") + 1];
+	sprintf(logging_path, "%s/plugin_loader.log", server::instanceRoot);
+
 	//set the logging path for pyTensible
-	callPyStringFunc(setup_loggingFunction, "plugin_loader.log");
+	callPyStringFunc(setup_loggingFunction, logging_path);
 
 	//plugin_loader = pyTensible.PluginLoader()
 	PluginLoaderClass = PyObject_GetAttrString(pyTensibleModule, "PluginLoader");

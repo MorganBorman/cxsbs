@@ -310,8 +310,6 @@ const char *disc_reasons[] = { "normal", "end of packet", "client num", "kicked/
 void disconnect_client(int n, int reason)
 {
     if(!clients.inrange(n) || clients[n]->type!=ST_TCPIP) return;
-    //SbPy::triggerEventInt("player_disconnect", n);
-    //SbPy::triggerEventInt("player_disconnect_post", n);
     enet_peer_disconnect(clients[n]->peer, reason);
     server::clientdisconnect(n);
     clients[n]->type = ST_EMPTY;
@@ -464,14 +462,12 @@ void serverslice(bool dedicated, uint timeout)   // main server update, called f
     }
 */
     
-/*
     if(totalmillis-laststatus>60*1000)   // display bandwidth stats, useful for server ops
     {
         laststatus = totalmillis;     
-        if(nonlocalclients || bsend || brec) fprintf(server::eventlog.file(), "status: %d remote clients, %.1f send, %.1f rec (K/sec)\n", nonlocalclients, bsend/60.0f/1024, brec/60.0f/1024);
-        bsend = brec = 0;
+        if(nonlocalclients || serverhost->totalSentData || serverhost->totalReceivedData) printf("status: %d remote clients, %.1f send, %.1f rec (K/sec)\n", nonlocalclients, serverhost->totalSentData/60.0f/1024, serverhost->totalReceivedData/60.0f/1024);
+        serverhost->totalSentData = serverhost->totalReceivedData = 0;
     }
-*/
 	
     ENetEvent event;
     bool serviced = false;
@@ -492,7 +488,7 @@ void serverslice(bool dedicated, uint timeout)   // main server update, called f
                 c.peer->data = &c;
                 char hn[1024];
                 copystring(c.hostname, (enet_address_get_host_ip(&c.peer->address, hn, sizeof(hn))==0) ? hn : "unknown");
-                //printf("client connected (%s)\n", c.hostname);
+                printf("client connected (%s)\n", c.hostname);
                 int reason = server::clientconnect(c.num, c.peer->address.host);
                 if(!reason) nonlocalclients++;
                 else disconnect_client(c.num, reason);
@@ -509,7 +505,7 @@ void serverslice(bool dedicated, uint timeout)   // main server update, called f
             {
                 client *c = (client *)event.peer->data;
                 if(!c) break;
-                //printf("disconnected client (%s)\n", c->hostname);
+                printf("disconnected client (%s)\n", c->hostname);
                 server::clientdisconnect(c->num);
                 nonlocalclients--;
                 c->type = ST_EMPTY;
@@ -576,8 +572,8 @@ void rundedicatedserver()
     #ifdef WIN32
     SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
     #endif
-    //puts("dedicated server started...\nCtrl-C to exit\n\n");
-    SbPy::triggerEvent("server_start", 0);
+    puts("dedicated CXSBS server started...\nCtrl-C to exit\n\n");
+    SbPy::triggerEventf("server_start", "");
     for(;rundedicated;) serverslice(true, 4);
 }
 
@@ -731,7 +727,7 @@ int main(int argc, char* argv[])
     for(int i = 1; i<argc; i++) if(argv[i][0]!='-' || !serveroption(argv[i])) gameargs.add(argv[i]);
     game::parseoptions(gameargs);
     initserver(true, true);
-    SbPy::triggerEvent("server_stop", 0);
+    SbPy::triggerEventf("server_stop", "");
     SbPy::deinitPy();
     return 0;
 }

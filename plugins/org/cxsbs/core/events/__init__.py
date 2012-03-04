@@ -15,7 +15,7 @@ class events(pyTensible.Plugin):
 				event_manager.register_handler(self.name, f)
 				return f
 		
-		def trigger_event(event_name, *args, **kwargs):
+		def trigger_event(event_name, args=(), kwargs={}):
 			event_manager.trigger_event(REvent(event_name, args, kwargs))
 		
 		Interfaces = {'IEventManager': IEventManager, 'IEvent': IEvent}
