@@ -45,7 +45,7 @@ class RTimer(ITimer):
 	_events = []
 	
 	def __init__(self, how_long, *events):
-		events = pyTensible.plugin_loader.get_resource('org.cxsbs.core.events')
+		events = pyTensible.plugin_loader.get_resource('org.cxsbs.core.events.manager')
 		
 		start_time = time.time()
 		
@@ -123,7 +123,7 @@ class RTimerManager(ITimerManager, threading.Thread):
 		self._event.set()
 					
 	def _fire_off(self, events):
-		events = pyTensible.plugin_loader.get_resource('org.cxsbs.core.events')
+		events = pyTensible.plugin_loader.get_resource('org.cxsbs.core.events.manager')
 		
 		for event in events:
 			events.event_manager.trigger_event(event)

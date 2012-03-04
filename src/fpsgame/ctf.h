@@ -149,7 +149,7 @@ struct ctfservmode : servmode
     void dropflag(clientinfo *ci)
     {
         if(notgotflags) return;
-        if(ci->invisible) return;
+        if(ci->state.state == CS_INVISIBLE) return;
         loopv(flags) if(flags[i].owner==ci->clientnum)
         {
             flag &f = flags[i];
@@ -211,7 +211,7 @@ struct ctfservmode : servmode
 
     void scoreflag(clientinfo *ci, int goal, int relay = -1)
     {
-    	if(ci->invisible) return;
+    	if(ci->state.state == CS_INVISIBLE) return;
         returnflag(relay >= 0 ? relay : goal, m_protect ? lastmillis : 0);
         ci->state.flags++;
         int team = ctfteamflag(ci->team), score = addscore(team, 1);
@@ -223,7 +223,6 @@ struct ctfservmode : servmode
 
     void takeflag(clientinfo *ci, int i, int version)
     {
-    	if(ci->invisible) return;
         if(notgotflags || !flags.inrange(i) || ci->state.state!=CS_ALIVE || !ci->team[0]) return;
         flag &f = flags[i];
         if((m_hold ? f.spawnindex < 0 : !ctfflagteam(f.team)) || f.owner>=0 || f.version != version || (f.droptime && f.dropper == ci->clientnum)) return;

@@ -16,7 +16,7 @@ timer_manager(ITimerManager)
 pyTensible.Plugin = [1.0.0,1.0.0]
 
 [Dependencies]
-org.cxsbs.core.events = [1.0.0,1.0.0]
+org.cxsbs.core.events.manager = [1.0.0,1.0.0]
 
 [Requests]
 #None

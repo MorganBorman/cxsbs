@@ -134,7 +134,7 @@
                         sendserverinforeply(p);
                         return;
                     }
-                    if(ci->invisible)
+                    if(ci->state.state != CS_INVISIBLE)
                     {
                         putint(p, EXT_ERROR); //client requested by id was not found
                         sendserverinforeply(p);
@@ -147,11 +147,11 @@
                 ucharbuf q = p; //remember buffer position
                 putint(q, EXT_PLAYERSTATS_RESP_IDS); //send player ids following
                 if(ci) putint(q, ci->clientnum);
-                else loopv(clients) if(!clients[i]->invisible) {putint(q, clients[i]->clientnum);}
+                else loopv(clients) if(clients[i]->state.state != CS_INVISIBLE) {putint(q, clients[i]->clientnum);}
                 sendserverinforeply(q);
             
                 if(ci) extinfoplayer(p, ci);
-                else loopv(clients) if(!clients[i]->invisible) {extinfoplayer(p, clients[i]);}
+                else loopv(clients) if(clients[i]->state.state != CS_INVISIBLE) {extinfoplayer(p, clients[i]);}
                 return;
             }
 

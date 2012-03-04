@@ -232,34 +232,28 @@ namespace aiman
 		else clearai();
 	}
 
-	void reqadd(clientinfo *ci, int skill)
+	bool reqadd(clientinfo *ci, int skill)
 	{
-        if(!ci->local && !ci->privilege) return;
-        if(!addai(skill, !ci->local && ci->privilege < PRIV_ADMIN ? botlimit : -1)) sendf(ci->clientnum, 1, "ris", N_SERVMSG, "failed to create or assign bot");
+        return addai(skill, botlimit);
 	}
 
-	void reqdel(clientinfo *ci)
+	bool reqdel(clientinfo *ci)
 	{
-        if(!ci->local && !ci->privilege) return;
-        if(!deleteai()) sendf(ci->clientnum, 1, "ris", N_SERVMSG, "failed to remove any bots");
+        return deleteai();
 	}
 
-    void setbotlimit(clientinfo *ci, int limit)
+    void setbotlimit(int limit)
     {
-        if(ci && !ci->local && ci->privilege < PRIV_ADMIN) return;
         botlimit = clamp(limit, 0, MAXBOTS);
         dorefresh = true;
-        defformatstring(msg)("bot limit is now %d", botlimit);
-        sendservmsg(msg);
+        SbPy::triggerEventf("bot_limit_set", "i", limit);
     }
 
-    void setbotbalance(clientinfo *ci, bool balance)
+    void setbotbalance(bool balance)
     {
-        if(ci && !ci->local && !ci->privilege) return;
         botbalance = balance ? 1 : 0;
         dorefresh = true;
-        defformatstring(msg)("bot team balancing is now %s", botbalance ? "enabled" : "disabled");
-        sendservmsg(msg);
+        SbPy::triggerEventf("bot_balance_set", "b", balance);
     }
 
 
@@ -267,7 +261,7 @@ namespace aiman
     {
         dorefresh = true;
         loopv(clients) if(clients[i]->local || clients[i]->privilege) return;
-        if(!botbalance) setbotbalance(NULL, true);
+        if(!botbalance) setbotbalance(true);
     }
 
     void addclient(clientinfo *ci)

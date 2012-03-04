@@ -1,0 +1,20 @@
+[Plug-in]
+SymbolicName = org.cxsbs.core.events.information
+Version = 1.0.0
+Author = Morgan Borman
+Enabled = True
+
+[Interfaces]
+
+[Resources]
+HandlerInformation[org.cxsbs.core.events.interfaces.IHandlerInformation]
+
+[Implements]
+pyTensible.Plugin = [1.0.0,1.0.0]
+org.cxsbs.core.events.interfaces.IHandlerInformation = [1.0.0,1.0.0]
+
+[Dependencies]
+#None
+
+[Requests]
+#None

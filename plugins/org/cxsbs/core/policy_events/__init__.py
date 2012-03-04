@@ -14,6 +14,14 @@ class policy_events(pyTensible.Plugin):
 	
 org = pyTensible.plugin_loader.get_resource("org")
 
-@org.cxsbs.core.events.event_handler('client_connect_pre')
+@org.cxsbs.core.events.manager.event_handler('client_connect_pre')
 def on_client_connect_pre(event):
+	pass
+
+@org.cxsbs.core.events.manager.event_handler('client_auth_timout')
+def on_client_auth_timout(event):
+	pass
+
+@org.cxsbs.core.events.manager.event_handler('client_auth_challenge_response')
+def on_client_auth_challenge_response(event):
 	pass

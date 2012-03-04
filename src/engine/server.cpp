@@ -415,7 +415,7 @@ void checkserversockets()        // reply all server info requests
     }
 }
 
-#define DEFAULTCLIENTS 124
+#define DEFAULTCLIENTS 8
 
 VARF(maxclients, 0, DEFAULTCLIENTS, MAXCLIENTS, { if(!maxclients) maxclients = DEFAULTCLIENTS; });
 VAR(serveruprate, 0, 0, INT_MAX);

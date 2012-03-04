@@ -1,18 +1,13 @@
 [Plug-in]
-SymbolicName = org.cxsbs.core.events
+SymbolicName = org.cxsbs.core.threads
 Version = 1.0.0
 Author = Morgan Borman
 Enabled = True
 
 [Interfaces]
-IEvent
-IEventManager
 
 [Resources]
-Event[IEvent]
-event_manager(IEventManager)
-trigger_event
-event_handler
+thread_manager
 
 [Implements]
 pyTensible.Plugin = [1.0.0,1.0.0]

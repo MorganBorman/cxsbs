@@ -155,11 +155,11 @@ bool initPy()
 
 	
 	//Get trigger_event function
-	trigger_eventFunction = callPyStringFunc(get_resourceFunction, "org.cxsbs.core.events.trigger_event");
+	trigger_eventFunction = callPyStringFunc(get_resourceFunction, "org.cxsbs.core.events.manager.trigger_event");
 	SBPY_ERR(trigger_eventFunction)
 	if(!PyCallable_Check(trigger_eventFunction))
 	{
-		fprintf(stderr, "Error: trigger_event function could not be loaded from 'org.cxsbs.core.events.trigger_event'.\n");
+		fprintf(stderr, "Error: trigger_event function could not be loaded from 'org.cxsbs.core.events.manager.trigger_event'.\n");
 		return false;
 	}
 

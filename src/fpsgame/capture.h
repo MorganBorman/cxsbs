@@ -256,7 +256,6 @@ struct captureservmode : servmode
 
     void replenishammo(clientinfo *ci)
     {
-    	if(ci->invisible) return;
         if(m_noitems || notgotbases || ci->state.state!=CS_ALIVE || !ci->team[0]) return;
         loopv(bases)
         {
@@ -441,42 +440,40 @@ struct captureservmode : servmode
 
     void entergame(clientinfo *ci)
     {
-    	if(ci->invisible) return;
         if(notgotbases || ci->state.state!=CS_ALIVE || ci->gameclip) return;
         enterbases(ci->team, ci->state.o);
     }
 
     void spawned(clientinfo *ci)
     {
-    	if(ci->invisible) return;
+    	if(ci->state.state == CS_INVISIBLE) return;
         if(notgotbases || ci->gameclip) return;
         enterbases(ci->team, ci->state.o);
     }
 
     void leavegame(clientinfo *ci, bool disconnecting = false)
     {
-    	if(ci->invisible) return;
         if(notgotbases || ci->state.state!=CS_ALIVE || ci->gameclip) return;
         leavebases(ci->team, ci->state.o);
     }
 
     void died(clientinfo *ci, clientinfo *actor)
     {
-    	if(ci->invisible) return;
+    	if(ci->state.state == CS_INVISIBLE) return;
         if(notgotbases || ci->gameclip) return;
         leavebases(ci->team, ci->state.o);
     }
 
     void moved(clientinfo *ci, const vec &oldpos, bool oldclip, const vec &newpos, bool newclip)
     {
-    	if(ci->invisible) return;
+    	if(ci->state.state == CS_INVISIBLE) return;
         if(notgotbases) return;
         movebases(ci->team, oldpos, oldclip, newpos, newclip);
     }
 
     void changeteam(clientinfo *ci, const char *oldteam, const char *newteam)
     {
-    	if(ci->invisible) return;
+    	if(ci->state.state == CS_INVISIBLE) return;
         if(notgotbases || ci->gameclip) return;
         leavebases(oldteam, ci->state.o);
         enterbases(newteam, ci->state.o);

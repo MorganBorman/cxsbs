@@ -148,7 +148,7 @@ namespace server
 		
         void reset()
         {
-            if(state!=CS_SPECTATOR) state = editstate = CS_DEAD;
+            if(state<CS_SPECTATOR) state = editstate = CS_DEAD;
             maxhealth = 100;
             rockets.reset();
             grenades.reset();
@@ -220,7 +220,6 @@ namespace server
         int modevote;
         int privilege;
         int connectstage;
-        bool invisible;
         bool connected, local, timesync, active;
         string connectpwd;
         int gameoffset, lastevent, pushed, exceeded;
@@ -243,7 +242,7 @@ namespace server
 
         void addevent(gameevent *e)
         {
-            if(state.state==CS_SPECTATOR || events.length()>100) delete e;
+            if(state.state>=CS_SPECTATOR || events.length()>100) delete e;
             else events.add(e);
         }
 
@@ -363,10 +362,10 @@ namespace server
         extern void removeai(clientinfo *ci);
         extern void clearai();
         extern void checkai();
-        extern void reqadd(clientinfo *ci, int skill);
-        extern void reqdel(clientinfo *ci);
-        extern void setbotlimit(clientinfo *ci, int limit);
-        extern void setbotbalance(clientinfo *ci, bool balance);
+        extern bool reqadd(clientinfo *ci, int skill);
+        extern bool reqdel(clientinfo *ci);
+        extern void setbotlimit(int limit);
+        extern void setbotbalance(bool balance);
         extern void changemap();
         extern void addclient(clientinfo *ci);
         extern void changeteam(clientinfo *ci);
@@ -398,7 +397,6 @@ namespace server
 
 	extern int gamelimit;
 	extern int gamemillis;
-	extern bool persistentIntermission;
 	extern bool allowShooting;
 	extern int nextexceeded;
 	extern vector<clientinfo *> connects, clients, bots;
@@ -418,6 +416,10 @@ namespace server
 	extern bool allow_modevote;
 	extern int port;
 	extern bool demonextmatch;
+	extern int persistentdemos;
+	extern int capacity;
+	extern int persistentintermission;
+	extern stream *demorecord;
 	extern vector<demofile> demos;
 	void savedemofile(const char *s);
 
@@ -458,21 +460,21 @@ namespace server
 	extern bool is_capture_mode();
 	extern bool is_flag_mode();
 
-	int numclients(int exclude = -1, bool nospec = true, bool noai = true, bool priv = false);
+	int numclients(int exclude=-1, bool nospec=true, bool noai=true, bool priv=false, bool visible=true);
 	void sendservmsg(const char *s);
 	clientinfo *getinfo(int n);
 	void hashPassword(int cn, int sessionid, char *pass, char *dest, int len);
-	void setcimaster(clientinfo *ci);
-	void setciadmin(clientinfo *ci);
+	void setprivilege(clientinfo *ci, int priv);
 	void pausegame(bool);
 	void setmap(const char *, int);
 	void setmastermode(int);
-	void challengeauth(clientinfo *, uint, const char *);
+	void challengeauth(clientinfo *ci, uint id, const char *domain, const char *val);
 	bool setteam(clientinfo *, char *);
 	void sendClientInitialization(clientinfo *);
 	bool pregame_setteam(clientinfo *, char *);
-	bool spectate(clientinfo *, bool, int);
-	void setSecondsLeft(int seconds);
+	bool spectate(clientinfo *, bool);
+	void setinvisible(clientinfo *, bool);
+	void setTimeLeft(int milliseconds);
 	void resetpriv(clientinfo *ci);
 	void sendmapreload();
 	void senddemo(int cn, int num);

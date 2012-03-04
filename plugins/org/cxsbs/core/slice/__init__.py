@@ -17,6 +17,6 @@ def update():
 
 org = pyTensible.plugin_loader.get_resource("org")
 
-@org.cxsbs.core.events.event_handler('server_stop')
+@org.cxsbs.core.events.manager.event_handler('server_stop')
 def on_server_stop(event):
 	pyTensible.plugin_loader.unload_all()
