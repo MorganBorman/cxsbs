@@ -305,7 +305,7 @@ void sendfile(int cn, int chan, stream *file, const char *format, ...)
     else sendclientpacket(packet, chan);
 #endif
 }
-const char *disc_reasons[] = { "normal", "end of packet", "client num", "kicked/banned", "tag type", "ip is banned", "server is in private mode", "server FULL", "connection timed out", "overflow" };
+//const char *disc_reasons[] = { "normal", "end of packet", "client num", "kicked/banned", "tag type", "ip is banned", "server is in private mode", "server FULL", "connection timed out", "overflow" };
 
 void disconnect_client(int n, int reason)
 {
@@ -426,7 +426,7 @@ VARF(serverport, 0, server::serverport(), 0xFFFF, { if(!serverport) serverport =
 int curtime = 0, lastmillis = 0, totalmillis = 0;
 #endif
 
-void serverslice(bool dedicated, uint timeout)   // main server update, called from main loop in sp, or from below in dedicated server
+void serverslice(uint timeout, bool last)   // main server update, called from main loop in sp, or from below in dedicated server
 {
     localclients = nonlocalclients = 0;
     loopv(clients) switch(clients[i]->type)
@@ -518,7 +518,9 @@ void serverslice(bool dedicated, uint timeout)   // main server update, called f
                 break;
         }
     }
-    if(server::sendpackets()) enet_host_flush(serverhost);
+    if(server::sendpackets(last)) enet_host_flush(serverhost);
+
+    server::checkdisconnects(last);
 }
 
 void flushserver(bool force)
@@ -574,7 +576,7 @@ void rundedicatedserver()
     #endif
     puts("dedicated CXSBS server started...\nCtrl-C to exit\n\n");
     SbPy::triggerEventf("server_start", "");
-    for(;rundedicated;) serverslice(true, 4);
+    for(;rundedicated;) serverslice(4, false);
 }
 
 bool servererror(bool dedicated, const char *desc)
@@ -721,13 +723,19 @@ vector<const char *> gameargs;
 int main(int argc, char* argv[])
 {
 
-    if(enet_initialize()<0) fatal("Unable to initialise network module");
+    if(enet_initialize()<0) fatal("Unable to initialize network module");
     atexit(enet_deinitialize);
     enet_time_set(0);
     for(int i = 1; i<argc; i++) if(argv[i][0]!='-' || !serveroption(argv[i])) gameargs.add(argv[i]);
     game::parseoptions(gameargs);
     initserver(true, true);
     SbPy::triggerEventf("server_stop", "");
+
+    //two more server slices just to make sure all the clients got disconnected appropriately
+    serverslice(5, false);
+    serverslice(5, true);
+
+    //Finally shutdown the interpreter and return
     SbPy::deinitPy();
     return 0;
 }

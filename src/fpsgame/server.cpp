@@ -983,6 +983,14 @@ namespace server
 		SbPy::triggerEventf("client_connect", "i", ci->clientnum);
 	}
 
+	void reinitclients()
+	{
+		loopv(clients)
+		{
+			SbPy::triggerEventf("client_reinit", "i", clients[i]->clientnum);
+		}
+	}
+
 	void sendwelcome(clientinfo *ci)
 	{
 		packetbuf p(MAXTRANS, ENET_PACKET_FLAG_RELIABLE);
@@ -1523,7 +1531,14 @@ namespace server
 			if(smode) smode->update();
 		}
 
-		loopv(connects) if(totalmillis-connects[i]->connectmillis>15000) disconnect_client(connects[i]->clientnum, DISC_TIMEOUT);
+		loopv(connects)
+		{
+			if(totalmillis-connects[i]->connectmillis>15000)
+			{
+				disconnect_client(connects[i]->clientnum, DISC_TIMEOUT);
+				continue;
+			}
+		}
 
 		if(!SbPy::update())
 		{
@@ -1537,6 +1552,17 @@ namespace server
 			interm = -1;
 			SbPy::triggerEventf("intermission_ended", "");
 			//if(clients.length()) sendf(-1, 1, "ri", N_MAPRELOAD);
+		}
+	}
+
+	void checkdisconnects(bool last)
+	{
+		loopv(clients)
+		{
+			if(clients[i]->disconnect_reason >= DISC_NONE || last)
+			{
+				disconnect_client(clients[i]->clientnum, clients[i]->disconnect_reason >= DISC_NONE ? clients[i]->disconnect_reason : DISC_NONE);
+			}
 		}
 	}
 
@@ -1628,13 +1654,25 @@ namespace server
 		SbPy::triggerEventf("no_clients", "");
 	}
 
+	bool getbysessionid(int sessionid)
+	{
+		loopv(clients) if(clients[i]->sessionid == sessionid) return clients[i];
+		return NULL;
+	}
+
 	int clientconnect(int n, uint ip)
 	{
 		clientinfo *ci = getinfo(n);
 		ci->clientnum = ci->ownernum = n;
 		ci->connectmillis = totalmillis;
+
+		//get a new unique sessionid
 		//ci->sessionid = (rnd(0x1000000)*((totalmillis%10000)+1))&0xFFFFFF;
-		ci->sessionid = (unsigned long) &ci;
+		ci->sessionid = (((unsigned long) &ci)%10000)+rnd(0x1000000);
+		while(getbysessionid(ci->sessionid))
+		{
+			ci->sessionid = (((unsigned long) &ci)%10000)+rnd(0x1000000);
+		}
 
 		connects.add(ci);
 		sendservinfo(ci);
@@ -1645,7 +1683,6 @@ namespace server
 	{
 		clientinfo *ci = getinfo(n);
 		SbPy::triggerEventf("client_disconnect", "i", n);
-		SbPy::triggerEventf("client_disconnect_post", "i", n);
 		if(ci->connected)
 		{
 			if(ci->privilege) resetpriv(ci);
@@ -1658,9 +1695,13 @@ namespace server
 			}
 			clients.removeobj(ci);
 			aiman::removeai(ci);
-			if(!numclients(-1, false, true)) noclients(); // bans clear when server empties
+			if(!numclients(-1, false, true)) noclients();
 		}
-		else connects.removeobj(ci);
+		else
+		{
+			connects.removeobj(ci);
+		}
+		SbPy::triggerEventf("client_disc", "i", n);
 	}
 
 	int reserveclients() { return 3; }

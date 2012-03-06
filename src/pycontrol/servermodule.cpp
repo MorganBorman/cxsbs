@@ -341,6 +341,30 @@ namespace SbPy
 		return Py_None;
 	}
 	
+	static PyObject *clientSetDisconnect(PyObject *self, PyObject *args)
+	{
+		int cn;
+		int reason;
+		server::clientinfo *ci;
+		if(!PyArg_ParseTuple(args, "ii", &cn, &reason))
+			return 0;
+		ci = server::getinfo(cn);
+		if(!ci)
+		{
+			PyErr_SetString(PyExc_ValueError, "Invalid cn specified");
+			return 0;
+		}
+		//enum { DISC_NONE = 0, DISC_EOP, DISC_CN, DISC_KICK, DISC_TAGT, DISC_IPBAN, DISC_PRIVATE, DISC_MAXCLIENTS, DISC_TIMEOUT, DISC_OVERFLOW, DISC_NUM };
+		if (reason < DISC_NONE || reason > DISC_NUM)
+		{
+			PyErr_SetString(PyExc_ValueError, "That is not a valid disconnect reason.");
+			return 0;
+		}
+		ci->disconnect_reason = reason;
+		Py_INCREF(Py_None);
+		return Py_None;
+	}
+
 	static PyObject *clientInitialize(PyObject *self, PyObject *args)
 	{
 		int cn;
@@ -1155,6 +1179,7 @@ static PyMethodDef ModuleMethods[] = {
 	def(clientDamageRecieved, 		"Get client total damage received in current match."),
 
 	def(clientDisconnect, 			"Disconnect client from server for a specific reason."),
+	def(clientSetDisconnect, 		"Set the client to be disconnected on next server slice for a specific reason."),
 	def(clientInitialize, 			"Send map initialization and item lists to client."),
 	def(clientMessage, 				"Send a message to client."),
 	def(clientMessageAll, 			"Send a message as one client to another(from, to, text)."),

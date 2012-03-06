@@ -342,6 +342,7 @@ bool update()
 {
 	if (reload_on_update)
 	{
+		triggerEventf("server_reload", "");
 		// Deinitialize
 		deinitPy();
 		// Initialize
@@ -353,6 +354,7 @@ bool update()
 			return false;
 		}
 		reload_on_update = false;
+		server::reinitclients();
 	}
 
 	PyObject *pargs, *pvalue;

@@ -214,7 +214,7 @@ namespace server
 
     struct clientinfo
     {
-        int clientnum, ownernum, connectmillis, sessionid, overflow;
+        int clientnum, ownernum, connectmillis, sessionid, overflow, disconnect_reason;
         string name, team, mapvote;
         int playermodel;
         int modevote;
@@ -319,6 +319,7 @@ namespace server
         void reset()
         {
             name[0] = team[0] = connectpwd[0] = 0;
+            disconnect_reason = -1;
             connectstage = 0;
             playermodel = -1;
             privilege = PRIV_NONE;
@@ -459,6 +460,9 @@ namespace server
 	extern bool is_item_mode();
 	extern bool is_capture_mode();
 	extern bool is_flag_mode();
+
+	extern void checkdisconnects(bool last);
+	extern void reinitclients();
 
 	int numclients(int exclude=-1, bool nospec=true, bool noai=true, bool priv=false, bool visible=true);
 	void sendservmsg(const char *s);

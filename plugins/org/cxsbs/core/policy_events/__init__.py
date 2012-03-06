@@ -14,6 +14,8 @@ class policy_events(pyTensible.Plugin):
 	
 org = pyTensible.plugin_loader.get_resource("org")
 
+import sbserver
+
 @org.cxsbs.core.events.manager.event_handler('client_connect_pre')
 def on_client_connect_pre(event):
 	pass
@@ -25,3 +27,7 @@ def on_client_auth_timout(event):
 @org.cxsbs.core.events.manager.event_handler('client_auth_challenge_response')
 def on_client_auth_challenge_response(event):
 	pass
+
+@org.cxsbs.core.events.manager.event_handler('client_message_pre')
+def on_client_auth_timout(event):
+	sbserver.serverReload()
