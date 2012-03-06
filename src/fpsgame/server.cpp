@@ -1542,7 +1542,8 @@ namespace server
 
 		if(!SbPy::update())
 		{
-			exit(1);
+			printf("SbPy::update() returned false.\n");
+			quit();
 		}
 
 		if(!gamepaused && m_timed && smapname[0] && gamemillis-curtime>0) checkintermission();

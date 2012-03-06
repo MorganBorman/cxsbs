@@ -13,18 +13,17 @@ class slice(pyTensible.Plugin):
 		pass
 
 def update():
-	try:
-		pass
-	except:
-		pass
+	pass
 
 org = pyTensible.plugin_loader.get_resource("org")
 
 @org.cxsbs.core.events.manager.event_handler('server_stop')
 def on_server_stop(event):
+	print "\nServer going down."
 	org.cxsbs.core.events.manager.trigger_event('server_shutdown')
 	pyTensible.plugin_loader.unload_all()
 	
 @org.cxsbs.core.events.manager.event_handler('server_reload')
-def on_server_stop(event):
+def on_server_reload(event):
+	print "Reloading server. Hang on."
 	pyTensible.plugin_loader.unload_all()

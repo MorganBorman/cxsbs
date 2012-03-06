@@ -45,7 +45,6 @@ class ClientManager:
 	def on_client_init(self, event):
 		cn = event.args[0]
 		self._clients[cn] = Client(self, cn)
-		#print dir(self._clients[cn])
 		
 	def on_client_disc(self, event):
 		cn = event.args[0]
@@ -202,9 +201,9 @@ class Client:
 		else:
 			groups.append("__norm__")
 			
-		if self.isSpectator():
+		if self.spectator:
 			groups.append("__spectator__")
-		elif self.isInvisible():
+		elif self.invisible:
 			groups.append("__invisible__")
 		else:
 			groups.append("__playing__")
@@ -213,37 +212,37 @@ class Client:
 	
 	#read write properties
 	
-	def __get_team(self):
+	@property
+	def team(self):
 		'''Name of team client belongs to'''
 		return sbserver.clientTeam(self.cn)
 	
+	@team.setter
 	def __set_team(self, team):
 		'''Set the team that this client is on'''
 		sbserver.clientSetTeam(self.cn, team)
 	
-	team = property(__get_team, __set_team)
-	
-	def __get_spectator(self):
+	@property
+	def spectator(self):
 		'''Is client a spectator'''
 		return sbserver.clientState(self.cn) >= CS_SPECTATOR
 	
+	@spectator.setter
 	def __set_spectator(self, value):
 		if not type(value) == boolean:
 			raise ValueError("Client spectator state must be boolean.")
 		sbserver.clientSetSpectator(self.cn, value)
-		
-	spectator = property(__get_spectator, __set_spectator)
 	
-	def __get_invisible(self):
+	@property
+	def invisible(self):
 		'''Is client invisible'''
 		return sbserver.clientState(self.cn) == CS_INVISIBLE
 	
+	@invisible.setter
 	def __set_invisible(self, value):
 		if not type(value) == boolean:
 			raise ValueError("Client invisible state must be boolean.")
 		sbserver.clientSetSpectator(self.cn, value)
-		
-	invisible = property(__get_invisible, __set_invisible)
 	
 	#normal methods
 	

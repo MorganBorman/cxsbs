@@ -203,13 +203,20 @@ ENetPeer *getclientpeer(int i) { return clients.inrange(i) && clients[i]->type==
 int getnumclients()        { return clients.length(); }
 uint getclientip(int n)    { return clients.inrange(n) && clients[n]->type==ST_TCPIP ? clients[n]->peer->address.host : 0; }
 
-void sendpacket(int n, int chan, ENetPacket *packet, int exclude)
+void sendpacket(int n, int chan, ENetPacket *packet, int exclude, int proximity)
 {
     if(n<0)
     {
-        server::recordpacket(chan, packet->data, packet->dataLength);
-        loopv(clients) if(i!=exclude && server::allowbroadcast(i)) sendpacket(i, chan, packet);
-        return;
+    	if(n == -1)
+    	{
+			server::recordpacket(chan, packet->data, packet->dataLength);
+			loopv(clients) if(i!=exclude && server::allowbroadcast(i)) sendpacket(i, chan, packet);
+    	}
+    	else
+    	{
+
+    	}
+		return;
     }
     switch(clients[n]->type)
     {
@@ -224,6 +231,7 @@ void sendpacket(int n, int chan, ENetPacket *packet, int exclude)
 void sendf(int cn, int chan, const char *format, ...)
 {
     int exclude = -1;
+    int proximity = -1;
     bool reliable = false;
     if(*format=='r') { reliable = true; ++format; }
     packetbuf p(MAXTRANS, reliable ? ENET_PACKET_FLAG_RELIABLE : 0);
@@ -234,6 +242,13 @@ void sendf(int cn, int chan, const char *format, ...)
         case 'x':
             exclude = va_arg(args, int);
             break;
+
+        case 'p':
+        {
+        	//a proximity specifies the cn of the player whos rooms should receive the message
+        	proximity = va_arg(args, int);
+        	break;
+        }
 
         case 'v':
         {
@@ -264,7 +279,7 @@ void sendf(int cn, int chan, const char *format, ...)
         }
     }
     va_end(args);
-    sendpacket(cn, chan, p.finalize(), exclude);
+    sendpacket(cn, chan, p.finalize(), exclude, proximity);
 }
 
 void sendfile(int cn, int chan, stream *file, const char *format, ...)
@@ -569,14 +584,20 @@ void server_sigint(int signal)
     quit();
 }
 
+void setup_signal_handlers()
+{
+    signal(SIGINT, server_sigint);
+	signal(SIGTERM, server_sigint);
+}
+
 void rundedicatedserver()
 {
     #ifdef WIN32
     SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
     #endif
-    puts("dedicated CXSBS server started...\nCtrl-C to exit\n\n");
+    puts("dedicated CXSBS server started...\nCtrl-C to exit\n");
     SbPy::triggerEventf("server_start", "");
-    for(;rundedicated;) serverslice(4, false);
+    for(;rundedicated;) serverslice(5, false);
 }
 
 bool servererror(bool dedicated, const char *desc)
@@ -629,10 +650,7 @@ bool setuplistenserver(bool dedicated)
 void initserver(bool listen, bool dedicated)
 {
 	char *tempserverinitfile = new char[strlen(serverinitfile) + strlen(server::instanceRoot) + 2];
-	strcat(tempserverinitfile, server::instanceRoot);
-	strcat(tempserverinitfile, "/");
-	strcat(tempserverinitfile, serverinitfile);
-	//std::cout << tempserverinitfile << std::endl;
+	sprintf(tempserverinitfile, "%s/%s", server::instanceRoot, serverinitfile);
 	setsvar("serverinitfile", tempserverinitfile);
 
     if(dedicated) execfile(serverinitfile, false);
@@ -644,8 +662,7 @@ void initserver(bool listen, bool dedicated)
         conoutf("Server initialization failed.");
         return;
     }
-    signal(SIGINT, server_sigint);
-	signal(SIGTERM, server_sigint);
+    setup_signal_handlers();
 
     if(listen)
     {
@@ -732,8 +749,8 @@ int main(int argc, char* argv[])
     SbPy::triggerEventf("server_stop", "");
 
     //two more server slices just to make sure all the clients got disconnected appropriately
-    serverslice(5, false);
-    serverslice(5, true);
+    serverslice(100, true);
+    serverslice(100, true);
 
     //Finally shutdown the interpreter and return
     SbPy::deinitPy();

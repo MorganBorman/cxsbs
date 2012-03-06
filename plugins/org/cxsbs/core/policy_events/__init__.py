@@ -4,6 +4,8 @@ class policy_events(pyTensible.Plugin):
 		
 	def load(self):
 		
+		handlers()
+		
 		Interfaces = {}
 		Resources = {}
 		
@@ -12,22 +14,24 @@ class policy_events(pyTensible.Plugin):
 	def unload(self):
 		pass
 	
-org = pyTensible.plugin_loader.get_resource("org")
-
-import sbserver
-
-@org.cxsbs.core.events.manager.event_handler('client_connect_pre')
-def on_client_connect_pre(event):
-	pass
-
-@org.cxsbs.core.events.manager.event_handler('client_auth_timout')
-def on_client_auth_timout(event):
-	pass
-
-@org.cxsbs.core.events.manager.event_handler('client_auth_challenge_response')
-def on_client_auth_challenge_response(event):
-	pass
-
-@org.cxsbs.core.events.manager.event_handler('client_message_pre')
-def on_client_auth_timout(event):
-	sbserver.serverReload()
+def handlers():
+	import sbserver
+		
+	org = pyTensible.plugin_loader.get_resource("org")
+	
+	@org.cxsbs.core.events.manager.event_handler('client_connect_pre')
+	def on_client_connect_pre(event):
+		sbserver.clientInitialize(event.args[0])
+	
+	@org.cxsbs.core.events.manager.event_handler('client_auth_timout')
+	def on_client_auth_timout(event):
+		pass
+	
+	@org.cxsbs.core.events.manager.event_handler('client_auth_challenge_response')
+	def on_client_auth_challenge_response(event):
+		pass
+	
+	@org.cxsbs.core.events.manager.event_handler('client_message_pre')
+	def on_client_auth_timout(event):
+		if event.args[1] == "#reload":
+			sbserver.serverReload()

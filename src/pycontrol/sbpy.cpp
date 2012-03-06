@@ -222,7 +222,7 @@ bool init(const char *programName, const char *pythonRoot, const char *pluginPat
 	Py_SetProgramName(pn);
 
 	// Initialize
-	Py_Initialize();
+	Py_InitializeEx(0);
 	initModule();
 	if(!initPy())
 	{
@@ -285,8 +285,6 @@ bool triggerFuncEvent(const char *name, std::vector<PyObject*> *args, PyObject *
 	return true;
 }
 
-#undef SBPY_ERR
-
 bool triggerEvent(const char*name, std::vector<PyObject*>* args)
 {
 	return triggerFuncEvent(name, args, trigger_eventFunction);
@@ -346,7 +344,7 @@ bool update()
 		// Deinitialize
 		deinitPy();
 		// Initialize
-		Py_Initialize();
+		Py_InitializeEx(0);
 		initModule();
 		if(!initPy())
 		{
@@ -355,14 +353,35 @@ bool update()
 		}
 		reload_on_update = false;
 		server::reinitclients();
+		setup_signal_handlers();
 	}
 
 	PyObject *pargs, *pvalue;
 	pargs = PyTuple_New(0);
 	pvalue = callPyFunc(updateFunction, pargs);
-	if(pvalue)
+
+
+
+	if(!pvalue)
+	{
+		if(PyErr_ExceptionMatches(PyExc_KeyboardInterrupt))
+		{
+			printf("Exception matched. Shutting down.");
+			return false;
+		}
+		else
+		{
+			printf("Exception occurred in Python update method.\n");
+			PyErr_Print();
+		}
+	}
+	else
+	{
 		Py_DECREF(pvalue);
+	}
 	return true;
 }
+
+#undef SBPY_ERR
 
 }

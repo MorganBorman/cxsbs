@@ -1,0 +1,14 @@
+[Plug-in]
+SymbolicName = org.cxsbs.core.maps.rotation
+Version = 1.0.0
+Author = Morgan Borman
+Enabled = True
+
+[Resources]
+#None
+
+[Implements]
+pyTensible.Plugin = [1.0.0,1.0.0]
+
+[Dependencies]
+org.cxsbs.core.events.manager = [1.0.0,1.0.0]

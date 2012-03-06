@@ -1,0 +1,22 @@
+[Plug-in]
+SymbolicName = org.cxsbs.core.ui.colors
+Version = 1.0.0
+Author = Morgan Borman
+Enabled = True
+
+[Resources]
+colorstring
+colordict
+
+#colors
+green
+blue
+yellow
+red
+grey
+magenta
+orange
+white
+
+[Implements]
+pyTensible.Plugin = [1.0.0,1.0.0]
