@@ -1,0 +1,21 @@
+[Plug-in]
+SymbolicName = org.cxsbs.core.settings.nullstore
+Version = 1.0.0
+Author = Morgan Borman
+Enabled = True
+
+[Interfaces]
+#None
+
+[Resources]
+NullStore[org.cxsbs.core.settings.interfaces.ISettingStore]
+
+[Implements]
+pyTensible.Plugin = [1.0.0,1.0.0]
+org.cxsbs.core.settings.interfaces.ISettingStore = [1.0.0,1.0.0]
+
+[Dependencies]
+org.cxsbs.core.settings.exceptions = [1.0.0,1.0.0]
+
+[Requests]
+#None

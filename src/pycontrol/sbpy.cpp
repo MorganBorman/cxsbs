@@ -87,10 +87,10 @@ PyObject *callPyStringFunc(PyObject *func, const char *text)
 }
 
 //Objects associated with pyTensible
-static PyObject *pyTensibleModule, *PluginLoaderClass, *plugin_loaderObject, *setup_loggingFunction, *load_pluginsFunction, *get_resourceFunction;
+static PyObject *pyTensibleModule, *PluginLoaderClass, *plugin_loaderObject, *setup_loggingFunction, *load_pluginsFunction;
 
 //Objects associated with org.cxsbs.system
-static PyObject *trigger_eventFunction, *updateFunction;
+static PyObject *eventsManagerModule, *trigger_eventFunction, *sliceModule, *updateFunction;
 
 bool initPy()
 {
@@ -142,33 +142,31 @@ bool initPy()
 	//Actually load the plugins...
 	callPyStringFunc(load_pluginsFunction, plugin_path);
 
-	//get the get_resource function
-	get_resourceFunction = PyObject_GetAttrString(plugin_loaderObject, "get_resource");
-	SBPY_ERR(get_resourceFunction);
-	if(!PyCallable_Check(get_resourceFunction))
-	{
-		fprintf(stderr, "Error: get_resource function could not be loaded.\n");
-		return false;
-	}
-
 	//get the rest of the c++ accessible resources
 
-	
+	//import org.cxsbs.core.events.manager
+	eventsManagerModule = PyImport_ImportModule("org.cxsbs.core.events.manager");
+	SBPY_ERR(eventsManagerModule)
+
 	//Get trigger_event function
-	trigger_eventFunction = callPyStringFunc(get_resourceFunction, "org.cxsbs.core.events.manager.trigger_event");
+	trigger_eventFunction = PyObject_GetAttrString(eventsManagerModule, "trigger_event");
 	SBPY_ERR(trigger_eventFunction)
 	if(!PyCallable_Check(trigger_eventFunction))
 	{
-		fprintf(stderr, "Error: trigger_event function could not be loaded from 'org.cxsbs.core.events.manager.trigger_event'.\n");
+		fprintf(stderr, "Error: trigger_event function could not be loaded from 'org.cxsbs.core.events.manager'.\n");
 		return false;
 	}
 
+	//import org.cxsbs.core.slice
+	sliceModule = PyImport_ImportModule("org.cxsbs.core.slice");
+	SBPY_ERR(sliceModule)
+
 	//get the update function to call on each server slice
-	updateFunction = callPyStringFunc(get_resourceFunction, "org.cxsbs.core.slice.update");
+	updateFunction = PyObject_GetAttrString(sliceModule, "update");
 	SBPY_ERR(updateFunction);
 	if(!PyCallable_Check(updateFunction))
 	{
-		fprintf(stderr, "Error: update function could not be loaded from 'org.cxsbs.core.slice.update'.\n");
+		fprintf(stderr, "Error: update function could not be loaded from 'org.cxsbs.core.slice'.\n");
 		return false;
 	}
 
@@ -185,7 +183,6 @@ void deinitPy()
 	Py_XDECREF(setup_loggingFunction);
 
 	Py_XDECREF(load_pluginsFunction);
-	Py_XDECREF(get_resourceFunction);
 
 	Py_XDECREF(trigger_eventFunction);
 	Py_XDECREF(updateFunction);

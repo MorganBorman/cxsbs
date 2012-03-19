@@ -57,8 +57,5 @@ include_directories(${CMAKE_SOURCE_DIR}/src/engine
 add_executable(../bin/cxsbs ${cxsbs_srcs})
 target_link_libraries(../bin/cxsbs ${CXSBS_LIBS})
 
-add_executable(../bin/keygen keygen.cpp)
-target_link_libraries(../bin/keygen enet sauertools ${ZLIB_LIBRARIES})
-
 install(TARGETS ../bin/cxsbs DESTINATION bin)
 

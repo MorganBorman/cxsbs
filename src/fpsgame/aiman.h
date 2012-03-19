@@ -3,7 +3,7 @@ namespace aiman
 {
     bool dorefresh = false;
     VARN(serverbotlimit, botlimit, 0, 8, MAXBOTS);
-    VARN(serverbotbalance, botbalance, 0, 1, 1);
+    VARN(serverbotbalance, botbalance, 0, 0, 1);
 
     void calcteams(vector<teamscore> &teams)
     {

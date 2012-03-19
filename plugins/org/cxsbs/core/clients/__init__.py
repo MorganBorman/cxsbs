@@ -1,3 +1,5 @@
+import pyTensible, org, cube2server, copy
+
 class clients(pyTensible.Plugin):
 	def __init__(self):
 		pyTensible.Plugin.__init__(self)
@@ -19,7 +21,16 @@ class clients(pyTensible.Plugin):
 	def unload(self):
 		pass
 	
-import sbserver
+class enum(object):
+	def __init__(self, items):
+		i = 0
+		for item in items:
+			self.__setattr__(item, i)
+			i += 1
+
+class ClientConstants(object):
+	disconnect_reasons = enum(['DISC_NONE', 'DISC_EOP', 'DISC_CN', 'DISC_KICK', 'DISC_TAGT', 'DISC_IPBAN', 'DISC_PRIVATE', 'DISC_MAXCLIENTS', 'DISC_TIMEOUT', 'DISC_OVERFLOW', 'DISC_NUM'])
+	client_states = enum(['CS_ALIVE', 'CS_DEAD', 'CS_SPAWNING', 'CS_LAGGED', 'CS_EDITING', 'CS_SPECTATOR', 'CS_INVISIBLE'])
 
 class ClientManager:
 	_clients = {}
@@ -30,6 +41,11 @@ class ClientManager:
 		self._clients = {}
 		self._game_vars_template = {}
 		self._session_vars_template = {}
+		
+	@property
+	def clients(self):
+		#return a shallow copy of the clients dictionary
+		return copy.copy(self._clients)
 		
 	@property
 	def session_vars_template(self):
@@ -65,13 +81,31 @@ def log_client_action(client, action, level):
 
 import copy
 
-class Client:
+class Variables(object):
+	def __init__(self, cn):
+		self.cn = cn
+	
+	def __setitem__(self, key, value):
+		if type(value) == int:
+			valtype = 0
+		elif type(value) == float:
+			valtype = 1
+		elif type(value) == str:
+			valtype = 2
+		else:
+			raise ValueError("Must be set to a integer, float, or string") 
+		
+		print "Setting client variable %s to %s." %(key, str(value))
+		
+		cube2server.clientSetVariable(self.cn, self.cn, valtype, key, value)
+
+class Client(object):
 	'''Represents a client on the server'''
 	def __init__(self, manager, cn):
 		self.__manager = manager
 		self.__cn = cn
-		self.__ip = sbserver.clientIpLong(self.cn)
-		self.__sessionid = sbserver.clientSessionId(cn)
+		self.__ip = cube2server.clientIpLong(self.cn)
+		self.__sessionid = cube2server.clientSessionId(cn)
 		
 		self.__gamevars = copy.deepcopy(self.__manager.game_vars_template)
 		self.__sessionvars = copy.deepcopy(self.__manager.session_vars_template)
@@ -106,17 +140,21 @@ class Client:
 	@property
 	def mapCrc(self):
 		'''Map CRC of the client'''
-		return sbserver.clientMapCrc(self.cn)
+		return cube2server.clientMapCrc(self.cn)
 
 	@property
 	def mapName(self):
 		'''Map name of the client'''
-		return sbserver.clientMapName(self.cn)
+		return cube2server.clientMapName(self.cn)
 	
 	@property
 	def name(self):
 		'''Name of client'''
-		return sbserver.clientName(self.cn)
+		return cube2server.clientName(self.cn)
+	
+	@property
+	def variables(self):
+		return Variables(self.cn)
 	
 	@property
 	def ipLong(self):
@@ -131,32 +169,42 @@ class Client:
 	@property
 	def frags(self):
 		'''Frags by client in current game'''
-		return sbserver.clientFrags(self.cn)
+		return cube2server.clientFrags(self.cn)
 	
 	@property
 	def deaths(self):
 		'''Deaths by client in current game'''
-		return sbserver.clientDeaths(self.cn)
+		return cube2server.clientDeaths(self.cn)
 	
 	@property
 	def teamkills(self):
 		'''Team kills by client in current game'''
-		return sbserver.clientTeamkills(self.cn)
+		return cube2server.clientTeamkills(self.cn)
+	
+	@property
+	def suicides(self):
+		'''Suicides by client in current game'''
+		return cube2server.clientSuicides(self.cn)
+	
+	@property
+	def damage_spent(self):
+		'''Shots the client has fired'''
+		return cube2server.clientDamageSpent(self.cn)
+	
+	@property
+	def damage_dealt(self):
+		'''Number of hits the client has dealt'''
+		return cube2server.clientDamageDealt(self.cn)
+	
+	@property
+	def damage_received(self):
+		'''Amount of damage the client has received'''
+		return cube2server.clientDamageReceived(self.cn)
 	
 	@property
 	def ping(self):
 		'''Last reported ping of client'''
-		return sbserver.clientPing(self.cn)
-	
-	@property
-	def shots(self):
-		'''Shots the client has fired'''
-		return sbserver.clientShots(self.cn)
-	
-	@property
-	def hits(self):
-		'''Number of hits the client has dealt'''
-		return sbserver.clientHits(self.cn)
+		return cube2server.clientPing(self.cn)
 	
 	@property
 	def accuracy(self):
@@ -183,14 +231,14 @@ class Client:
 		return kpd
 	
 	@property
-	def score(self):
+	def flags_scored(self):
 		'''Flags the client has scored'''
-		return sbserver.clientScore(self.cn)
+		return cube2server.clientFlagsScored(self.cn)
 	
 	@property
 	def groups(self):
 		'''Returns the groups which are based on server state'''
-		clientPriv = sbserver.clientPrivilege(self.cn)
+		clientPriv = cube2server.clientPrivilege(self.cn)
 		groups = []
 		groups.append("__all__")
 		
@@ -215,34 +263,34 @@ class Client:
 	@property
 	def team(self):
 		'''Name of team client belongs to'''
-		return sbserver.clientTeam(self.cn)
+		return cube2server.clientTeam(self.cn)
 	
 	@team.setter
-	def __set_team(self, team):
+	def team(self, team):
 		'''Set the team that this client is on'''
-		sbserver.clientSetTeam(self.cn, team)
+		cube2server.clientSetTeam(self.cn, team)
 	
 	@property
 	def spectator(self):
 		'''Is client a spectator'''
-		return sbserver.clientState(self.cn) >= CS_SPECTATOR
+		return cube2server.clientState(self.cn) >= CS_SPECTATOR
 	
 	@spectator.setter
-	def __set_spectator(self, value):
+	def spectator(self, value):
 		if not type(value) == boolean:
 			raise ValueError("Client spectator state must be boolean.")
-		sbserver.clientSetSpectator(self.cn, value)
+		cube2server.clientSetSpectator(self.cn, value)
 	
 	@property
 	def invisible(self):
 		'''Is client invisible'''
-		return sbserver.clientState(self.cn) == CS_INVISIBLE
+		return cube2server.clientState(self.cn) == CS_INVISIBLE
 	
 	@invisible.setter
-	def __set_invisible(self, value):
-		if not type(value) == boolean:
+	def invisible(self, value):
+		if not type(value) == bool:
 			raise ValueError("Client invisible state must be boolean.")
-		sbserver.clientSetSpectator(self.cn, value)
+		cube2server.clientSetInvisible(self.cn, value)
 	
 	#normal methods
 	
@@ -263,22 +311,22 @@ class Client:
 		return permitted
 	def requestAuth(self, description):
 		'''Request that a client send their auth key with the given description'''
-		sbserver.clientRequestAuth(self.cn, description)
+		cube2server.clientRequestAuth(self.cn, description)
 	def say(self, tcn, message):
 		'''Send a message as this client to another client'''
-		sbserver.clientMessageAll(self.cn, tcn, message)
+		cube2server.clientMessageAll(self.cn, tcn, message)
 	def sayteam(self, tcn, message):
 		'''Send a team message as this client to another client'''
-		sbserver.clientMessageTeam(self.cn, tcn, message)
+		cube2server.clientMessageTeam(self.cn, tcn, message)
 	def message(self, msg):
 		'''Send message to client'''
-		sbserver.clientMessage(self.cn, msg)
+		cube2server.clientMessage(self.cn, msg)
 	def disconnect(self, reason=0):
 		'''Disconnect client from server'''
-		sbserver.clientDisconnect(self.cn, reason)
+		cube2server.clientDisconnect(self.cn, reason)
 	def setDisconnect(self, reason=0):
 		'''Disconnect client from server'''
-		sbserver.clientSetDisconnect(self.cn, reason)
+		cube2server.clientSetDisconnect(self.cn, reason)
 	def suicide(self):
 		'''Force client to commit suicide'''
-		sbserver.suicide(self.cn)
+		cube2server.suicide(self.cn)

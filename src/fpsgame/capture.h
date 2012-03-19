@@ -135,6 +135,13 @@ struct captureservmode : servmode
 
     bool hidefrags() { return true; }
 
+    void setteamscore(const char *team, int toscore)
+    {
+    	score &cs = findscore(team);
+    	cs.total = toscore;
+    	sendf(-1, 1, "riisi", N_BASESCORE, -1, team, toscore);
+    }
+
     int getteamscore(const char *team)
     {
         loopv(scores)

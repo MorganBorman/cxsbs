@@ -1,0 +1,15 @@
+[Plug-in]
+SymbolicName = org.cxsbs.core.settings.exceptions
+Version = 1.0.0
+Author = Morgan Borman
+Enabled = True
+
+[Resources]
+InvalidSettingReference
+InvalidSettingRepresentation
+InvalidSettingValue
+InvalidSettingType
+InvalidSettingUninitialized
+
+[Implements]
+pyTensible.Plugin = [1.0.0,1.0.0]

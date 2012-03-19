@@ -1,0 +1,11 @@
+[Plug-in]
+SymbolicName = org.cxsbs.core.logger
+Version = 1.0.0
+Author = Morgan Borman
+Enabled = True
+
+[Resources]
+log
+
+[Implements]
+pyTensible.Plugin = [1.0.0,1.0.0]

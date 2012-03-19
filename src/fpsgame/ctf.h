@@ -117,6 +117,31 @@ struct ctfservmode : servmode
 
     bool hidefrags() { return true; }
 
+    void setteamscore(const char *team, int to_score)
+    {
+    	int teamnum = ctfteamflag(team);
+    	if(!teamnum) return;
+
+    	flag *f;
+
+    	loopv(flags)
+    	{
+    		if(flags[i].team == teamnum)
+    		{
+    			f = &flags[i];
+    		}
+    	}
+
+        setscore(teamnum, to_score);
+        //If the flag exists and is at the base then it's safe to do a N_RESETFLAG
+        //Otherwise we just have to wait for one to occur naturally.
+        if(f && !f->droptime)
+        {
+        	//flag = getint(p), version = getint(p), spawnindex = getint(p), team = getint(p), score = getint(p);
+        	sendf(-1, 1, "ri6", N_RESETFLAG, f->id, ++f->version, f->spawnindex, teamnum, to_score);
+        }
+    }
+
     int getteamscore(const char *team)
     {
         return totalscore(ctfteamflag(team));
@@ -164,7 +189,7 @@ struct ctfservmode : servmode
                 ivec o(vec(ci->state.o).mul(DMF));
                 sendf(-1, 1, "ri7", N_DROPFLAG, ci->clientnum, i, ++f.version, o.x, o.y, o.z);
                 SbPy::triggerEventf("client_dropped_flag", "ii", ci->clientnum, i);
-		ci->state.flags_droped++;
+                ci->state.flags_dropped++;
                 dropflag(i, o.tovec().div(DMF), lastmillis, ci->clientnum);
             }
         }
@@ -179,6 +204,7 @@ struct ctfservmode : servmode
     void died(clientinfo *ci, clientinfo *actor)
     {
         dropflag(ci);
+        actor->state.flags_stopped++;
         loopv(flags) if(flags[i].dropper == ci->clientnum)
         {
             flags[i].dropper = -1;
@@ -213,11 +239,11 @@ struct ctfservmode : servmode
     {
     	if(ci->state.state == CS_INVISIBLE) return;
         returnflag(relay >= 0 ? relay : goal, m_protect ? lastmillis : 0);
-        ci->state.flags++;
+        ci->state.flags_scored++;
         int team = ctfteamflag(ci->team), score = addscore(team, 1);
         if(m_hold) spawnflag(goal);
-        sendf(-1, 1, "rii9", N_SCOREFLAG, ci->clientnum, relay, relay >= 0 ? ++flags[relay].version : -1, goal, ++flags[goal].version, flags[goal].spawnindex, team, score, ci->state.flags);
-	SbPy::triggerEventf("client_scored_flag", "ii", ci->clientnum, relay);
+        sendf(-1, 1, "rii9", N_SCOREFLAG, ci->clientnum, relay, relay >= 0 ? ++flags[relay].version : -1, goal, ++flags[goal].version, flags[goal].spawnindex, team, score, ci->state.flags_scored);
+        SbPy::triggerEventf("client_scored_flag", "ii", ci->clientnum, relay);
         if(score >= FLAGLIMIT) startintermission();
     }
 
@@ -241,6 +267,7 @@ struct ctfservmode : servmode
         else if(f.droptime)
         {
             returnflag(i);
+            ci->state.flags_returned++;
             sendf(-1, 1, "ri4", N_RETURNFLAG, ci->clientnum, i, ++f.version);
         }
         else

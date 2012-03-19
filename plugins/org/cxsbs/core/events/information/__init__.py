@@ -1,3 +1,5 @@
+import pyTensible, org
+
 class information(pyTensible.Plugin):
 	def __init__(self):
 		pyTensible.Plugin.__init__(self)

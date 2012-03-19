@@ -1,3 +1,5 @@
+import pyTensible, org
+
 class slice(pyTensible.Plugin):
 	def __init__(self):
 		pyTensible.Plugin.__init__(self)
@@ -14,8 +16,6 @@ class slice(pyTensible.Plugin):
 
 def update():
 	pass
-
-org = pyTensible.plugin_loader.get_resource("org")
 
 @org.cxsbs.core.events.manager.event_handler('server_stop')
 def on_server_stop(event):

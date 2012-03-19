@@ -647,57 +647,26 @@ bool setuplistenserver(bool dedicated)
     return true;
 }
 
-void initserver(bool listen, bool dedicated)
+bool initserver()
 {
 	char *tempserverinitfile = new char[strlen(serverinitfile) + strlen(server::instanceRoot) + 2];
 	sprintf(tempserverinitfile, "%s/%s", server::instanceRoot, serverinitfile);
 	setsvar("serverinitfile", tempserverinitfile);
 
-    if(dedicated) execfile(serverinitfile, false);
+    execfile(serverinitfile, false);
 
-    if(listen) setuplistenserver(dedicated);
+    setuplistenserver(true);
 
     if(!server::serverinit())
     {
         conoutf("Server initialization failed.");
-        return;
+        return false;
     }
     setup_signal_handlers();
 
-    if(listen)
-    {
-        if(dedicated) rundedicatedserver(); // never returns
-#ifndef STANDALONE
-        else conoutf("listen server started");
-#endif
-    }
+    rundedicatedserver(); // returns at server end
+    return true;
 }
-
-#ifndef STANDALONE
-void startlistenserver(int *usemaster)
-{
-    if(serverhost) { conoutf(CON_ERROR, "listen server is already running"); return; }
-
-    allowupdatemaster = *usemaster>0 ? 1 : 0;
- 
-    if(!setuplistenserver(false)) return;
-    
-    conoutf("listen server started for %d clients%s", maxclients, allowupdatemaster ? " and listed with master server" : ""); 
-}
-COMMAND(startlistenserver, "i");
-
-void stoplistenserver()
-{
-    if(!serverhost) { conoutf(CON_ERROR, "listen server is not running"); return; }
-
-    kicknonlocalclients();
-    enet_host_flush(serverhost);
-    cleanupserver();
-
-    conoutf("listen server stopped");
-}
-COMMAND(stoplistenserver, "");
-#endif
 
 void showhelp()
 {
@@ -745,15 +714,23 @@ int main(int argc, char* argv[])
     enet_time_set(0);
     for(int i = 1; i<argc; i++) if(argv[i][0]!='-' || !serveroption(argv[i])) gameargs.add(argv[i]);
     game::parseoptions(gameargs);
-    initserver(true, true);
-    SbPy::triggerEventf("server_stop", "");
+    if(initserver())
+    {
+		SbPy::triggerEventf("server_stop", "");
 
-    //two more server slices just to make sure all the clients got disconnected appropriately
-    serverslice(100, true);
-    serverslice(100, true);
+		flushserver(true);
 
-    //Finally shutdown the interpreter and return
-    SbPy::deinitPy();
-    return 0;
+		//two more server slices just to make sure all the clients got disconnected appropriately
+		serverslice(100, true);
+		serverslice(100, true);
+
+		//Finally shutdown the interpreter and return
+		SbPy::deinitPy();
+		return 0;
+    }
+    else
+    {
+    	return 1;
+    }
 }
 #endif

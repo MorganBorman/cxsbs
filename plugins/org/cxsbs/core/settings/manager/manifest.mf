@@ -1,0 +1,28 @@
+[Plug-in]
+SymbolicName = org.cxsbs.core.settings.manager
+Version = 1.0.0
+Author = Morgan Borman
+Enabled = True
+
+[Interfaces]
+
+[Resources]
+#a decorator which allows access to all loaded setting types by name
+Setting
+
+#a class providing indexing into the settings
+Accessor
+
+#the actual manager
+settings_manager(org.cxsbs.core.settings.interfaces.ISettingsManager)
+
+[Implements]
+pyTensible.Plugin = [1.0.0,1.0.0]
+org.cxsbs.core.settings.interfaces.ISettingsManager = [1.0.0,1.0.0]
+
+[Dependencies]
+org.cxsbs.core.events.manager = [1.0.0,1.0.0]
+
+[Requests]
+org.cxsbs.core.settings.interfaces.ISettingStore = [1.0.0,1.0.0]
+org.cxsbs.core.settings.interfaces.ISetting = [1.0.0,1.0.0]

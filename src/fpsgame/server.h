@@ -120,19 +120,46 @@ namespace server
             return false;
         }
     };
+
+    struct weapon_stat
+    {
+    	int damage_spent, damage_dealt;
+    	int kills;
+    	int spree, maxspree;
+
+        void reset()
+        {
+        	damage_spent, damage_dealt = 0;
+        	kills = 0;
+        	spree, maxspree = 0;
+        }
+    };
 	
     struct gamestate : fpsstate
     {
         vec o;
-        int state, editstate;
-        int lastdeath, lastspawn, lifesequence;
-        int lastshot;
         projectilestate<8> rockets, grenades;
-        int frags, flags, deaths, teamkills, shotdamage, damage, damage_rec;
-        int lasttimeplayed, timeplayed;
-        int shots, hits;
-	int flags_droped;
-        float effectiveness;
+
+        int state, editstate;
+        int lastdeath, lastspawn, lastshot, lasttimeplayed, lifesequence;
+
+        //stats stuff
+        weapon_stat weapon_stats[GUN_PISTOL+1];
+
+        //last kill info
+        int lastkill, lastkill_weapon;
+
+        //time totals
+        int timeplayed, timespectated;
+
+        //totals for regular stats
+        int frags, deaths, teamkills, suicides, spree, maxspree;
+
+        //totals for accuracy and effectiveness
+        int damage_spent, damage_dealt, damage_received;
+
+        //totals for ctf modes
+        int flags_scored, flags_dropped, flags_stopped, flags_returned;
 		
         gamestate() : state(CS_DEAD), editstate(CS_DEAD) {}
 		
@@ -152,11 +179,62 @@ namespace server
             maxhealth = 100;
             rockets.reset();
             grenades.reset();
-            timeplayed = 0;
-            effectiveness = 0;
-            frags = flags = deaths = teamkills = shotdamage = damage = 0;
-            shots = hits = 0;
+
+            lastdeath, lastspawn, lastshot, lasttimeplayed, lifesequence = 0;
+
+            //reset the stats stuff
+            loopi(GUN_PISTOL+1)
+            {
+            	weapon_stats[i].reset();
+            }
+            lastkill, lastkill_weapon = 0;
+            timeplayed, timespectated = 0;
+            frags, deaths, teamkills, suicides, spree, maxspree = 0;
+            damage_spent, damage_dealt, damage_received = 0;
+            flags_scored, flags_dropped, flags_stopped, flags_returned = 0;
+
             respawn();
+        }
+
+        void weapon_kill(int gun, int who)
+        {
+            loopi(GUN_PISTOL+1)
+            {
+            	if(i != gun)
+            	{
+            		if(weapon_stats[i].spree > 0)
+            		{
+            			if(weapon_stats[i].spree > weapon_stats[i].maxspree)
+            			{
+            				weapon_stats[i].maxspree = weapon_stats[i].spree;
+            			}
+            			SbPy::triggerEventf("client_weapon_spree_ended", "iii", who, gun, weapon_stats[i].spree);
+            		}
+            		weapon_stats[i].spree = 0;
+            	}
+            	else
+            	{
+            		weapon_stats[i].spree++;
+            		if(weapon_stats[i].spree > 1)
+            		{
+            			if(weapon_stats[i].spree > weapon_stats[i].maxspree)
+            			{
+            				weapon_stats[i].maxspree = weapon_stats[i].spree;
+            			}
+            			SbPy::triggerEventf("client_weapon_spree", "iii", who, gun, weapon_stats[i].spree);
+            		}
+            	}
+            }
+        }
+
+        void reset_sprees(int who)
+        {
+        	if (spree > maxspree)
+        	{
+        		maxspree = spree;
+        	}
+        	weapon_kill(-1, who);
+        	spree = 0;
         }
 		
         void respawn()
@@ -166,6 +244,7 @@ namespace server
             lastdeath = 0;
             lastspawn = -1;
             lastshot = 0;
+            lastkill = 0;
         }
 		
         void reassign()
@@ -173,42 +252,6 @@ namespace server
             respawn();
             rockets.reset();
             grenades.reset();
-        }
-    };
-	
-    struct savedscore
-    {
-        uint ip;
-        string name;
-        int maxhealth, frags, flags, deaths, teamkills, shotdamage, damage;
-        int timeplayed;
-        float effectiveness;
-		
-        void save(gamestate &gs)
-        {
-            maxhealth = gs.maxhealth;
-            frags = gs.frags;
-            flags = gs.flags;
-            deaths = gs.deaths;
-            teamkills = gs.teamkills;
-            shotdamage = gs.shotdamage;
-            damage = gs.damage;
-            timeplayed = gs.timeplayed;
-            effectiveness = gs.effectiveness;
-        }
-		
-        void restore(gamestate &gs)
-        {
-            if(gs.health==gs.maxhealth) gs.health = maxhealth;
-            gs.maxhealth = maxhealth;
-            gs.frags = frags;
-            gs.flags = flags;
-            gs.deaths = deaths;
-            gs.teamkills = teamkills;
-            gs.shotdamage = shotdamage;
-            gs.damage = damage;
-            gs.timeplayed = timeplayed;
-            gs.effectiveness = effectiveness;
         }
     };
 
@@ -365,6 +408,8 @@ namespace server
         extern void checkai();
         extern bool reqadd(clientinfo *ci, int skill);
         extern bool reqdel(clientinfo *ci);
+        extern int botbalance;
+        extern int botlimit;
         extern void setbotlimit(int limit);
         extern void setbotbalance(bool balance);
         extern void changemap();
@@ -419,10 +464,10 @@ namespace server
 	extern bool demonextmatch;
 	extern int persistentdemos;
 	extern int capacity;
+	extern int interm;
 	extern int persistentintermission;
 	extern stream *demorecord;
 	extern vector<demofile> demos;
-	void savedemofile(const char *s);
 
 	struct servmode
 	{
@@ -434,11 +479,6 @@ namespace server
 		virtual void moved(clientinfo *ci, const vec &oldpos, bool oldclip, const vec &newpos, bool newclip) {}
 		virtual bool canspawn(clientinfo *ci, bool connecting = false) { return true; }
 		virtual void spawned(clientinfo *ci) {}
-		virtual int fragvalue(clientinfo *victim, clientinfo *actor)
-		{
-			if(victim==actor || isteam(victim->team, actor->team)) return -1;
-			return 1;
-		}
 		virtual void died(clientinfo *victim, clientinfo *actor) {}
 		virtual bool canchangeteam(clientinfo *ci, const char *oldteam, const char *newteam) { return true; }
 		virtual void changeteam(clientinfo *ci, const char *oldteam, const char *newteam) {}
@@ -447,6 +487,7 @@ namespace server
 		virtual void reset(bool empty) {}
 		virtual void intermission() {  }
 		virtual bool hidefrags() { return false; }
+        virtual void setteamscore(const char *team, int score) {}
 		virtual int getteamscore(const char *team) { return 0; }
 		virtual void getteamscores(vector<teamscore> &scores) {}
 		virtual bool extinfoteam(const char *team, ucharbuf &p) { return false; }
@@ -481,7 +522,9 @@ namespace server
 	void setTimeLeft(int milliseconds);
 	void resetpriv(clientinfo *ci);
 	void sendmapreload();
-	void senddemo(int cn, int num);
+	void senddemo(int cn, uchar *data);
+	void setupdemorecord();
+	void enddemorecord();
 	void suicide(clientinfo *ci);
 	int numchannels();
 }

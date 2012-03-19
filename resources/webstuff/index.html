@@ -1,0 +1,76 @@
+<html>
+  <head>
+    <title>CXSBS panel</title>
+    
+	<script type="text/javascript" src="cube2crypto.o.js"></script>
+    <script type="text/javascript" src="cube2crypto.h.js"></script>
+    
+	<script type="text/javascript">
+		function initiate_auth()
+		{
+			var xmlhttp;
+			
+			if (window.XMLHttpRequest)
+		  	{// code for IE7+, Firefox, Chrome, Opera, Safari
+		  		xmlhttp=new XMLHttpRequest();
+		  	}
+			else
+		  	{// code for IE6, IE5
+		  		xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+		  	}
+		  	
+			xmlhttp.onreadystatechange=function()
+		  	{
+		  		if (xmlhttp.readyState==4 && xmlhttp.status==200)
+		    	{
+		    		var privkey = document.getElementById("privkey").value;
+		    		var challenge = xmlhttp.responseText;
+		    		answer_challenge(Module.answerchallenge(privkey, challenge));
+		    	}
+		  	}
+		  	
+		  	var username = document.getElementById("email").value;
+		  	
+			xmlhttp.open("GET","/auth/"+username,true);
+			xmlhttp.send();
+		}
+		
+		function answer_challenge(answer)
+		{
+			var xmlhttp;
+			
+			if (window.XMLHttpRequest)
+		  	{// code for IE7+, Firefox, Chrome, Opera, Safari
+		  		xmlhttp=new XMLHttpRequest();
+		  	}
+			else
+		  	{// code for IE6, IE5
+		  		xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+		  	}
+		  	
+			xmlhttp.onreadystatechange=function()
+		  	{
+		  		if (xmlhttp.readyState==4 && xmlhttp.status==200)
+		    	{
+		    		document.getElementById("myDiv").innerHTML=xmlhttp.responseText;
+		    	}
+		  	}
+		  	
+			xmlhttp.open("GET","/challenge/"+answer,true);
+			xmlhttp.send();
+		}
+		
+	</script>
+    
+  </head>
+  <body>
+  
+	<div id="myDiv">Status goes here.</div>
+  
+    <input type='text' id='email' style='width: 200px;' \><br>
+    <input type='text' id='privkey' style='width: 348px;' \><br>
+    <input type='button' onclick='initiate_auth();' value='Login' />
+	
+  </body>
+</html>
+

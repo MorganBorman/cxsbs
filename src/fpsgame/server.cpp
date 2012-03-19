@@ -87,7 +87,6 @@ namespace server
 	}
 
 	vector<server_entity> sents;
-	vector<savedscore> scores;
 
 	int msgsizelookup(int msg)
 	{
@@ -322,7 +321,7 @@ namespace server
 			clientinfo *ci = clients[i];
 			if(ci->state.state == CS_INVISIBLE) continue;
 			if(ci->state.timeplayed<0) continue;
-			float rank = ci->state.state!=CS_SPECTATOR ? ci->state.effectiveness/max(ci->state.timeplayed, 1) : -1;
+			float rank = ci->state.state!=CS_SPECTATOR ? ((float)ci->state.damage_dealt/(float)ci->state.damage_received) /max(ci->state.timeplayed, 1) : -1;
 			if(!best || rank > bestrank) { best = ci; bestrank = rank; }
 		}
 		return best;
@@ -444,7 +443,7 @@ namespace server
 			loopj(numteams) if(!strcmp(ci->team, teamranks[j].name))
 			{
 				teamrank &ts = teamranks[j];
-				ts.rank += ci->state.effectiveness/max(ci->state.timeplayed, 1);
+				ts.rank += ((float)ci->state.damage_dealt/(float)ci->state.damage_received)/max(ci->state.timeplayed, 1);
 				ts.clients++;
 				break;
 			}
@@ -524,41 +523,6 @@ namespace server
 		initclientpacket(p, NULL);
 		writedemo(1, p.buf, p.len);
 	}
-	/*
-	void listdemos(int cn)
-	{
-		packetbuf p(MAXTRANS, ENET_PACKET_FLAG_RELIABLE);
-		putint(p, N_SENDDEMOLIST);
-		putint(p, demos.length());
-		loopv(demos) sendstring(demos[i].info, p);
-		sendpacket(cn, 1, p.finalize());
-	}
-
-	void cleardemos(int n)
-	{
-		if(!n)
-		{
-			loopv(demos) delete[] demos[i].data;
-			demos.shrink(0);
-			sendservmsg("cleared all demos");
-		}
-		else if(demos.inrange(n-1))
-		{
-			delete[] demos[n-1].data;
-			demos.remove(n-1);
-			defformatstring(msg)("cleared demo %d", n);
-			sendservmsg(msg);
-		}
-	}
-
-	void senddemo(int cn, int num)
-	{
-		if(!num) num = demos.length();
-		if(!demos.inrange(num-1)) return;
-		demofile &d = demos[num-1];
-		sendf(cn, 2, "rim", N_SENDDEMO, d.len, d.data);
-	}
-*/
 
 	void enddemoplayback()
 	{
@@ -743,43 +707,6 @@ namespace server
 				resetpriv(ci);
 				return;
 		}
-	}
-
-	savedscore &findscore(clientinfo *ci, bool insert)
-	{
-		uint ip = getclientip(ci->clientnum);
-		if(!ip && !ci->local) return *(savedscore *)0;
-		if(!insert)
-		{
-			loopv(clients)
-			{
-				clientinfo *oi = clients[i];
-				if(oi->clientnum != ci->clientnum && getclientip(oi->clientnum) == ip && !strcmp(oi->name, ci->name))
-				{
-					oi->state.timeplayed += lastmillis - oi->state.lasttimeplayed;
-					oi->state.lasttimeplayed = lastmillis;
-					static savedscore curscore;
-					curscore.save(oi->state);
-					return curscore;
-				}
-			}
-		}
-		loopv(scores)
-		{
-			savedscore &sc = scores[i];
-			if(sc.ip == ip && !strcmp(sc.name, ci->name)) return sc;
-		}
-		if(!insert) return *(savedscore *)0;
-		savedscore &sc = scores.add();
-		sc.ip = ip;
-		copystring(sc.name, ci->name);
-		return sc;
-	}
-
-	void savescore(clientinfo *ci)
-	{
-		savedscore &sc = findscore(ci, true);
-		if(&sc) sc.save(ci->state);
 	}
 
 	int checktype(int type, clientinfo *ci)
@@ -1114,7 +1041,7 @@ namespace server
 				putint(p, oi->clientnum);
 				putint(p, oi->state.state);
 				putint(p, oi->state.frags);
-				putint(p, oi->state.flags);
+				putint(p, oi->state.flags_scored);
 				putint(p, oi->state.quadmillis);
 				sendstate(oi->state, p);
 			}
@@ -1133,24 +1060,12 @@ namespace server
 		return 1;
 	}
 
-	bool restorescore(clientinfo *ci)
-	{
-		//if(ci->local) return false;
-		savedscore &sc = findscore(ci, false);
-		if(&sc)
-		{
-			sc.restore(ci->state);
-			return true;
-		}
-		return false;
-	}
-
 	void sendresume(clientinfo *ci)
 	{
 		gamestate &gs = ci->state;
 		if(ci->state.state != CS_INVISIBLE)
 		sendf(-1, 1, "ri3i9vi", N_RESUME, ci->clientnum,
-			gs.state, gs.frags, gs.flags, gs.quadmillis,
+			gs.state, gs.frags, gs.flags_scored, gs.quadmillis,
 			gs.lifesequence,
 			gs.health, gs.maxhealth,
 			gs.armour, gs.armourtype,
@@ -1179,7 +1094,6 @@ namespace server
 		copystring(smapname, s);
 		resetitems();
 		notgotitems = true;
-		scores.setsize(0);
 		loopv(clients)
 		{
 			clientinfo *ci = clients[i];
@@ -1244,11 +1158,56 @@ namespace server
 		sendf(-1, 1, "ri2", N_TIMEUP, gamemillis < gamelimit && !interm ? max((gamelimit - gamemillis)/1000, 1) : 0);
 	}
 
+	void trigger_stats(clientinfo *ci)
+	{
+		PyObject *pTuple_weapon_stats = PyTuple_New(GUN_PISTOL+1);
+
+        loopi(GUN_PISTOL+1)
+        {
+        	//int damage_spent, damage_dealt, kills, maxspree;
+			PyTuple_SetItem(
+					pTuple_weapon_stats, i, Py_BuildValue("(iiii)",
+						ci->state.weapon_stats[i].damage_spent,
+						ci->state.weapon_stats[i].damage_dealt,
+						ci->state.weapon_stats[i].kills,
+						ci->state.weapon_stats[i].maxspree
+					)
+			);
+        }
+
+
+		SbPy::triggerEventf("client_stats_recorded", "i""iiii""i""iiii""ii""O",
+					ci->clientnum,
+
+					ci->state.frags,
+					ci->state.deaths,
+					ci->state.teamkills,
+					ci->state.suicides,
+
+					ci->state.maxspree,
+
+					ci->state.flags_scored,
+					ci->state.flags_stopped,
+					ci->state.flags_dropped,
+					ci->state.flags_returned,
+
+					ci->state.timeplayed,
+					ci->state.timespectated,
+
+					pTuple_weapon_stats
+				);
+	}
+
 	void checkintermission()
 	{
 		if(gamemillis >= gamelimit && !interm)
 		{
 			SbPy::triggerEventf("intermission_begin", "");
+
+			loopv(clients)
+			{
+				trigger_stats(clients[i]);
+			}
 			sendf(-1, 1, "ri2", N_TIMEUP, 0);
 			if(smode) smode->intermission();
 			interm = gamemillis + intermissionlength;
@@ -1262,58 +1221,61 @@ namespace server
 		if(actor->state.state == CS_INVISIBLE) return;
 		gamestate &ts = target->state;
 		ts.dodamage(damage);
+
 		SbPy::triggerEventf("client_inflict_damage", "iii", actor->clientnum, gun, damage);
-		actor->state.damage += damage;
+
+		actor->state.damage_dealt += damage;
+		actor->state.weapon_stats[gun].damage_dealt += damage;
+
+		target->state.damage_received += damage;
+
 		sendf(-1, 1, "ri6", N_DAMAGE, target->clientnum, actor->clientnum, damage, ts.armour, ts.health);
-		if(target==actor) target->setpushed();
+
+		if(target==actor)
+		{
+			target->setpushed();
+		}
 		else if(target!=actor && !hitpush.iszero())
 		{
 			ivec v = vec(hitpush).rescale(DNF);
 			sendf(ts.health<=0 ? -1 : target->ownernum, 1, "ri7", N_HITPUSH, target->clientnum, gun, damage, v.x, v.y, v.z);
 			target->setpushed();
 		}
+
 		if(ts.health<=0)
 		{
 			target->state.deaths++;
-			if(isteam(actor->team, target->team))
+
+			//moved these events down here for clarity
+			//hopefully the order of these things isn't important to any plug-ins
+			if(actor->clientnum == target->clientnum)
 			{
-				if(actor->clientnum != target->clientnum)
-				{
-					actor->state.teamkills++;
-				}
+				actor->state.suicides++;
+				actor->state.reset_sprees(actor->clientnum);
+				SbPy::triggerEventf("client_suicide", "i", actor->clientnum);
+			}
+			else if(isteam(actor->team, target->team))
+			{
+				actor->state.teamkills++;
+				actor->state.reset_sprees(actor->clientnum);
+				SbPy::triggerEventf("client_teamkill", "ii", actor->clientnum, target->clientnum);
+			}
+			else
+			{
+				actor->state.frags++;
+				actor->state.lastkill = gamemillis;
+				actor->state.lastkill_weapon = gun;
+				actor->state.spree++;
+				actor->state.weapon_kill(gun, actor->clientnum);
+				SbPy::triggerEventf("client_frag", "ii", actor->clientnum, target->clientnum);
 			}
 
-			int fragvalue = smode ? smode->fragvalue(target, actor) : (target==actor || isteam(target->team, actor->team) ? -1 : 1);
-			actor->state.frags += fragvalue;
-			if(fragvalue>0)
-			{
-				int friends = 0, enemies = 0; // note: friends also includes the fragger
-				if(m_teammode) loopv(clients) if(strcmp(clients[i]->team, actor->team)) enemies++; else friends++;
-				else { friends = 1; enemies = clients.length()-1; }
-				actor->state.effectiveness += fragvalue*friends/float(max(enemies, 1));
-			}
 			sendf(-1, 1, "ri4", N_DIED, target->clientnum, actor->clientnum, actor->state.frags);
 			target->position.setsize(0);
 			if(smode) smode->died(target, actor);
 			ts.state = CS_DEAD;
 			ts.lastdeath = gamemillis;
-
-			//moved these events down here for clarity
-			//hopefully the order of these things isn't important to any plugins
-			if(actor->clientnum == target->clientnum)
-			{
-				SbPy::triggerEventf("client_suicide", "i", actor->clientnum);
-			}
-			else if(isteam(actor->team, target->team))
-			{
-				SbPy::triggerEventf("client_teamkill", "ii", actor->clientnum, target->clientnum);
-			}
-			else
-			{
-				SbPy::triggerEventf("client_frag", "ii", actor->clientnum, target->clientnum);
-			}
-			// don't issue respawn yet until DEATHMILLIS has elapsed
-			// ts.respawn();
+			ts.reset_sprees(target->clientnum);
 		}
 	}
 
@@ -1321,12 +1283,11 @@ namespace server
 	{
 		gamestate &gs = ci->state;
 		if(gs.state!=CS_ALIVE) return;
-		ci->state.frags += smode ? smode->fragvalue(ci, ci) : -1;
-		ci->state.deaths++;
+		ci->state.suicides++;
 		if(ci->state.state != CS_INVISIBLE)
 		{
 			sendf(-1, 1, "ri4", N_DIED, ci->clientnum, ci->clientnum, gs.frags);
-	}
+		}
 		ci->position.setsize(0);
 		if(smode) smode->died(ci, NULL);
 		gs.state = CS_DEAD;
@@ -1359,7 +1320,6 @@ namespace server
 		{
 				sendf(-1, 1, "ri4x", N_EXPLODEFX, ci->clientnum, gun, id, ci->ownernum);
 		}
-		gs.shots++;
 		if (!allowshooting) return;
 		loopv(hits)
 		{
@@ -1371,7 +1331,6 @@ namespace server
 			loopj(i) if(hits[j].target==h.target) { dup = true; break; }
 			if(dup) continue;
 
-			gs.hits++;
 			int damage = guns[gun].damage;
 			if(gs.quadmillis) damage *= 4;
 			damage = int(damage*(1-h.dist/RL_DISTSCALE/RL_DAMRAD));
@@ -1400,9 +1359,11 @@ namespace server
 				ci->ownernum);
 	}
 		int tempdamage = guns[gun].damage*(gs.quadmillis ? 4 : 1)*(gun==GUN_SG ? SGRAYS : 1);
-		gs.shotdamage += tempdamage;
+
 		SbPy::triggerEventf("client_spend_damage", "iii", ci->clientnum, gun, tempdamage);
-		gs.shots++;
+		gs.damage_dealt += tempdamage;
+		gs.weapon_stats[gun].damage_dealt += tempdamage;
+
 		if (!allowshooting) return;
 		switch(gun)
 		{
@@ -1417,7 +1378,6 @@ namespace server
 					clientinfo *target = getinfo(h.target);
 					if(!target || target->state.state!=CS_ALIVE || h.lifesequence!=target->state.lifesequence || h.rays<1 || h.dist > guns[gun].range + 1) continue;
 
-					gs.hits++;
 					totalrays += h.rays;
 					if(totalrays>maxrays) continue;
 					int damage = h.rays*guns[gun].damage;
@@ -1599,6 +1559,7 @@ namespace server
 			{
 				ci->state.state = CS_DEAD;
 				ci->state.respawn();
+				sendf(ci->clientnum, 1, "ri3", N_SPECTATOR, ci->clientnum, false);
 				ci->state.lasttimeplayed = lastmillis;
 				aiman::addclient(ci);
 			}
@@ -1612,6 +1573,7 @@ namespace server
 		if (ci->state.state != CS_INVISIBLE && val)
 		{
 			sendf(-1, 1, "ri2", N_CDIS, ci->clientnum);
+			sendf(ci->clientnum, 1, "ri3", N_SPECTATOR, ci->clientnum, true);
 			ci->state.state = CS_INVISIBLE;
 			ci->state.timeplayed += lastmillis - ci->state.lasttimeplayed;
 			aiman::removeai(ci);
@@ -1684,12 +1646,12 @@ namespace server
 	{
 		clientinfo *ci = getinfo(n);
 		SbPy::triggerEventf("client_disconnect", "i", n);
+		trigger_stats(clients[n]);
 		if(ci->connected)
 		{
 			if(ci->privilege) resetpriv(ci);
 			if(smode) smode->leavegame(ci, true);
 			ci->state.timeplayed += lastmillis - ci->state.lasttimeplayed;
-			savescore(ci);
 			if(ci->state.state != CS_INVISIBLE)
 			{
 				sendf(-1, 1, "ri2", N_CDIS, n);
@@ -1802,13 +1764,12 @@ namespace server
 				copystring(ci->team, worst ? worst : "good", MAXTEAMLEN+1);
 
 				sendwelcome(ci);
-				if(restorescore(ci)) sendresume(ci);
 
 				aiman::addclient(ci);
 
 				if(m_demo) setupdemoplayback();
 
-				SbPy::triggerEventf("client_connect_pre", "i", ci->clientnum);
+				SbPy::triggerEventf("client_connect_pol", "i", ci->clientnum);
 			}
 		}
 		else if(chan==2)
@@ -2113,7 +2074,7 @@ namespace server
 			{
 				getstring(text, p);
 				filtertext(text, text);
-				SbPy::triggerEventf("client_message_pre", "is", ci->clientnum, text);
+				SbPy::triggerEventf("client_message_pol", "is", ci->clientnum, text);
 				break;
 			}
 
@@ -2121,14 +2082,14 @@ namespace server
 			{
 				getstring(text, p);
 				filtertext(text, text);
-				SbPy::triggerEventf("client_message_team_pre", "is", ci->clientnum, text);
+				SbPy::triggerEventf("client_message_team_pol", "is", ci->clientnum, text);
 				break;
 			}
 
 			case N_SWITCHNAME:
 			{
 				getstring(text, p);
-				SbPy::triggerEventf("client_name_change_pre", "is", ci->clientnum, text);
+				SbPy::triggerEventf("client_name_change_pol", "is", ci->clientnum, text);
 				break;
 			}
 
@@ -2146,7 +2107,7 @@ namespace server
 			{
 				getstring(text, p);
 				filtertext(text, text, false, MAXTEAMLEN);
-				SbPy::triggerEventf("client_switch_team_pre", "is", sender, text);
+				SbPy::triggerEventf("client_switch_team_pol", "is", sender, text);
 				break;
 			}
 
@@ -2294,7 +2255,7 @@ namespace server
 				int spectator = getint(p), val = getint(p);
 				clientinfo *spinfo = (clientinfo *)getclientinfo(spectator);
 				if(!spinfo || (spinfo->state.state==CS_SPECTATOR ? val : !val)) break; // no bots
-				SbPy::triggerEventf("client_spectate_pre", "iii", ci->clientnum, spectator, val);
+				SbPy::triggerEventf("client_spectate_pol", "iii", ci->clientnum, spectator, val);
 				break;
 			}
 
@@ -2303,36 +2264,40 @@ namespace server
 				int who = getint(p);
 				getstring(text, p);
 				filtertext(text, text, false, MAXTEAMLEN);
-				clientinfo *wi = getinfo(who);
-				if(!wi || !strcmp(wi->team, text)) break;
-				if(!smode || smode->canchangeteam(wi, wi->team, text))
+				if(ci->clientnum != who)
 				{
-					SbPy::triggerEventf("client_set_team", "iif", ci->clientnum, who, text);
+					clientinfo *wi = getinfo(who);
+					if(!wi) break;
+					SbPy::triggerEventf("client_set_team_pol", "iis", ci->clientnum, who, text);
+				}
+				else
+				{
+					SbPy::triggerEventf("client_switch_team_pol", "is", ci->clientnum, text);
 				}
 				break;
 			}
 
 			case N_FORCEINTERMISSION:
-				if(ci->local && !hasnonlocalclients()) startintermission();
+				//This only ever gets used when a player kills the last monster in sp
 				break;
 
 			case N_RECORDDEMO:
 			{
 				int val = getint(p);
-				SbPy::triggerEventf("client_record_demo", "ib", ci->clientnum, val != 0);
+				SbPy::triggerEventf("client_record_demo_pol", "ib", ci->clientnum, val != 0);
 				break;
 			}
 
 			case N_STOPDEMO:
 			{
-				SbPy::triggerEventf("client_stop_demo", "i", ci->clientnum);
+				SbPy::triggerEventf("client_stop_demo_pol", "i", ci->clientnum);
 				break;
 			}
 
 			case N_CLEARDEMOS:
 			{
 				int demo = getint(p);
-				SbPy::triggerEventf("client_clear_demo", "ii", ci->clientnum, demo);
+				SbPy::triggerEventf("client_clear_demos_pol", "ii", ci->clientnum, demo);
 				break;
 			}
 
@@ -2402,7 +2367,7 @@ namespace server
 			case N_BOTBALANCE:
 			{
 				int balance = getint(p);
-				SbPy::triggerEventf("client_set_bot_limit", "ib", ci->clientnum, balance!=0);
+				SbPy::triggerEventf("client_set_bot_balance", "ib", ci->clientnum, balance!=0);
 				break;
 			}
 

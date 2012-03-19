@@ -11,19 +11,19 @@ SCRIPT_PATH=`pwd`;
 popd  > /dev/null
 
 CXSBS_DIR="${SCRIPT_PATH}"
-SERVER_NAMES=("dev")
+#SERVER_NAMES=("dev")
 
 if [ -z "${1}" ]; then
 	echo "Must provide at least one argument"
 else
 	declare -i VALID_NAME
 	SERVER_NAME="${1}"
-	VALID_NAME=0
-	for NAME in "${SERVER_NAMES[@]}"; do
-		if [[ "${SERVER_NAME}" == "${NAME}" ]]; then
-			VALID_NAME=1
-		fi
-	done
+	VALID_NAME=1
+	#for NAME in "${SERVER_NAMES[@]}"; do
+	#	if [[ "${SERVER_NAME}" == "${NAME}" ]]; then
+	#		VALID_NAME=1
+	#	fi
+	#done
 	if (( ${VALID_NAME} == 1 )); then
 		${CXSBS_DIR}/bin/cxsbs -r"${CXSBS_DIR}" -p"${CXSBS_DIR}/plugins" -i"${CXSBS_DIR}/instances/${SERVER_NAME}"
 	else

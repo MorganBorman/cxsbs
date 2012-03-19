@@ -242,7 +242,7 @@ namespace SbPy
 		return Py_BuildValue("i", ci->state.teamkills);
 	}
 
-	static PyObject *clientShots(PyObject *self, PyObject *args)
+	static PyObject *clientSuicides(PyObject *self, PyObject *args)
 	{
 		int cn;
 		server::clientinfo *ci;
@@ -254,10 +254,10 @@ namespace SbPy
 			PyErr_SetString(PyExc_ValueError, "Invalid cn specified");
 			return 0;
 		}
-		return Py_BuildValue("i", ci->state.shots);
+		return Py_BuildValue("i", ci->state.suicides);
 	}
 
-	static PyObject *clientHits(PyObject *self, PyObject *args)
+	static PyObject *clientFlagsScored(PyObject *self, PyObject *args)
 	{
 		int cn;
 		server::clientinfo *ci;
@@ -269,10 +269,10 @@ namespace SbPy
 			PyErr_SetString(PyExc_ValueError, "Invalid cn specified");
 			return 0;
 		}
-		return Py_BuildValue("i", ci->state.hits);
+		return Py_BuildValue("i", ci->state.flags_scored);
 	}
 
-	static PyObject *clientScore(PyObject *self, PyObject *args)
+	static PyObject *clientFlagsStopped(PyObject *self, PyObject *args)
 	{
 		int cn;
 		server::clientinfo *ci;
@@ -284,7 +284,52 @@ namespace SbPy
 			PyErr_SetString(PyExc_ValueError, "Invalid cn specified");
 			return 0;
 		}
-		return Py_BuildValue("i", ci->state.flags);
+		return Py_BuildValue("i", ci->state.flags_stopped);
+	}
+
+	static PyObject *clientFlagsDropped(PyObject *self, PyObject *args)
+	{
+		int cn;
+		server::clientinfo *ci;
+		if(!PyArg_ParseTuple(args, "i", &cn))
+			return 0;
+		ci = server::getinfo(cn);
+		if(!ci)
+		{
+			PyErr_SetString(PyExc_ValueError, "Invalid cn specified");
+			return 0;
+		}
+		return Py_BuildValue("i", ci->state.flags_dropped);
+	}
+
+	static PyObject *clientFlagsReturned(PyObject *self, PyObject *args)
+	{
+		int cn;
+		server::clientinfo *ci;
+		if(!PyArg_ParseTuple(args, "i", &cn))
+			return 0;
+		ci = server::getinfo(cn);
+		if(!ci)
+		{
+			PyErr_SetString(PyExc_ValueError, "Invalid cn specified");
+			return 0;
+		}
+		return Py_BuildValue("i", ci->state.flags_returned);
+	}
+
+	static PyObject *clientDamageSpent(PyObject *self, PyObject *args)
+	{
+		int cn;
+		server::clientinfo *ci;
+		if(!PyArg_ParseTuple(args, "i", &cn))
+			return 0;
+		ci = server::getinfo(cn);
+		if(!ci)
+		{
+			PyErr_SetString(PyExc_ValueError, "Invalid cn specified");
+			return 0;
+		}
+		return Py_BuildValue("i", ci->state.damage_spent);
 	}
 
 	static PyObject *clientDamageDealt(PyObject *self, PyObject *args)
@@ -299,10 +344,10 @@ namespace SbPy
 			PyErr_SetString(PyExc_ValueError, "Invalid cn specified");
 			return 0;
 		}
-		return Py_BuildValue("i", ci->state.damage);
+		return Py_BuildValue("i", ci->state.damage_dealt);
 	}
 
-	static PyObject *clientDamageRecieved(PyObject *self, PyObject *args)
+	static PyObject *clientDamageReceived(PyObject *self, PyObject *args)
 	{
 		int cn;
 		server::clientinfo *ci;
@@ -314,7 +359,7 @@ namespace SbPy
 			PyErr_SetString(PyExc_ValueError, "Invalid cn specified");
 			return 0;
 		}
-		return Py_BuildValue("i", ci->state.damage_rec);
+		return Py_BuildValue("i", ci->state.damage_received);
 	}
 
 	static PyObject *clientDisconnect(PyObject *self, PyObject *args)
@@ -543,6 +588,37 @@ namespace SbPy
 		return Py_None;
 	}
 
+	static PyObject *clientSendDemoList(PyObject *self, PyObject *args)
+	{
+		int cn, numdemos;
+		PyObject *pTuple;
+		char *demodesc;
+		server::clientinfo *ci;
+		if(!PyArg_ParseTuple(args, "iO", &cn, &pTuple))
+			return 0;
+		ci = server::getinfo(cn);
+		if(!ci)
+		{
+			PyErr_SetString(PyExc_ValueError, "Invalid cn specified");
+			return 0;
+		}
+
+		numdemos = PyTuple_Size(pTuple);
+
+		packetbuf p(MAXTRANS, ENET_PACKET_FLAG_RELIABLE);
+		putint(p, N_SENDDEMOLIST);
+		putint(p, numdemos);
+
+		loopi(numdemos)
+		{
+			demodesc = PyString_AsString(PyTuple_GetItem(pTuple,i));
+			sendstring(demodesc, p);
+		}
+		sendpacket(cn, 1, p.finalize());
+		Py_INCREF(Py_None);
+		return Py_None;
+	}
+
 	static PyObject *clientSendDemo(PyObject *self, PyObject *args)
 	{
 		int cn, len;
@@ -565,42 +641,71 @@ namespace SbPy
 	{
 		int cn;
 		int tcn;
+		int type;
+		char *variableName;
+
+		PyObject *pValue;
+		int ivalue;
+		float fvalue;
+		char *svalue;
+
 		int msglen = 0;
+
 		server::clientinfo *ci;
 		server::clientinfo *tci;
-		char *variableName;
-		int value;
-		if(!PyArg_ParseTuple(args, "iisi", &cn, &tcn, &variableName, &value)) return 0;
+
+		if(!PyArg_ParseTuple(args, "iiisO", &cn, &tcn, &type, &variableName, &pValue))
+			return 0;
 
 		ci = server::getinfo(cn);
 		if(!ci)
 		{
-			PyErr_SetString(PyExc_ValueError, "Invalid cn specified");
-			return 0;
-		}
-		if(ci->state.aitype != AI_NONE)
-		{
-			PyErr_SetString(PyExc_ValueError, "Cannot send message from AI client");
+			PyErr_SetString(PyExc_ValueError, "Invalid origin cn specified");
 			return 0;
 		}
 
 		tci = server::getinfo(tcn);
 		if(!tci)
 		{
-			PyErr_SetString(PyExc_ValueError, "Invalid cn specified");
+			PyErr_SetString(PyExc_ValueError, "Invalid target cn specified");
 			return 0;
 		}
 		if(tci->state.aitype != AI_NONE)
 		{
-			PyErr_SetString(PyExc_ValueError, "Cannot send message to AI client");
+			PyErr_SetString(PyExc_ValueError, "Cannot change variables of AI client");
 			return 0;
 		}
 
-		msglen = 2+strlen(variableName)+2+intlen(value);
-
-
-	    sendf(tcn, 1, "riiiiisi", N_CLIENT, cn, msglen, N_EDITVAR, ID_VAR, variableName, value);
-
+		if(type==ID_VAR)
+		{
+			ivalue = PyLong_AsLong(pValue);
+			if(PyErr_Occurred())
+				return 0;
+			msglen = 2+strlen(variableName)+2+intlen(ivalue);
+			sendf(tcn, 1, "riiiiisi", N_CLIENT, cn, msglen, N_EDITVAR, ID_VAR, variableName, ivalue);
+		}
+		else if(type==ID_FVAR)
+		{
+			fvalue = PyFloat_AsDouble(pValue);
+			if(PyErr_Occurred())
+				return 0;
+			msglen = 2+strlen(variableName)+2+sizeof(float);
+			sendf(tcn, 1, "riiiiisf", N_CLIENT, cn, msglen, N_EDITVAR, ID_FVAR, variableName, fvalue);
+		}
+		else if(type==ID_SVAR)
+		{
+			svalue = PyString_AsString(pValue);
+			if(!svalue)
+				return 0;
+			msglen = 2+strlen(variableName)+2+strlen(svalue);
+			sendf(tcn, 1, "riiiiiss", N_CLIENT, cn, msglen, N_EDITVAR, ID_SVAR, variableName, svalue);
+		}
+		else
+		{
+			PyErr_SetString(PyExc_ValueError, "type argument must be one of ID_VAR, ID_FVAR, or ID_SVAR.");
+			return 0;
+		}
+		printf("Hopefully set client variable.\n");
 		Py_INCREF(Py_None);
 		return Py_None;
 	}
@@ -779,11 +884,6 @@ namespace SbPy
 		return Py_BuildValue("i", totalmillis);
 	}
 
-	static PyObject *serverTimeRemaining(PyObject *self, PyObject *args)
-	{
-		return Py_BuildValue("i", max((server::gamelimit - server::gamemillis)/1000, 0));
-	}
-
 	static PyObject *serverGetVariable(PyObject *self, PyObject *args)
 	{
 	    char *variableName;
@@ -824,19 +924,19 @@ namespace SbPy
 		}
 	}
 
+	static PyObject *serverBotLimit(PyObject *self, PyObject *args)
+	{
+		return Py_BuildValue("i", server::aiman::botlimit);
+	}
+
+	static PyObject *serverBotBalance(PyObject *self, PyObject *args)
+	{
+		return Py_BuildValue("b", server::aiman::botbalance);
+	}
+
 	static PyObject *serverPaused(PyObject *self, PyObject *args)
 	{
 		return Py_BuildValue("b", server::gamepaused);
-	}
-
-	static PyObject *serverMasterMode(PyObject *self, PyObject *args)
-	{
-		return Py_BuildValue("i", server::mastermode);
-	}
-
-	static PyObject *serverMasterMask(PyObject *self, PyObject *args)
-	{
-		return Py_BuildValue("i", server::mastermask);
 	}
 
 	static PyObject *serverGameMode(PyObject *self, PyObject *args)
@@ -867,14 +967,34 @@ namespace SbPy
 		return Py_BuildValue("i", server::smode->getteamscore(team));
 	}
 
+	static PyObject *serverMasterMode(PyObject *self, PyObject *args)
+	{
+		return Py_BuildValue("i", server::mastermode);
+	}
+
+	static PyObject *serverMasterMask(PyObject *self, PyObject *args)
+	{
+		return Py_BuildValue("i", server::mastermask);
+	}
+
 	static PyObject *serverMatchRecording(PyObject *self, PyObject *args)
 	{
 		return Py_BuildValue("b", (bool)server::demorecord);
 	}
 
-	static PyObject *serverNextMatchRecording(PyObject *self, PyObject *args)
+	static PyObject *serverRecordNextMatch(PyObject *self, PyObject *args)
 	{
 		return Py_BuildValue("b", server::demonextmatch || server::persistentdemos);
+	}
+
+	static PyObject *serverTimeRemaining(PyObject *self, PyObject *args)
+	{
+		return Py_BuildValue("i", max((server::gamelimit - server::gamemillis)/1000, 0));
+	}
+
+	static PyObject *serverIntermission(PyObject *self, PyObject *args)
+	{
+		return Py_BuildValue("i", server::interm >= 0);
 	}
 
 	static PyObject *serverInstanceRoot(PyObject *self, PyObject *args)
@@ -882,19 +1002,18 @@ namespace SbPy
 		return Py_BuildValue("s", server::instanceRoot);
 	}
 
-	static PyObject *serverReload(PyObject *self, PyObject *args)
-	{
-		SbPy::reload_on_update = true;
-		return Py_None;
-	}
-
 	static PyObject *serverSetVariable(PyObject *self, PyObject *args)
 	{
 	    char *variableName;
-	    char *value;
-	    if(!PyArg_ParseTuple(args, "ss", &variableName, &value))
+
+	    PyObject *pValue;
+	    int ivalue;
+	    float fvalue;
+	    char *svalue;
+
+	    if(!PyArg_ParseTuple(args, "sO", &variableName, &pValue))
 	    	return 0;
-	    static string scmdval; scmdval[0] = 0;
+
 	    ident *id = idents->access(variableName);
 	    if(id)
 	    {
@@ -902,8 +1021,10 @@ namespace SbPy
 	        {
 				case ID_VAR:
 				{
-	                int ret = parseint(value);
-	                if(ret < id->minval || ret > id->maxval)
+					ivalue = PyLong_AsLong(pValue);
+					if(PyErr_Occurred())
+						return 0;
+	                if(ivalue < id->minval || ivalue > id->maxval)
 	                {
 	                	PyErr_Format(PyExc_ValueError,
 	                        id->flags&IDF_HEX ?
@@ -911,23 +1032,28 @@ namespace SbPy
 	                                "valid range for %s is %d..%d", variableName, id->minval, id->maxval);
 	                    return 0;
 	                }
-	                setvar(variableName, ret);
+	                setvar(variableName, ivalue);
 					break;
 				}
 				case ID_FVAR:
 				{
-	                float ret = parsefloat(value);
-	                if(ret < id->minvalf || ret > id->maxvalf)
+					fvalue = PyFloat_AsDouble(pValue);
+					if(PyErr_Occurred())
+						return 0;
+	                if(fvalue < id->minvalf || fvalue > id->maxvalf)
 	                {
 	                	PyErr_Format(PyExc_ValueError, "valid range for %s is %s..%s", variableName, floatstr(id->minvalf), floatstr(id->maxvalf));
 	                    return 0;
 	                }
-	                setfvar(variableName, ret);
+	                setfvar(variableName, fvalue);
 	                break;
 				}
 				case ID_SVAR:
 				{
-	                setsvar(variableName, value);
+					svalue = PyString_AsString(pValue);
+					if(!svalue)
+						return 0;
+	                setsvar(variableName, svalue);
 					break;
 				}
 				default:
@@ -937,27 +1063,12 @@ namespace SbPy
 					break;
 				}
 	        }
-	        printf("hopefully to set: %s to %s\n", variableName, value);
+	        printf("hopefully to set: %s\n", variableName);
 	    	Py_INCREF(Py_None);
 	    	return Py_None;
 	    }
 		PyErr_SetString(PyExc_ValueError, "Invalid variable specified");
 		return 0;
-	}
-
-	static PyObject *serverMessage(PyObject *self, PyObject *args)
-	{
-		PyObject *pMsg = PyTuple_GetItem(args, 0);
-		if(pMsg)
-		{
-			char *msg = PyString_AsString(pMsg);
-			if(msg)
-				server::sendservmsg(msg);
-		}
-		else
-			fprintf(stderr, "Error sending message");
-		Py_INCREF(Py_None);
-		return Py_None;
 	}
 
 	static PyObject *serverSetBotLimit(PyObject *self, PyObject *args)
@@ -994,6 +1105,117 @@ namespace SbPy
 		if(!PyArg_ParseTuple(args, "b", &val))
 			return 0;
 		server::pausegame(val);
+		Py_INCREF(Py_None);
+		return Py_None;
+	}
+
+	static PyObject *serverSetCapacity(PyObject *self, PyObject *args)
+	{
+		int capacity;
+		if(!PyArg_ParseTuple(args, "i", &capacity))
+			return 0;
+		setvar("capacity", capacity);
+		Py_INCREF(Py_None);
+		return Py_None;
+	}
+
+	static PyObject *serverSetTeamScore(PyObject *self, PyObject *args)
+	{
+		char *team;
+		int score;
+		if(!PyArg_ParseTuple(args, "si", &team, &score))
+			return 0;
+		if(!team)
+		{
+			PyErr_SetString(PyExc_ValueError, "Invalid team.");
+			return 0;
+		}
+		server::smode->setteamscore(team, score);
+		Py_INCREF(Py_None);
+		return Py_None;
+	}
+
+	static PyObject *serverSetMasterMode(PyObject *self, PyObject *args)
+	{
+		int mm;
+		if(!PyArg_ParseTuple(args, "i", &mm))
+			return 0;
+		server::setmastermode(mm);
+		Py_INCREF(Py_None);
+		return Py_None;
+	}
+
+	static PyObject *serverSetMasterMask(PyObject *self, PyObject *args)
+	{
+		int mm;
+		if(!PyArg_ParseTuple(args, "i", &mm))
+			return 0;
+		switch(mm)
+		{
+			case 1: server::mastermask = MM_PUBSERV; break;
+			case 2: server::mastermask = MM_COOPSERV; break;
+			case 3: server::mastermask = MM_AUTOAPPROVE; break;
+			default:
+				PyErr_SetString(PyExc_ValueError, "Invalid master mask.");
+				return 0;
+		}
+		Py_INCREF(Py_None);
+		return Py_None;
+	}
+
+	static PyObject *serverSetMatchRecording(PyObject *self, PyObject *args)
+	{
+		bool val;
+		if(!PyArg_ParseTuple(args, "b", &val))
+			return 0;
+
+		if (val && !server::demorecord)
+		{
+			//turn on demo recording immediately
+			server::setupdemorecord();
+		}
+		else if (!val && server::demorecord)
+		{
+			//stop demo recording immediately
+			server::enddemorecord();
+		}
+		Py_INCREF(Py_None);
+		return Py_None;
+	}
+
+	static PyObject *serverSetRecordNextMatch(PyObject *self, PyObject *args)
+	{
+		bool val;
+		if(!PyArg_ParseTuple(args, "b", &val))
+			return 0;
+		server::demonextmatch = val;
+		Py_INCREF(Py_None);
+		return Py_None;
+	}
+
+	static PyObject *serverSetTimeRemaining(PyObject *self, PyObject *args)
+	{
+		int milliseconds;
+		if(!PyArg_ParseTuple(args, "i", &milliseconds))
+			return 0;
+		server::setTimeLeft(milliseconds);
+		Py_INCREF(Py_None);
+		return Py_None;
+	}
+
+	static PyObject *serverStartIntermission(PyObject *self, PyObject *args)
+	{
+		server::startintermission();
+		Py_INCREF(Py_None);
+		return Py_None;
+	}
+
+	static PyObject *serverMessage(PyObject *self, PyObject *args)
+	{
+		char *msg;
+		if(!PyArg_ParseTuple(args, "s", &msg))
+			return 0;
+		server::sendservmsg(msg);
 		Py_INCREF(Py_None);
 		return Py_None;
 	}
@@ -1040,68 +1262,9 @@ namespace SbPy
 		return server::setServMapBases(args);
 	}
 
-	static PyObject *serverSetCapacity(PyObject *self, PyObject *args)
+	static PyObject *serverReload(PyObject *self, PyObject *args)
 	{
-		int capacity;
-		if(!PyArg_ParseTuple(args, "i", &server::capacity))
-			return 0;
-		setvar("capacity", capacity);
-		Py_INCREF(Py_None);
-		return Py_None;
-	}
-
-	static PyObject *serverSetMasterMode(PyObject *self, PyObject *args)
-	{
-		int mm;
-		if(!PyArg_ParseTuple(args, "i", &mm))
-			return 0;
-		server::setmastermode(mm);
-		Py_INCREF(Py_None);
-		return Py_None;
-	}
-
-	static PyObject *serverSetMasterMask(PyObject *self, PyObject *args)
-	{
-		int mm;
-		if(!PyArg_ParseTuple(args, "i", &mm))
-			return 0;
-		switch(mm)
-		{
-			case 1: server::mastermask = MM_PUBSERV; break;
-			case 2: server::mastermask = MM_COOPSERV; break;
-			case 3: server::mastermask = MM_AUTOAPPROVE; break;
-			default:
-				PyErr_SetString(PyExc_ValueError, "Invalid master mask.");
-				return 0;
-		}
-		Py_INCREF(Py_None);
-		return Py_None;
-	}
-
-	static PyObject *serverSetRecordNextMatch(PyObject *self, PyObject *args)
-	{
-		bool val;
-		if(!PyArg_ParseTuple(args, "b", &val))
-			return 0;
-		server::demonextmatch = val;
-		Py_INCREF(Py_None);
-		return Py_None;
-	}
-
-	static PyObject *serverSetTimeRemaining(PyObject *self, PyObject *args)
-	{
-		int milliseconds;
-		if(!PyArg_ParseTuple(args, "i", &milliseconds))
-			return 0;
-		server::setTimeLeft(milliseconds);
-		Py_INCREF(Py_None);
-		return Py_None;
-	}
-
-	static PyObject *serverStartIntermission(PyObject *self, PyObject *args)
-	{
-		server::startintermission();
-		Py_INCREF(Py_None);
+		SbPy::reload_on_update = true;
 		return Py_None;
 	}
 
@@ -1113,45 +1276,6 @@ namespace SbPy
 
 		exit(exit_status);
 		return Py_None;
-	}
-
-	static PyObject *generateAuthKey(PyObject *self, PyObject *args)
-	{
-		char *pass;
-		PyObject *pstr;
-		PyObject *pTuple = PyTuple_New(2);
-
-		if(!PyArg_ParseTuple(args, "s", &pass))
-			return 0;
-
-		vector<char> pubkey, privkey;
-		genprivkey(pass, privkey, pubkey);
-
-		pstr = PyString_FromString(privkey.getbuf());
-		PyTuple_SetItem(pTuple, 0, pstr);
-
-		pstr = PyString_FromString(pubkey.getbuf());
-		PyTuple_SetItem(pTuple, 1, pstr);
-
-		return pTuple;
-	}
-
-	static PyObject *generateAuthChallenge(PyObject *self, PyObject *args)
-	{
-		//publicKey
-		char *publicKey;
-		if(!PyArg_ParseTuple(args, "s", &publicKey))
-			return 0;
-
-		uint seed[3] = { randomMT(), randomMT(), randomMT() };
-		vector<char> challengeBuf;
-		vector<char> answerBuf;
-		void *parsedKey = parsepubkey(publicKey);
-		genchallengestr(parsedKey, seed, sizeof(seed), challengeBuf, answerBuf);
-
-		freepubkey(parsedKey);
-
-		return Py_BuildValue("(ss)", challengeBuf.getbuf(), answerBuf.getbuf());
 	}
 
 #define def(NAME, DOC)  {#NAME, NAME, METH_VARARGS, DOC}
@@ -1172,11 +1296,14 @@ static PyMethodDef ModuleMethods[] = {
 	def(clientFrags, 				"Get client frags in current match."),
 	def(clientDeaths, 				"Get client deaths in current match."),
 	def(clientTeamkills, 			"Get client teamkills in current match."),
-	def(clientShots, 				"Get client shots in current match."),
-	def(clientHits, 				"Get client hits in current match."),
-	def(clientScore, 				"Get client flags scored in current match."),
+	def(clientSuicides, 			"Get client suicides in current match."),
+	def(clientFlagsScored, 			"Get client flags scored in current match."),
+	def(clientFlagsDropped, 		"Get client flags dropped in current match."),
+	def(clientFlagsStopped, 		"Get client flags stopped in current match."),
+	def(clientFlagsReturned, 		"Get client flags returned in current match."),
+	def(clientDamageSpent, 			"Get client damage spent in current match."),
 	def(clientDamageDealt, 			"Get client total damage dealt in current match."),
-	def(clientDamageRecieved, 		"Get client total damage received in current match."),
+	def(clientDamageReceived, 		"Get client total damage received in current match."),
 
 	def(clientDisconnect, 			"Disconnect client from server for a specific reason."),
 	def(clientSetDisconnect, 		"Set the client to be disconnected on next server slice for a specific reason."),
@@ -1187,6 +1314,7 @@ static PyMethodDef ModuleMethods[] = {
 	def(clientSendMap, 				"Send the edit map to the client."),
 	def(clientRequestAuth, 			"send request for client to auto-auth."),
 	def(clientChallengeAuth, 		"Send auth challenge to client."),
+	def(clientSendDemoList,			"Send a list of demos to the client."),
 	def(clientSendDemo, 			"Send demo to client."),
 	def(clientSetVariable, 			"Set a client variable."),
 	def(clientSetPrivilege, 		"Set client advertised privilege."),
@@ -1201,41 +1329,45 @@ static PyMethodDef ModuleMethods[] = {
 	def(serverClients, 				"Tuple of client numbers."),
 	def(serverClientStates, 		"Dictionary of client states indexed by cn."),
 	def(serverUptime, 				"Get the uptime in milliseconds."),
-	def(serverTimeRemaining, 		"Get the remaining match time in milliseconds."),
 	def(serverGetVariable, 			"Get a server variable."),
+	def(serverBotLimit,				"Get the server bot limit"),
+	def(serverBotBalance,			"Get the server bot balance status"),
 	def(serverPaused, 				"Get the paused state."),
-	def(serverMasterMode, 			"Get the master mode."),
-	def(serverMasterMask, 			"Get the master mask."),
 	def(serverGameMode, 			"Get the game mode."),
 	def(serverMapName, 				"Get the map name."),
 	def(serverMaxClients, 			"Get the maximum clients which can be connected."),
 	def(serverCapacity, 			"Get the advertised server capacity."),
 	def(serverTeamScore, 			"Get the score of a team by name."),
+	def(serverMasterMode, 			"Get the master mode."),
+	def(serverMasterMask, 			"Get the master mask."),
 	def(serverMatchRecording, 		"Get whether or not this match is being recorded."),
-	def(serverNextMatchRecording, 	"Get whether or not the next match will be recorded."),
+	def(serverRecordNextMatch, 		"Get whether or not the next match will be recorded."),
+	def(serverTimeRemaining, 		"Get the remaining match time in milliseconds."),
+	def(serverIntermission, 		"Get whether or not the match state is intermission."),
 	def(serverInstanceRoot, 		"Get the root directory of the instance."),
 
-	def(serverReload, 				"Stop and restart the python interpreter then reload all python systems."),
 	def(serverSetVariable, 			"Set a server variable."),
-	def(serverMessage, 				"Send a server message."),
 	def(serverSetBotLimit, 			"Set the bot limit."),
 	def(serverSetBotBalance, 		"Set the bot balance."),
 	def(serverSetPaused, 			"Set the game paused state."),
+	def(serverSetCapacity, 			"Set advertised max number of clients."),
+	def(serverSetTeamScore,			"Set a teams score by name."),
+	def(serverSetMasterMode, 		"Set server master mode."),
+	def(serverSetMasterMask, 		"Set maximum master mode a master can set."),
+	def(serverSetMatchRecording,	"Set the server to record the current match now."),
+	def(serverSetRecordNextMatch,	"Set the server to record the next match."),
+	def(serverSetTimeRemaining, 	"Set the number of seconds remaining in current game in milliseconds."),
+	def(serverStartIntermission, 	"Set the current game state to intermission."),
+
+	def(serverMessage, 				"Send a server message."),
 	def(serverSendMapReload, 		"Send map reload request to all clients."),
 	def(serverSetMapMode, 			"Set server map and mode."),
 	def(serverSetMapItems, 			"Populate the servers entity spawn tracking data."),
 	def(serverSetMapFlags, 			"Populate the servers flag spawn tracking data for flag modes."),
 	def(serverSetMapBases, 			"Populate the servers base spawn tracking data for capture modes."),
-	def(serverSetCapacity, 			"Set advertised max number of clients."),
-	def(serverSetMasterMode, 		"Set server master mode."),
-	def(serverSetMasterMask, 		"Set maximum master mode a master can set."),
-	def(serverSetRecordNextMatch,	"Set the server to record the next match."),
-	def(serverSetTimeRemaining, 	"Set the number of seconds remaining in current game in milliseconds."),
-	def(serverStartIntermission, 	"Set the current game state to intermission."),
-	def(serverShutdown, 			"Shutdown the c++ side of things."),
 
-	def(generateAuthKey, 			"Create and return an auth key pair as a tuple (private, public)."),
-	def(generateAuthChallenge, 		"given (cn, serverDesc, id, pubkey) sends challenge to client and returns correct answer."),
+	def(serverReload, 				"Stop and restart the python interpreter then reload all python systems."),
+	def(serverShutdown, 			"Shutdown the c++ side of things."),
 
 	{NULL, NULL, 0, NULL}
 };
@@ -1243,7 +1375,7 @@ static PyMethodDef ModuleMethods[] = {
 PyMODINIT_FUNC
 initModule(void)
 {
-	(void) Py_InitModule("sbserver", ModuleMethods);
+	(void) Py_InitModule("cube2server", ModuleMethods);
 	return;
 }
 
