@@ -46,15 +46,15 @@ class RTimer(ITimer):
 	_expired_time = -1
 	_events = []
 	
-	def __init__(self, how_long, *events):
-		events = org.cxsbs.core.events.manager
+	def __init__(self, how_long, events=()):
+		event_interfaces = org.cxsbs.core.events.interfaces
 		
 		start_time = time.time()
 		
 		ITimer.__init__(self)
 		self._expired_time = start_time + how_long
 		for event in events:
-			if not isinstance(event, events.IEvent):
+			if not isinstance(event, event_interfaces.IEvent):
 				raise TypeError("Expected an event object implementing the IEvent interface. Got an object of %s class." %event.__class__.__name__)
 		self._events = events[:]
 		
@@ -125,10 +125,10 @@ class RTimerManager(ITimerManager, threading.Thread):
 		self._event.set()
 					
 	def _fire_off(self, events):
-		events = org.cxsbs.core.events.manager
+		event_manager = org.cxsbs.core.events.manager
 		
 		for event in events:
-			events.event_manager.trigger_event(event)
+			event_manager.event_manager.trigger_event(event)
 		
 	def add_timer(self, timer):
 		if not isinstance(timer, ITimer):

@@ -1,0 +1,17 @@
+[Plug-in]
+SymbolicName = org.cxsbs.core.maps.main
+Version = 1.0.0
+Author = Morgan Borman
+Enabled = True
+
+[Resources]
+Map
+
+[Implements]
+pyTensible.Plugin = [1.0.0,1.0.0]
+
+[Dependencies]
+org.cxsbs.core.events.manager = [1.0.0,1.0.0]
+org.cxsbs.core.settings.manager = [1.0.0,1.0.0]
+org.cxsbs.core.server = [1.0.0,1.0.0]
+org.cxsbs.core.database = [1.0.0,1.0.0]

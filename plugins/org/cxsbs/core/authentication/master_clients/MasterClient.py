@@ -1,11 +1,15 @@
 import socket, select, threading, time, os
 
+import org
+
 class MasterClient(threading.Thread):
-	def __init__(self, master_name, master_host, master_port, server_port, update_interval):
+	def __init__(self, manager, domain, master_host, master_port, server_port, update_interval):
 		
 		threading.Thread.__init__(self)
 		
-		self.master_name = master_name
+		self.manager = manager
+		
+		self.domain = domain
 		self.master_host = master_host
 		self.master_port = master_port
 		self.server_port = server_port
@@ -22,7 +26,7 @@ class MasterClient(threading.Thread):
 									}
 		
 		self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		self.socket.connect((master_host, master_port))
+		self.connected = False
 		
 		self.local_read, self.local_write = os.pipe()
 		
@@ -31,15 +35,31 @@ class MasterClient(threading.Thread):
 		
 		self.running = True
 		self.next_update = time.time()
+		
+	def check_connection(self):
+		if not self.connected:
+			try:
+				self.socket.connect((self.master_host, self.master_port))
+				self.connected = True
+			except:
+				print "Failed to connect to master server at %s" %str((self.master_host, self.master_port))
+				self.connected = False
+		return self.connected
 	
 	def run(self):
 		while self.running:
 			if time.time() >= self.next_update:
-				self.socket.sendall("regserv %s\n" %self.server_port)
+				if self.check_connection():
+					self.socket.sendall("regserv %s\n" %self.server_port)
 				self.next_update = time.time() + self.interval
 			
 			wait_time = self.next_update - time.time()
-			rfds, wfds, efds = select.select([self.socket, self.local_read], [], [], wait_time)
+			
+			wait_devs = [self.local_read]
+			if self.connected:
+				wait_devs.append(self.socket)
+			
+			rfds, wfds, efds = select.select(wait_devs, [], [], wait_time)
 			
 			for rfd in rfds:
 				if rfd == self.socket:
@@ -60,14 +80,16 @@ class MasterClient(threading.Thread):
 		while next_nl_pos != -1:
 			datum, self.local_data_stream = self.local_data_stream.split('\n', 1)
 			datum += "\n"
-			self.socket.sendall(datum)
+			if self.check_connection():
+				self.socket.sendall(datum)
 			next_nl_pos = self.local_data_stream.find("\n")
 	
 	def handle_remote(self):
 		data = self.socket.recv(1024)
 		if len(data) <= 0:
 			print "Read end of stream from remote side."
-			self.stop_client()
+			self.connected = False
+			#self.stop_client()
 		else:
 			self.remote_data_stream += data
 		
@@ -85,29 +107,40 @@ class MasterClient(threading.Thread):
 			print "Received unknown masterserver command (%s)." % args[0]
 			
 	def stop_client(self):
-		self.running = False
-		self.socket.close()
-		os.close(self.local_read)
-		os.close(self.local_write)
+		if self.running:
+			self.running = False
+			os.write(self.local_write, "\n")
+			self.join()
+			self.socket.close()
+			os.close(self.local_read)
+			os.close(self.local_write)
 	
 	def handle_registration_success(self, args):
-		print "Sucessfully Registered with masterserver."
+		#print "Sucessfully Registered with masterserver."
+		pass
 		
 	def handle_registration_failure(self, args):
-		print "Failed to Register with masterserver."
+		#print "Failed to Register with masterserver."
+		pass
 		
 	def handle_authentication_challenge(self, args):
 		auth_id = int(args[1])
 		auth_chal = args[2]
-		print "Got auth challenge (%s)" % str(args)
+		
+		self.manager.on_challenge(self.domain, auth_id, auth_chal)
+		#print "Got auth challenge (%s)" % str(args)
 		
 	def handle_authentication_success(self, args):
 		auth_id = int(args[1])
-		print "Got auth success (%s)" % str(args)
+		
+		self.manager.on_authorize(self.domain, auth_id)
+		#print "Got auth success (%s)" % str(args)
 		
 	def handle_authentication_failure(self, args):
 		auth_id = int(args[1])
-		print "Got auth failure (%s)" % str(args)
+		
+		self.manager.on_deny(self.domain, auth_id)
+		#print "Got auth failure (%s)" % str(args)
 	
 	def handle_global_ban_clear(self, args):
 		print "Got gbanclear (%s)" % str(args)
@@ -115,6 +148,8 @@ class MasterClient(threading.Thread):
 	def handle_global_ban_add(self, args):
 		ip_string = args[1]
 		print "Got gbanadd (%s)" % str(args)
+		
+	#public methods
 		
 	def authentication_request(self, id, name):
 		os.write(self.local_write, "reqauth %i %s\n" %(id, name) )

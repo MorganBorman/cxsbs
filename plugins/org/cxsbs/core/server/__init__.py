@@ -10,6 +10,7 @@ class server(pyTensible.Plugin):
 		
 		Interfaces = {}
 		Resources = {
+						'instance': ServerInstance(),
 						'state': ServerState(),
 						'constants': ServerConstants(),
 					}
@@ -20,6 +21,17 @@ class server(pyTensible.Plugin):
 		pass
 	
 import cube2server
+
+class ServerInstance(object):
+	
+	@property
+	def name(self):
+		return "instance name"
+	
+	@property
+	def root(self):
+		return cube2server.serverInstanceRoot()
+
 
 class enum(object):
 	def __init__(self, items):

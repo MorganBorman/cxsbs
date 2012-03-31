@@ -1,14 +1,15 @@
 [Plug-in]
-SymbolicName = org.cxsbs.core.maps.voting
+SymbolicName = org.cxsbs.core.authentication.admin
 Version = 1.0.0
 Author = Morgan Borman
 Enabled = True
 
 [Resources]
-#None
+AdminAuthority[org.cxsbs.core.authentication.interfaces.IAuthority]
 
 [Implements]
 pyTensible.Plugin = [1.0.0,1.0.0]
+org.cxsbs.core.authentication.interfaces.IAuthority = [1.0.0,1.0.0]
 
 [Dependencies]
 org.cxsbs.core.events.manager = [1.0.0,1.0.0]

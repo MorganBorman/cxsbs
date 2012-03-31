@@ -11,10 +11,12 @@ class clients(pyTensible.Plugin):
 		Interfaces = {}
 		Resources = {'client_manager': self.client_manager, 'get_client': self.client_manager.get_client}
 		
-		org.cxsbs.core.events.manager.event_manager.register_handler('client_init', self.client_manager.on_client_init)
-		org.cxsbs.core.events.manager.event_manager.register_handler('client_reinit', self.client_manager.on_client_init)
-		org.cxsbs.core.events.manager.event_manager.register_handler('client_disc', self.client_manager.on_client_disc)
-		org.cxsbs.core.events.manager.event_manager.register_handler('server_shutdown', self.client_manager.on_server_shutdown)
+		event_manager = org.cxsbs.core.events.manager.event_manager
+		
+		event_manager.register_handler('client_init', self.client_manager.on_client_init)
+		event_manager.register_handler('client_reinit', self.client_manager.on_client_init)
+		event_manager.register_handler('client_disc', self.client_manager.on_client_disc)
+		event_manager.register_handler('server_shutdown', self.client_manager.on_server_shutdown)
 		
 		return {'Interfaces': Interfaces, 'Resources': Resources}
 		
@@ -138,12 +140,12 @@ class Client(object):
 		return self.__sessionvars
 	
 	@property
-	def mapCrc(self):
+	def map_crc(self):
 		'''Map CRC of the client'''
 		return cube2server.clientMapCrc(self.cn)
 
 	@property
-	def mapName(self):
+	def map_name(self):
 		'''Map name of the client'''
 		return cube2server.clientMapName(self.cn)
 	
@@ -157,12 +159,12 @@ class Client(object):
 		return Variables(self.cn)
 	
 	@property
-	def ipLong(self):
+	def ip_long(self):
 		'''Ip of client as long'''
 		return self.ip
 	
 	@property
-	def ipString(self):
+	def ip_string(self):
 		'''Ip of client as decimal octet string'''
 		return Net.ipLongToString(self.ip)
 	
@@ -277,7 +279,7 @@ class Client(object):
 	
 	@spectator.setter
 	def spectator(self, value):
-		if not type(value) == boolean:
+		if not type(value) == bool:
 			raise ValueError("Client spectator state must be boolean.")
 		cube2server.clientSetSpectator(self.cn, value)
 	
@@ -312,6 +314,9 @@ class Client(object):
 	def requestAuth(self, description):
 		'''Request that a client send their auth key with the given description'''
 		cube2server.clientRequestAuth(self.cn, description)
+	def challengeAuth(self, id, domain, challenge):
+		'''Send an auth challenge to the client'''
+		cube2server.clientChallengeAuth(self.cn, id, domain, challenge)
 	def say(self, tcn, message):
 		'''Send a message as this client to another client'''
 		cube2server.clientMessageAll(self.cn, tcn, message)

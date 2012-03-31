@@ -8,7 +8,7 @@ class threads(pyTensible.Plugin):
 		self.thread_manager = ThreadManager()
 		
 		Interfaces = {}
-		Resources = {'thread_manager': self.thread_manager}
+		Resources = {'thread_manager': self.thread_manager, 'queue': self.thread_manager.queue}
 		
 		return {'Interfaces': Interfaces, 'Resources': Resources}
 		
@@ -25,16 +25,20 @@ class ThreadManager:
 		
 		if not name in self.processing_threads.keys():
 			self.processing_threads[name] = ProcessingThread(name)
+			self.processing_threads[name].start()
 	
 	def queue(self, name, function, args, kwargs):
 		if name == "main":
 			function(*args, **kwargs)
+			return
 		
-		if name in self.processing_threads.keys():
-			self.processing_threads[name].queue(function, args, kwargs)
+		if not name in self.processing_threads.keys():
+			self.start(name)
+			
+		self.processing_threads[name].queue(function, args, kwargs)
 	
 	def stop_all(self):
-		for processing_thread in self.processing_threads.items():
+		for processing_thread in self.processing_threads.values():
 			processing_thread.stop()
 	
 	def stop(self, name):
@@ -45,7 +49,7 @@ class ThreadManager:
 			self.processing_threads[name].stop()
 		
 	def join_all(self):
-		for processing_thread in self.processing_threads.items():
+		for processing_thread in self.processing_threads.values():
 			processing_thread.join()
 		
 import threading
@@ -60,11 +64,11 @@ class ProcessingThread(threading.Thread):
 		self.running = True
 		self.event_queue = []
 		self.flag = threading.Event()
+		self.flag.clear()
 		
 	def run(self):
 		while self.running:
 			
-			self.flag.clear()
 			self.flag.wait()
 			
 			while len(self.event_queue) > 0:

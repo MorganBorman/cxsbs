@@ -18,22 +18,95 @@ import cube2server
 
 @org.cxsbs.core.events.manager.event_handler('client_connect_pol')
 def on_client_connect_pol(event):
-	cube2server.clientInitialize(event.args[0])
+	'''
+	@thread policy_events
+	'''
+	cn = event.args[0]
 	
-@org.cxsbs.core.events.manager.event_handler('client_spectate_pol')
-def on_client_spectate_pol(event):
-	cube2server.clientSetSpectator(event.args[1], event.args[2])
-
-@org.cxsbs.core.events.manager.event_handler('client_auth_timout')
-def on_client_auth_timout(event):
-	pass
-
-@org.cxsbs.core.events.manager.event_handler('client_auth_challenge_response')
-def on_client_auth_challenge_response(event):
-	pass
+	cube2server.clientInitialize(cn)
+	
+@org.cxsbs.core.events.manager.event_handler('client_set_spectator_pol')
+def on_client_set_spectator_pol(event):
+	'''
+	@thread policy_events
+	'''
+	cn = event.args[0]
+	who = event.args[1]
+	val = event.args[2]
+	self = (cn == who)
+	
+	client = org.cxsbs.core.clients.get_client(cn)
+	
+	if self:
+		target = client
+		
+		if val:
+			policy_query = org.cxsbs.core.policies.Query('client_can_spectate_self', True, (client,))
+		else:
+			policy_query = org.cxsbs.core.policies.Query('client_can_unspectate_self', True, (client,))
+	else:
+		target = org.cxsbs.core.clients.get_client(who)
+		
+		if val:
+			policy_query = org.cxsbs.core.policies.Query('client_can_spectate_other', True, (client, target))
+		else:
+			policy_query = org.cxsbs.core.policies.Query('client_can_unspectate_other', True, (client, target))
+	
+	response = org.cxsbs.core.policies.query_policy(policy_query)
+	
+	if response:
+		target.spectator = bool(val)
+		
+@org.cxsbs.core.events.manager.event_handler('client_set_team_pol')
+def on_client_set_team_pol(event):
+	'''
+	@thread policy_events
+	'''
+	cn = event.args[0]
+	who = event.args[1]
+	team = event.args[2]
+	self = (cn == who)
+	
+	client = org.cxsbs.core.clients.get_client(cn)
+	
+	if self:
+		target = client
+		
+		policy_query = org.cxsbs.core.policies.Query('client_can_change_team_self', True, (client, team))
+		
+	else:
+		target = org.cxsbs.core.clients.get_client(who)
+		
+		policy_query = org.cxsbs.core.policies.Query('client_can_change_team_other', True, (client, target, team))
+	
+	response = org.cxsbs.core.policies.query_policy(policy_query)
+	
+	if response:
+		target.team = team
 
 @org.cxsbs.core.events.manager.event_handler('client_message_pol')
 def on_client_message_pol(event):
+	'''
+	@thread policy_events
+	'''
+	cn = event.args[0]
+	msg = event.args[1]
+	
+	client = org.cxsbs.core.clients.get_client(cn)
+	
+	if msg == "#reload":
+		cube2server.serverReload()
+	elif msg[0] == '#':
+		org.cxsbs.core.events.manager.trigger_event('command', (client, msg))
+	else:
+		#find out whether this client is allowed to talk
+		policy_query = org.cxsbs.core.policies.Query('client_can_chat', True, (client, msg))
+		response = org.cxsbs.core.policies.query_policy(policy_query)
+		if response:
+			org.cxsbs.core.chat.message(client, msg)
+	
+	
+	'''
 	if event.args[1] == "#reload":
 		cube2server.serverReload()
 	elif event.args[1] == "#setscore":
@@ -51,4 +124,4 @@ def on_client_message_pol(event):
 	elif event.args[1] == "#visible":
 		client = org.cxsbs.core.clients.get_client(event.args[0])
 		client.invisible = False
-	
+	'''

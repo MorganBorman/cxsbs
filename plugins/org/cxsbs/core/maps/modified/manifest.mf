@@ -1,14 +1,16 @@
 [Plug-in]
-SymbolicName = org.cxsbs.core.policy_events
+SymbolicName = org.cxsbs.core.maps.modified
 Version = 1.0.0
 Author = Morgan Borman
 Enabled = True
+
+[Resources]
+mark
 
 [Implements]
 pyTensible.Plugin = [1.0.0,1.0.0]
 
 [Dependencies]
 org.cxsbs.core.events.manager = [1.0.0,1.0.0]
-org.cxsbs.core.events.interfaces = [1.0.0,1.0.0]
-org.cxsbs.core.policies = [1.0.0,1.0.0]
 org.cxsbs.core.server = [1.0.0,1.0.0]
+org.cxsbs.core.clients = [1.0.0,1.0.0]

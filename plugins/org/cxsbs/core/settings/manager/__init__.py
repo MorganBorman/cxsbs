@@ -1,11 +1,10 @@
-import pyTensible, org, , CategoryConfig
+import pyTensible, org, CategoryConfig
 
 class manager(pyTensible.Plugin):
 	def __init__(self):
 		pyTensible.Plugin.__init__(self)
 		
 	def load(self):
-		import , sys, traceback
 		
 		self.settings_manager = SettingsManager()
 		
@@ -130,7 +129,7 @@ class SettingsManager(org.cxsbs.core.settings.interfaces.ISettingsManager):
 		
 		store_classes = pyTensible.plugin_loader.get_providers("org.cxsbs.core.settings.interfaces.ISettingStore")
 		
-		config_path = .serverInstanceRoot()
+		config_path = org.cxsbs.core.server.instance.root
 		config_category = "settings"
 		config_extension = ".conf"
 		
@@ -138,7 +137,7 @@ class SettingsManager(org.cxsbs.core.settings.interfaces.ISettingsManager):
 		
 		doc = 'Which settings store should be used. Look at the section name below for the fully qualified SettingStore names.'
 		
-		store = config_object.getOption('org.cxsbs.settings.manager.store', 'org.cxsbs.core.settings.nullstore.NullStore', doc)
+		store = config_object.getOption('org.cxsbs.core.settings.manager.store', 'org.cxsbs.core.settings.nullstore.NullStore', doc)
 		
 		for store_class in store_classes.values():
 			store_class.initialize_config( config_object )

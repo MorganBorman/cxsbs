@@ -1164,7 +1164,6 @@ namespace server
 
         loopi(GUN_PISTOL+1)
         {
-        	//int damage_spent, damage_dealt, kills, maxspree;
 			PyTuple_SetItem(
 					pTuple_weapon_stats, i, Py_BuildValue("(iiii)",
 						ci->state.weapon_stats[i].damage_spent,
@@ -1176,7 +1175,7 @@ namespace server
         }
 
 
-		SbPy::triggerEventf("client_stats_recorded", "i""iiii""i""iiii""ii""O",
+		SbPy::triggerEventf("client_stats_recorded", "i""iiii""i""iiii""ii""p",
 					ci->clientnum,
 
 					ci->state.frags,
@@ -1647,7 +1646,7 @@ namespace server
 		clientinfo *ci = getinfo(n);
 		SbPy::triggerEventf("client_disconnect", "i", n);
 		trigger_stats(clients[n]);
-		if(ci->connected)
+		if(ci->connected && ci->connectstage == 2)
 		{
 			if(ci->privilege) resetpriv(ci);
 			if(smode) smode->leavegame(ci, true);
@@ -2245,17 +2244,20 @@ namespace server
 				int victim = getint(p);
 				if(getclientinfo(victim)) // no bots
 				{
-					SbPy::triggerEventf("client_kick", "ii", ci->clientnum, victim);
+					SbPy::triggerEventf("client_kick_pol", "ii", ci->clientnum, victim);
 				}
 				break;
 			}
 
 			case N_SPECTATOR:
 			{
-				int spectator = getint(p), val = getint(p);
+				int spectator = getint(p);
+				int val = getint(p);
+
 				clientinfo *spinfo = (clientinfo *)getclientinfo(spectator);
-				if(!spinfo || (spinfo->state.state==CS_SPECTATOR ? val : !val)) break; // no bots
-				SbPy::triggerEventf("client_spectate_pol", "iii", ci->clientnum, spectator, val);
+				if(!spinfo || (spinfo->state.state==CS_SPECTATOR ? val : !val)) break; //discard null actions
+
+				SbPy::triggerEventf("client_set_spectator_pol", "iii", ci->clientnum, spectator, val);
 				break;
 			}
 
@@ -2264,16 +2266,11 @@ namespace server
 				int who = getint(p);
 				getstring(text, p);
 				filtertext(text, text, false, MAXTEAMLEN);
-				if(ci->clientnum != who)
-				{
-					clientinfo *wi = getinfo(who);
-					if(!wi) break;
-					SbPy::triggerEventf("client_set_team_pol", "iis", ci->clientnum, who, text);
-				}
-				else
-				{
-					SbPy::triggerEventf("client_switch_team_pol", "is", ci->clientnum, text);
-				}
+
+				clientinfo *wi = (clientinfo *)getclientinfo(who);
+				if(!wi || !strcmp(wi->team, text)) break; //discard null actions
+
+				SbPy::triggerEventf("client_set_team_pol", "iis", ci->clientnum, who, text);
 				break;
 			}
 
@@ -2386,7 +2383,7 @@ namespace server
 				getstring(desc, p, sizeof(desc));
 				uint id = (uint)getint(p);
 				getstring(ans, p, sizeof(ans));
-				SbPy::triggerEventf("client_auth_challenge_response", "ics", ci->clientnum, id, ans);
+				SbPy::triggerEventf("client_auth_challenge_response", "iis", ci->clientnum, id, ans);
 				break;
 			}
 

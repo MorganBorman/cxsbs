@@ -1,0 +1,12 @@
+[Plug-in]
+SymbolicName = org.cxsbs.core.authentication.interfaces
+Version = 1.0.0
+Author = Morgan Borman
+Enabled = True
+
+[Interfaces]
+IAuthority
+ICredential
+
+[Implements]
+pyTensible.Plugin = [1.0.0,1.0.0]

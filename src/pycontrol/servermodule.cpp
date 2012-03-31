@@ -432,7 +432,7 @@ namespace SbPy
 		return Py_None;
 	}
 	
-	static PyObject *clientMessage(PyObject *self, PyObject *args)
+	static PyObject *clientServerMessage(PyObject *self, PyObject *args)
 	{
 		int cn;
 		char *text;
@@ -455,7 +455,7 @@ namespace SbPy
 		return Py_None;
 	}
 	
-	static PyObject *clientMessageAll(PyObject *self, PyObject *args)
+	static PyObject *clientMessage(PyObject *self, PyObject *args)
 	{
 		int cn;
 		int tcn;
@@ -1308,8 +1308,8 @@ static PyMethodDef ModuleMethods[] = {
 	def(clientDisconnect, 			"Disconnect client from server for a specific reason."),
 	def(clientSetDisconnect, 		"Set the client to be disconnected on next server slice for a specific reason."),
 	def(clientInitialize, 			"Send map initialization and item lists to client."),
-	def(clientMessage, 				"Send a message to client."),
-	def(clientMessageAll, 			"Send a message as one client to another(from, to, text)."),
+	def(clientServerMessage, 		"Send a server message to client."),
+	def(clientMessage, 				"Send a message as one client to another(from, to, text)."),
 	def(clientMessageTeam, 			"Send a team message as one client to another(from, to, text)."),
 	def(clientSendMap, 				"Send the edit map to the client."),
 	def(clientRequestAuth, 			"send request for client to auto-auth."),
