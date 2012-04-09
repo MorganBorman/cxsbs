@@ -413,8 +413,9 @@ namespace SbPy
 	static PyObject *clientInitialize(PyObject *self, PyObject *args)
 	{
 		int cn;
+		int state;
 		server::clientinfo *ci;
-		if(!PyArg_ParseTuple(args, "i", &cn))
+		if(!PyArg_ParseTuple(args, "ii", &cn, &state))
 			return 0;
 		ci = server::getinfo(cn);
 		if(!ci)
@@ -427,7 +428,7 @@ namespace SbPy
 			PyErr_SetString(PyExc_ValueError, "Cannot send client init to AI client");
 			return 0;
 		}
-		server::sendClientInitialization(ci);
+		server::sendClientInitialization(ci, state);
 		Py_INCREF(Py_None);
 		return Py_None;
 	}
@@ -841,7 +842,6 @@ namespace SbPy
 
 	static PyObject *serverClients(PyObject *self, PyObject *args)
 	{
-		server::clientinfo *ci;
 		std::vector<int> clients;
 		std::vector<int>::iterator itr;
 		PyObject *pTuple;
@@ -995,6 +995,16 @@ namespace SbPy
 	static PyObject *serverIntermission(PyObject *self, PyObject *args)
 	{
 		return Py_BuildValue("i", server::interm >= 0);
+	}
+
+	static PyObject *serverIp(PyObject *self, PyObject *args)
+	{
+		return Py_BuildValue("s", serverip);
+	}
+
+	static PyObject *serverPort(PyObject *self, PyObject *args)
+	{
+		return Py_BuildValue("i", serverport);
 	}
 
 	static PyObject *serverInstanceRoot(PyObject *self, PyObject *args)
@@ -1344,6 +1354,8 @@ static PyMethodDef ModuleMethods[] = {
 	def(serverRecordNextMatch, 		"Get whether or not the next match will be recorded."),
 	def(serverTimeRemaining, 		"Get the remaining match time in milliseconds."),
 	def(serverIntermission, 		"Get whether or not the match state is intermission."),
+	def(serverIp,					"Get the ip that this server instance is serving on."),
+	def(serverPort,					"Get the port that this server instance is serving on."),
 	def(serverInstanceRoot, 		"Get the root directory of the instance."),
 
 	def(serverSetVariable, 			"Set a server variable."),

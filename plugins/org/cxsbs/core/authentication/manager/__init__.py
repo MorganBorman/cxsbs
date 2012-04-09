@@ -28,6 +28,8 @@ class manager(pyTensible.Plugin):
         
     def unload(self):
         self.authentication_manager.shutdown()
+        
+import threading
     
 class AuthenticationEvent(object):
     cn = None
@@ -64,6 +66,9 @@ class AuthenticationManager(object):
             authority.shutdown()
     
     def on_client_auth_request(self, event):
+        '''
+        @thread authentication
+        '''
         cn = event.args[0]
         name = event.args[1]
         domain = event.args[2]
@@ -94,6 +99,9 @@ class AuthenticationManager(object):
         org.cxsbs.core.timers.timer_manager.add_timer(timeout_timer)
         
     def on_authority_challenge(self, event):
+        '''
+        @thread authentication
+        '''
         global_id = event.args[0]
         challenge = event.args[1]
         
@@ -106,7 +114,7 @@ class AuthenticationManager(object):
         self.global_pending_challenges[global_id] = authEv
         del self.global_pending_requests[global_id]
         
-        if authEv.timeout_timer is not None:
+        if authEv.timeout_timer != None:
             authEv.timeout_timer.cancel()
             authEv.timeout_timer = None
 
@@ -121,6 +129,9 @@ class AuthenticationManager(object):
         org.cxsbs.core.timers.timer_manager.add_timer(timeout_timer)
         
     def on_client_auth_timeout(self, event):
+        '''
+        @thread authentication
+        '''
         challEv = event.args[0]
         global_id = challEv.global_id
         
@@ -129,8 +140,12 @@ class AuthenticationManager(object):
                 del self.global_pending_challenges[global_id]
         
         #TODO: tell the client that an authentication timeout occurred
+        org.cxsbs.core.events.manager.trigger_event('client_auth_finished', (challEv.cn, False))
     
     def on_client_auth_challenge_response(self, event):
+        '''
+        @thread authentication
+        '''
         cn = event.args[0]
         global_id = event.args[1]
         answer = event.args[2]
@@ -144,7 +159,7 @@ class AuthenticationManager(object):
         self.global_pending_verifications[global_id] = authEv
         del self.global_pending_challenges[global_id]
         
-        if authEv.timeout_timer is not None:
+        if authEv.timeout_timer != None:
             authEv.timeout_timer.cancel()
             authEv.timeout_timer = None
         
@@ -158,6 +173,9 @@ class AuthenticationManager(object):
         org.cxsbs.core.timers.timer_manager.add_timer(timeout_timer)
     
     def on_authority_authorize(self, event):
+        '''
+        @thread authentication
+        '''
         global_id = event.args[0]
         credential = event.args[1]
         
@@ -167,7 +185,7 @@ class AuthenticationManager(object):
         authEv = self.global_pending_verifications[global_id]
         del self.global_pending_verifications[global_id]
         
-        if authEv.timeout_timer is not None:
+        if authEv.timeout_timer != None:
             authEv.timeout_timer.cancel()
             authEv.timeout_timer = None
         
@@ -176,8 +194,12 @@ class AuthenticationManager(object):
         client.sessionvars['credentials'][authEv.domain] = credential
         
         #TODO: tell client that they're verified
+        org.cxsbs.core.events.manager.trigger_event('client_auth_finished', (authEv.cn, True))
     
     def on_authority_deny(self, event):
+        '''
+        @thread authentication
+        '''
         global_id = event.args[0]
         
         if not global_id in self.global_pending_verifications.keys():
@@ -186,15 +208,19 @@ class AuthenticationManager(object):
         authEv = self.global_pending_verifications[global_id]
         del self.global_pending_verifications[global_id]
         
-        if authEv.timeout_timer is not None:
+        if authEv.timeout_timer != None:
             authEv.timeout_timer.cancel()
             authEv.timeout_timer = None
         
         #TODO: tell client that authentication has been denied
+        org.cxsbs.core.events.manager.trigger_event('client_auth_finished', (authEv.cn, False))
         
     def on_authority_timeout(self, event):
-        authenticationEvent = event.args[0]
-        global_id = authenticationEvent.global_id
+        '''
+        @thread authentication
+        '''
+        authEv = event.args[0]
+        global_id = authEv.global_id
         
         #remove the matching auth request from the pending dictionaries
         if global_id in self.global_pending_requests.keys():
@@ -207,7 +233,7 @@ class AuthenticationManager(object):
                 del self.global_pending_verifications[global_id]
                 
         #TODO: tell the client which made the auth request that it has been dropped
-        
+        org.cxsbs.core.events.manager.trigger_event('client_auth_finished', (authEv.cn, False))
         
         
         

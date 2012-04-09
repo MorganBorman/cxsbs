@@ -25,7 +25,6 @@ class MasterClient(threading.Thread):
 										'addgban':		self.handle_global_ban_add
 									}
 		
-		self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.connected = False
 		
 		self.local_read, self.local_write = os.pipe()
@@ -39,7 +38,9 @@ class MasterClient(threading.Thread):
 	def check_connection(self):
 		if not self.connected:
 			try:
+				self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 				self.socket.connect((self.master_host, self.master_port))
+				print "Connected to master server at %s" %str((self.master_host, self.master_port))
 				self.connected = True
 			except:
 				print "Failed to connect to master server at %s" %str((self.master_host, self.master_port))
@@ -59,19 +60,23 @@ class MasterClient(threading.Thread):
 			if self.connected:
 				wait_devs.append(self.socket)
 			
-			rfds, wfds, efds = select.select(wait_devs, [], [], wait_time)
+			try:
+				rfds, wfds, efds = select.select(wait_devs, [], [], wait_time)
 			
-			for rfd in rfds:
-				if rfd == self.socket:
-					self.handle_remote()
-				elif rfd == self.local_read:
-					self.handle_local()
+				for rfd in rfds:
+					if rfd == self.socket:
+						self.handle_remote()
+					elif rfd == self.local_read:
+						self.handle_local()
+						
+			except select.error:
+				pass
 			
 	def handle_local(self):
 		"Pass input on to the socket except when the pipe gets closed."
 		data = os.read(self.local_read, 1024)
 		if len(data) <= 0:
-			print "Read end of stream from local side."
+			#print "Read end of stream from local side."
 			self.stop_client()
 		else:
 			self.local_data_stream += data
@@ -87,9 +92,9 @@ class MasterClient(threading.Thread):
 	def handle_remote(self):
 		data = self.socket.recv(1024)
 		if len(data) <= 0:
-			print "Read end of stream from remote side."
+			print "Read end of stream from master server at %s" %str((self.master_host, self.master_port))
 			self.connected = False
-			#self.stop_client()
+			self.socket.close()
 		else:
 			self.remote_data_stream += data
 		
@@ -109,18 +114,17 @@ class MasterClient(threading.Thread):
 	def stop_client(self):
 		if self.running:
 			self.running = False
-			os.write(self.local_write, "\n")
+			os.close(self.local_write)
 			self.join()
 			self.socket.close()
 			os.close(self.local_read)
-			os.close(self.local_write)
 	
 	def handle_registration_success(self, args):
-		#print "Sucessfully Registered with masterserver."
+		print "Sucessfully Registered with masterserver."
 		pass
 		
 	def handle_registration_failure(self, args):
-		#print "Failed to Register with masterserver."
+		print "Failed to Register with masterserver."
 		pass
 		
 	def handle_authentication_challenge(self, args):

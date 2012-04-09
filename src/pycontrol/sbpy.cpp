@@ -70,7 +70,8 @@ PyObject *callPyStringFunc(PyObject *func, const char *text)
 	if(!func || !PyCallable_Check(func))
 	{
 		fprintf(stderr, "Python Error: Invalid handler to triggerEvent function.\n");
-		return val;
+		Py_INCREF(Py_None);
+		return Py_None;
 	}
 
 	//construct the args
@@ -308,9 +309,17 @@ bool triggerEventf(const char *event_name, const char* format, ... )
             {
             	args.push_back(PyInt_FromLong(va_arg(arguments, int)));
             }
+            else if (format[i] == 'I')
+            {
+            	args.push_back(PyLong_FromLong(va_arg(arguments, unsigned int)));
+            }
             else if (format[i] == 'l')
             {
             	args.push_back(PyLong_FromLong(va_arg(arguments, long)));
+            }
+            else if (format[i] == 'L')
+            {
+            	args.push_back(PyLong_FromLong(va_arg(arguments, unsigned long)));
             }
             else if (format[i] == 'p')
             {
@@ -319,6 +328,10 @@ bool triggerEventf(const char *event_name, const char* format, ... )
             else if (format[i] == 'c')
             {
             	args.push_back(PyString_FromFormat("%c", va_arg(arguments, int)));
+            }
+            else if (format[i] == 'C')
+            {
+            	args.push_back(PyString_FromFormat("%C", va_arg(arguments, unsigned int)));
             }
             else if (format[i] == 's')
             {

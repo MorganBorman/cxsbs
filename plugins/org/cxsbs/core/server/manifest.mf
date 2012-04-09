@@ -4,8 +4,10 @@ Version = 1.0.0
 Author = Morgan Borman
 Enabled = True
 
-[[Resources]
-test_property
+[Resources]
+instance
+constants
+state
 
 [Implements]
 pyTensible.Plugin = [1.0.0,1.0.0]

@@ -7,15 +7,29 @@ class slice(pyTensible.Plugin):
 	def load(self):
 		
 		Interfaces = {}
-		Resources = {'update': update}
+		Resources = {'update': update, 'queue': queue}
 		
 		return {'Interfaces': Interfaces, 'Resources': Resources}
 		
 	def unload(self):
 		pass
 
+import sys, traceback
+
+function_queue = []
+
 def update():
-	pass
+	while len(function_queue) > 0:
+		item = function_queue.pop(0)
+		try:
+			item[0](*item[1], **item[2])
+		except:
+			exceptionType, exceptionValue, exceptionTraceback = sys.exc_info()	
+			pyTensible.plugin_loader.logger.error("Uncaught exception occurred in server slice queue." %self.name)
+			pyTensible.plugin_loader.logger.error(traceback.format_exc())
+
+def queue(func, args, kwargs):
+	function_queue.append((func, args, kwargs))
 
 @org.cxsbs.core.events.manager.event_handler('server_stop')
 def on_server_stop(event):

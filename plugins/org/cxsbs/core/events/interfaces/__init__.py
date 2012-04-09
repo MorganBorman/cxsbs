@@ -6,12 +6,31 @@ class interfaces(pyTensible.Plugin):
         
     def load(self):
         
-        Interfaces = {'IEventManager': IEventManager, 'IHandlerInformation': IHandlerInformation, 'IEvent': IEvent}
+        Interfaces = {'IEventManager': IEventManager, 'IHandlerInformation': IHandlerInformation, 'IEvent': IEvent, 'ISelect': ISelect}
         Resources = {}
         
         return {'Interfaces': Interfaces, 'Resources': Resources}
         
     def unload(self):
+        pass
+    
+class ISelect:
+    __metaclass__ = abc.ABCMeta
+    
+    @abc.abstractproperty
+    def filters(self):
+        pass
+    
+    @abc.abstractproperty
+    def timeout(self):
+        pass
+    
+    @abc.abstractproperty
+    def callback(self):
+        pass
+    
+    @abc.abstractproperty
+    def thread(self):
         pass
     
 class IEvent:

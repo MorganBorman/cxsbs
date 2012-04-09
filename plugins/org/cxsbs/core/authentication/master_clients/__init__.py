@@ -16,7 +16,7 @@ class master_clients(pyTensible.Plugin):
 import MasterClient
 
 configured_servers =        (
-                                ('localhost', 'localhost', 28780, 10),
+                                ('localhost', 'localhost', 28780, 60*60),
                             )
 
 configured_aliases =        (

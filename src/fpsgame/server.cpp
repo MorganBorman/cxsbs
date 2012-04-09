@@ -27,7 +27,7 @@ extern ENetAddress masteraddress;
 namespace server
 {
 
-	bool notgotitems = true;		// true when map has changed and waiting for clients to send item
+	bool notgotitems = false;		// true when map has changed and waiting for clients to send item
 	int gamemode = 0;
 	int gamemillis = 0, gamelimit = 0, nextexceeded = 0;
 	bool gamepaused = false;
@@ -465,7 +465,7 @@ namespace server
 	void sendwelcome(clientinfo *ci);
 
 	int initclientpacket(packetbuf &p, clientinfo *ci);
-	void sendClientInitialization(clientinfo *ci);
+	void sendClientInitialization(clientinfo *ci, int state);
 
 /** Demo Recording **/
 	void writedemo(int chan, void *data, int len)
@@ -670,7 +670,6 @@ namespace server
 
 	void setciadmin(clientinfo *ci)
 	{
-		string msg;
 		loopv(clients) if(ci!=clients[i] && clients[i]->privilege<=PRIV_MASTER) revokemaster(clients[i]);
 		ci->privilege = PRIV_ADMIN;
 		currentmaster = ci->clientnum;
@@ -897,9 +896,22 @@ namespace server
 
 	void sendinitclient(clientinfo *ci);
 
-	void sendClientInitialization(clientinfo *ci)
+	void sendClientInitialization(clientinfo *ci, int state)
 	{
 		packetbuf p(MAXTRANS, ENET_PACKET_FLAG_RELIABLE);
+		if (state == 1)
+		{
+			ci->state.state = CS_SPECTATOR;
+		}
+		else if (state == 2)
+		{
+			ci->state.state = CS_INVISIBLE;
+		}
+		else
+		{
+			ci->state.state = CS_DEAD;
+		}
+
 		int chan = initclientpacket(p, ci);
 		sendpacket(ci->clientnum, chan, p.finalize());
 		ci->connectstage = 2;
@@ -961,6 +973,20 @@ namespace server
 
 	int initclientpacket(packetbuf &p, clientinfo *ci)
 	{
+		if(ci)
+		{
+			putint(p, N_SETTEAM);
+			putint(p, ci->clientnum);
+			sendstring(ci->team, p);
+			putint(p, -1);
+		}
+		if(ci && ci->state.state >= CS_SPECTATOR)
+		{
+			putint(p, N_SPECTATOR);
+			putint(p, ci->clientnum);
+			putint(p, 1);
+			sendf(-1, 1, "ri3x", N_SPECTATOR, ci->clientnum, 1, ci->clientnum);
+		}
 		int hasmap = (m_edit && (clients.length()>1 || (ci && ci->local))) || (smapname[0] && (!m_timed || gamemillis<gamelimit || (ci && ci->state.state==CS_SPECTATOR && !ci->privilege && !ci->local) || numclients(ci ? ci->clientnum : -1, true, true, true)));
 		if(hasmap)
 		{
@@ -997,13 +1023,6 @@ namespace server
 			putint(p, N_PAUSEGAME);
 			putint(p, 1);
 		}
-		if(ci)
-		{
-			putint(p, N_SETTEAM);
-			putint(p, ci->clientnum);
-			sendstring(ci->team, p);
-			putint(p, -1);
-		}
 		if(ci && (m_demo || m_mp(gamemode)) && ci->state.state<CS_SPECTATOR)
 		{
 			if(smode && !smode->canspawn(ci, true))
@@ -1022,13 +1041,6 @@ namespace server
 				sendstate(gs, p);
 				gs.lastspawn = gamemillis;
 			}
-		}
-		if(ci && ci->state.state==CS_SPECTATOR)
-		{
-			putint(p, N_SPECTATOR);
-			putint(p, ci->clientnum);
-			putint(p, 1);
-			sendf(-1, 1, "ri3x", N_SPECTATOR, ci->clientnum, 1, ci->clientnum);
 		}
 		if(!ci || clients.length()>1)
 		{
@@ -1201,7 +1213,7 @@ namespace server
 	{
 		if(gamemillis >= gamelimit && !interm)
 		{
-			SbPy::triggerEventf("intermission_begin", "");
+			SbPy::triggerEventf("intermission_begin", "ii", gamemillis, intermissionlength);
 
 			loopv(clients)
 			{
@@ -1221,7 +1233,7 @@ namespace server
 		gamestate &ts = target->state;
 		ts.dodamage(damage);
 
-		SbPy::triggerEventf("client_inflict_damage", "iii", actor->clientnum, gun, damage);
+		//SbPy::triggerEventf("client_inflict_damage", "iii", actor->clientnum, gun, damage);
 
 		actor->state.damage_dealt += damage;
 		actor->state.weapon_stats[gun].damage_dealt += damage;
@@ -1359,7 +1371,7 @@ namespace server
 	}
 		int tempdamage = guns[gun].damage*(gs.quadmillis ? 4 : 1)*(gun==GUN_SG ? SGRAYS : 1);
 
-		SbPy::triggerEventf("client_spend_damage", "iii", ci->clientnum, gun, tempdamage);
+		//SbPy::triggerEventf("client_spend_damage", "iii", ci->clientnum, gun, tempdamage);
 		gs.damage_dealt += tempdamage;
 		gs.weapon_stats[gun].damage_dealt += tempdamage;
 
@@ -1645,9 +1657,9 @@ namespace server
 	{
 		clientinfo *ci = getinfo(n);
 		SbPy::triggerEventf("client_disconnect", "i", n);
-		trigger_stats(clients[n]);
 		if(ci->connected && ci->connectstage == 2)
 		{
+			trigger_stats(ci);
 			if(ci->privilege) resetpriv(ci);
 			if(smode) smode->leavegame(ci, true);
 			ci->state.timeplayed += lastmillis - ci->state.lasttimeplayed;
@@ -1741,7 +1753,7 @@ namespace server
 
 				getstring(text, p);
 
-				copystring(ci->connectpwd, text, strlen(text));
+				copystring(ci->connectpwd, text, strlen(text)+1);
 
 				SbPy::triggerEventf("client_init", "i", ci->clientnum);
 
@@ -1844,7 +1856,7 @@ namespace server
 					{
 						sendf(-1, 0, "ri4x", N_TELEPORT, pcn, teleport, teledest, cp->ownernum);
 					}
-					SbPy::triggerEventf("client_teleport", "iii", cp->clientnum, teleport, teledest);
+					//SbPy::triggerEventf("client_teleport", "iii", cp->clientnum, teleport, teledest);
 				}
 				break;
 			}
@@ -1862,7 +1874,7 @@ namespace server
 					{
 						sendf(-1, 0, "ri3x", N_JUMPPAD, pcn, jumppad, cp->ownernum);
 					}
-					SbPy::triggerEventf("client_jumppad", "ii", cp->clientnum, jumppad);
+					//SbPy::triggerEventf("client_jumppad", "ii", cp->clientnum, jumppad);
 				}
 				break;
 			}
@@ -1923,7 +1935,7 @@ namespace server
 				}
 				copystring(ci->clientmap, text);
 				ci->mapcrc = text[0] ? crc : 1;
-				SbPy::triggerEventf("client_map_crc", "ii", ci->clientnum, ci->mapcrc);
+				SbPy::triggerEventf("client_map_crc", "iI", ci->clientnum, ci->mapcrc);
 				break;
 			}
 
@@ -2004,7 +2016,7 @@ namespace server
 				}
 				loopk(3) shot->from[k] = getint(p)/DMF;
 				loopk(3) shot->to[k] = getint(p)/DMF;
-				SbPy::triggerEventf("client_shot", "iii", cq->clientnum, shot->millis, shot->gun);
+				//SbPy::triggerEventf("client_shot", "iii", cq->clientnum, shot->millis, shot->gun);
 				int hits = getint(p);
 				loopk(hits)
 				{
@@ -2015,7 +2027,7 @@ namespace server
 					hit.dist = getint(p)/DMF;
 					hit.rays = getint(p);
 					loopk(3) hit.dir[k] = getint(p)/DNF;
-					SbPy::triggerEventf("client_shot_hit", "iiiii", cq->clientnum, hit.target, hit.lifesequence, hit.dist, hit.rays);
+					//SbPy::triggerEventf("client_shot_hit", "iiiii", cq->clientnum, hit.target, hit.lifesequence, hit.dist, hit.rays);
 				}
 				if(cq)
 				{
@@ -2041,7 +2053,7 @@ namespace server
 				}
 				exp->id = getint(p);
 				int hits = getint(p);
-				SbPy::triggerEventf("client_explode", "iii", cq->clientnum, exp->millis, exp->gun);
+				//SbPy::triggerEventf("client_explode", "iii", cq->clientnum, exp->millis, exp->gun);
 				loopk(hits)
 				{
 					if(p.overread()) break;
@@ -2051,7 +2063,7 @@ namespace server
 					hit.dist = getint(p)/DMF;
 					hit.rays = getint(p);
 					loopk(3) hit.dir[k] = getint(p)/DNF;
-					SbPy::triggerEventf("client_explode_hit", "iiiii", cq->clientnum, hit.target, hit.lifesequence, hit.dist, hit.rays);
+					//SbPy::triggerEventf("client_explode_hit", "iiiii", cq->clientnum, hit.target, hit.lifesequence, hit.dist, hit.rays);
 				}
 				if(cq) cq->addevent(exp);
 				else delete exp;
@@ -2065,7 +2077,7 @@ namespace server
 				pickupevent *pickup = new pickupevent;
 				pickup->ent = n;
 				cq->addevent(pickup);
-				SbPy::triggerEventf("client_pickup", "ii", cq->clientnum, pickup->ent);
+				//SbPy::triggerEventf("client_pickup", "ii", cq->clientnum, pickup->ent);
 				break;
 			}
 
@@ -2117,9 +2129,9 @@ namespace server
 				filtertext(text, text, false);
 				int reqmode = getint(p);
 				if(type==N_MAPVOTE)
-					SbPy::triggerEventf("client_map_vote", "isi", sender, text, reqmode);
+					SbPy::triggerEventf("client_map_vote_pol", "isi", sender, text, reqmode);
 				else
-					SbPy::triggerEventf("client_map_set", "isi", sender, text, reqmode);
+					SbPy::triggerEventf("client_map_vote_pol", "isi", sender, text, reqmode);
 				break;
 			}
 
@@ -2138,7 +2150,7 @@ namespace server
 				int n;
 				while((n = getint(p))>=0 && n<MAXENTS && !p.overread())
 				{
-					while(item_types.size()<n) item_types.push_back(NOTUSED);
+					while(item_types.size() < n) item_types.push_back(NOTUSED);
 					item_types.push_back(getint(p));
 				}
 
@@ -2338,7 +2350,7 @@ namespace server
 			{
 				int val = getint(p);
 				getstring(text, p);
-				SbPy::triggerEventf("client_setmaster", "is", ci->clientnum, text);
+				SbPy::triggerEventf("client_setmaster", "iis", ci->clientnum, val, text);
 				break;
 			}
 

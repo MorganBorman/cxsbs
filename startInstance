@@ -25,6 +25,7 @@ else
 	#	fi
 	#done
 	if (( ${VALID_NAME} == 1 )); then
+		#valgrind --suppressions=resources/valgrind-python.supp --log-file=valgrind_output.txt ${CXSBS_DIR}/bin/cxsbs -r"${CXSBS_DIR}" -p"${CXSBS_DIR}/plugins" -i"${CXSBS_DIR}/instances/${SERVER_NAME}"
 		${CXSBS_DIR}/bin/cxsbs -r"${CXSBS_DIR}" -p"${CXSBS_DIR}/plugins" -i"${CXSBS_DIR}/instances/${SERVER_NAME}"
 	else
 		echo "Invalid name $SERVER_NAME specified"

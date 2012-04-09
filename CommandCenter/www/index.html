@@ -1,0 +1,70 @@
+<html>
+	<head>
+		<title>CXSBS Command Center</title>
+
+		<link rel="stylesheet" type="text/css" href="css/CommandCenter.css" />
+		<link rel="stylesheet" type="text/css" href="css/CommandCenter.sprites.css" />
+		<link rel="stylesheet" type="text/css" href="css/CommandCenter.menus.css" />
+		
+		<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/dojo/1.7.2/dojo/resources/dojo.css">
+		<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/dojo/1.7.2/dijit/themes/claro/claro.css">
+		<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/dojo/1.7.2/dojox/grid/resources/claroGrid.css">
+		
+		<script src="js/cube2crypto.o.js" type="text/javascript"></script>	
+		<script src="js/cube2crypto.h.js" type="text/javascript"></script>
+		
+		<script type="text/javascript">
+			if (location.host == "")
+			{
+				var command_center_location = location.pathname.replace(/\/[^/]+$/, "") + "/js/CommandCenter"
+			}
+			else
+			{
+				var command_center_location = "/js/CommandCenter"
+			}
+		
+			var dojoConfig = {
+				async: true,
+				parseOnLoad: true,
+			    packages: [
+			        { name: "dojo", location: "//ajax.googleapis.com/ajax/libs/dojo/1.7.2/" },
+			        { name: "CommandCenter", location: command_center_location, main: "Main"}
+			    ]};
+		</script>
+		<script src="http://ajax.googleapis.com/ajax/libs/dojo/1.7.2/dojo/dojo.js" type="text/javascript"></script>
+		<script type="text/javascript">
+			require(["CommandCenter/CommandCenter"]);
+		</script>
+	</head>
+	<body class="claro">
+		<div id="preloader"></div>
+		<div id="content-main">
+			<div id="menu-bar">
+				<ul class="memu">
+					<li class="memu-root">
+						<a href="#"><div class="memu-icon sprite-server"></div>Server</a>
+						<ul>
+							<li><a class="menuaction" id="connect"><div class="memu-icon sprite-connect"></div>Connect</a></li>
+							<li><a class="menuaction" id="disconnect"><div class="memu-icon sprite-disconnect"></div>Disconnect</a></li>
+							<li><a class="menuaction" id="authenticate"><div class="memu-icon sprite-authenticate"></div>Authenticate</a></li>
+						</ul>
+					</li>
+				</ul>
+			</div>
+			<div id="content-inner">
+				<div id="appLayout" class="commandLayout" data-dojo-type="dijit.layout.BorderContainer" data-dojo-props="design: 'headline'">
+					<div class="centerPanel" data-dojo-type="dijit.layout.TabContainer" data-dojo-props="region: 'center', tabPosition: 'top'">
+						<div data-dojo-type="dijit.layout.ContentPane" closable="true" title="Welcome">
+							<h4>Welcome</h4>
+							<br>This is the CXSBS Command Center. It will allow you to view and issue commands to CXSBS servers.
+						</div>
+					</div>
+					<div id="leftCol" class="edgePanel" data-dojo-type="dijit.layout.ContentPane" data-dojo-props="region: 'left', splitter: true">
+						<div id="navTree"></div>
+					</div>
+				</div>
+			</div>
+			<div id="status-bar"></div>
+		</div>
+	</body>
+</html>

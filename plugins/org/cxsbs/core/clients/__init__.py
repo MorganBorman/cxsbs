@@ -23,6 +23,8 @@ class clients(pyTensible.Plugin):
 	def unload(self):
 		pass
 	
+settings = org.cxsbs.core.settings.manager.Accessor('org.cxsbs.core.clients')
+	
 class enum(object):
 	def __init__(self, items):
 		i = 0
@@ -36,6 +38,7 @@ class ClientConstants(object):
 
 class ClientManager:
 	_clients = {}
+	_pseudoclients = {}
 	_game_vars_template = {}
 	_session_vars_template = {}
 	
@@ -48,6 +51,10 @@ class ClientManager:
 	def clients(self):
 		#return a shallow copy of the clients dictionary
 		return copy.copy(self._clients)
+	
+	@property
+	def pseudoclients(self):
+		return self._pseudoclients
 		
 	@property
 	def session_vars_template(self):
@@ -58,16 +65,25 @@ class ClientManager:
 		return self._game_vars_template
 		
 	def get_client(self, cn):
-		return self._clients[cn]
+		if cn >= -128 and cn <= 127:
+			return self._clients[cn]
+		else:
+			return self._pseudoclients[cn]
 	
 	def on_client_init(self, event):
+		'''
+		@thread policy_events
+		'''
 		cn = event.args[0]
 		self._clients[cn] = Client(self, cn)
+		pyTensible.plugin_loader.logger.debug("Added client instance to client_manager.")
 		
 	def on_client_disc(self, event):
 		cn = event.args[0]
 		if cn in self._clients.keys():
 			del self._clients[cn]
+		elif cn in self._pseudoclients.keys():
+			del self._pseudoclients[cn]
 			
 	def on_server_shutdown(self, event):
 		self.disconnect_all("Server going down.")
@@ -128,6 +144,11 @@ class Client(object):
 	def sessionid(self):
 		'''get the ip of the client'''
 		return self.__sessionid
+	
+	@property
+	def connect_password(self):
+		'''Get the hash of the password this client used to connect.'''
+		return cube2server.clientConnectPassword(self.cn)
 
 	@property
 	def gamevars(self):
@@ -166,7 +187,7 @@ class Client(object):
 	@property
 	def ip_string(self):
 		'''Ip of client as decimal octet string'''
-		return Net.ipLongToString(self.ip)
+		return org.cxsbs.core.net.ipLongToString(self.ip)
 	
 	@property
 	def frags(self):
@@ -251,6 +272,12 @@ class Client(object):
 		else:
 			groups.append("__norm__")
 			
+		try:
+			for credential in self.sessionvars['credentials']:
+			 	groups.append(credential.groups())
+		except KeyError:
+			pass
+			
 		if self.spectator:
 			groups.append("__spectator__")
 		elif self.invisible:
@@ -275,7 +302,7 @@ class Client(object):
 	@property
 	def spectator(self):
 		'''Is client a spectator'''
-		return cube2server.clientState(self.cn) >= CS_SPECTATOR
+		return cube2server.clientState(self.cn) >= ClientConstants.client_states.CS_SPECTATOR
 	
 	@spectator.setter
 	def spectator(self, value):
@@ -286,7 +313,7 @@ class Client(object):
 	@property
 	def invisible(self):
 		'''Is client invisible'''
-		return cube2server.clientState(self.cn) == CS_INVISIBLE
+		return cube2server.clientState(self.cn) == ClientConstants.client_states.CS_INVISIBLE
 	
 	@invisible.setter
 	def invisible(self, value):
@@ -298,7 +325,7 @@ class Client(object):
 	
 	def newGame(self):
 		'''Reset game variables'''
-		self.__gamevars = copy.deepcopy(self.manager.game_vars_template)
+		self.__gamevars = copy.deepcopy(self.__manager.game_vars_template)
 	def logAction(self, action, level='info'):
 		'''Log an action this client has taken'''
 		log_client_action(self, action, level)
@@ -311,6 +338,11 @@ class Client(object):
 			if group in allowGroups:
 				permitted = True
 		return permitted
+	def isActionPermitted(self, action):
+		'''Retreive a list of allowGroups and denyGroups for a particular action and check this client using isPermitted.'''
+		allow_groups = settings[action + '_allowed']
+		deny_groups = settings[action + '_denied']
+		return self.isPermitted(allow_groups, deny_groups)
 	def requestAuth(self, description):
 		'''Request that a client send their auth key with the given description'''
 		cube2server.clientRequestAuth(self.cn, description)
@@ -325,7 +357,7 @@ class Client(object):
 		cube2server.clientMessageTeam(self.cn, tcn, message)
 	def message(self, msg):
 		'''Send message to client'''
-		cube2server.clientMessage(self.cn, msg)
+		cube2server.clientServerMessage(self.cn, msg)
 	def disconnect(self, reason=0):
 		'''Disconnect client from server'''
 		cube2server.clientDisconnect(self.cn, reason)

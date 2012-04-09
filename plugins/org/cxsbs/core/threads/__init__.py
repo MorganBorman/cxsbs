@@ -29,7 +29,7 @@ class ThreadManager:
 	
 	def queue(self, name, function, args, kwargs):
 		if name == "main":
-			function(*args, **kwargs)
+			org.cxsbs.core.slice.queue(function, args, kwargs)
 			return
 		
 		if not name in self.processing_threads.keys():

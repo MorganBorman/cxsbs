@@ -22,6 +22,7 @@ org.cxsbs.core.settings.interfaces.ISettingsManager = [1.0.0,1.0.0]
 
 [Dependencies]
 org.cxsbs.core.events.manager = [1.0.0,1.0.0]
+org.cxsbs.core.server = [1.0.0,1.0.0]
 
 [Requests]
 org.cxsbs.core.settings.interfaces.ISettingStore = [1.0.0,1.0.0]

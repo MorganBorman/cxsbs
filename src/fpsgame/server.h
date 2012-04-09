@@ -129,9 +129,9 @@ namespace server
 
         void reset()
         {
-        	damage_spent, damage_dealt = 0;
+        	damage_spent = damage_dealt = 0;
         	kills = 0;
-        	spree, maxspree = 0;
+        	spree = maxspree = 0;
         }
     };
 	
@@ -180,18 +180,18 @@ namespace server
             rockets.reset();
             grenades.reset();
 
-            lastdeath, lastspawn, lastshot, lasttimeplayed, lifesequence = 0;
+            lastdeath = lastspawn = lastshot = lasttimeplayed = lifesequence = 0;
 
             //reset the stats stuff
             loopi(GUN_PISTOL+1)
             {
             	weapon_stats[i].reset();
             }
-            lastkill, lastkill_weapon = 0;
-            timeplayed, timespectated = 0;
-            frags, deaths, teamkills, suicides, spree, maxspree = 0;
-            damage_spent, damage_dealt, damage_received = 0;
-            flags_scored, flags_dropped, flags_stopped, flags_returned = 0;
+            lastkill = lastkill_weapon = 0;
+            timeplayed = timespectated = 0;
+            frags = deaths = teamkills = suicides = spree = maxspree = 0;
+            damage_spent = damage_dealt = damage_received = 0;
+            flags_scored = flags_dropped = flags_stopped = flags_returned = 0;
 
             respawn();
         }
@@ -460,7 +460,6 @@ namespace server
 	extern int gamemode;
 	extern bool gamepaused;
 	extern bool allow_modevote;
-	extern int port;
 	extern bool demonextmatch;
 	extern int persistentdemos;
 	extern int capacity;
@@ -515,7 +514,7 @@ namespace server
 	void setmastermode(int);
 	void challengeauth(clientinfo *ci, uint id, const char *domain, const char *val);
 	bool setteam(clientinfo *, char *);
-	void sendClientInitialization(clientinfo *);
+	void sendClientInitialization(clientinfo *, int state);
 	bool pregame_setteam(clientinfo *, char *);
 	bool spectate(clientinfo *, bool);
 	void setinvisible(clientinfo *, bool);

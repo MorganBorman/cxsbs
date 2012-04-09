@@ -15,4 +15,6 @@ add_definitions(-DHAS_SOCKLEN_T)
 
 include_directories(include)
 
+set(CMAKE_CXX_FLAGS "-Wall -g -pg")
+
 add_library(enet STATIC ${enet_srcs})

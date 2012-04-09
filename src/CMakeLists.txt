@@ -31,7 +31,7 @@ ENDIF(WIN32)
 include(CheckFunctionExists)
 include(CheckSymbolExists)
 
-set(CMAKE_CXX_FLAGS "-rdynamic")
+set(CMAKE_CXX_FLAGS "-rdynamic -Wall -g -pg")
 
 check_function_exists(gethostbyaddr_r, HAS_GETHOSTBYADDR_R)
 check_function_exists(gethostbyname_r, HAS_GETHOSTBYNAME_R)

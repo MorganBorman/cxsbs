@@ -1,4 +1,6 @@
 import pyTensible, org
+import CategoryConfig
+import os.path
 
 class server(pyTensible.Plugin):
 	def __init__(self):
@@ -23,14 +25,42 @@ class server(pyTensible.Plugin):
 import cube2server
 
 class ServerInstance(object):
+	def __init__(self):
+		config_path = self.root
+		config_category = "instance"
+		config_extension = ".conf"
+		
+		config_object = CategoryConfig.CategoryConfig(config_path, config_category, config_extension)
+		
+		doc_instance_name = "The name that should be used to refer to this server instance."
+		default_instance_name = os.path.basename(self.root)
+		self._name = config_object.getOption('org.cxsbs.core.server.instance.name', default_instance_name, doc_instance_name)
+		
+		doc_instance_domain = "The domain that this server is serving for."
+		default_instance_domain = "example.com"
+		self._domain = config_object.getOption('org.cxsbs.core.server.instance.domain', default_instance_domain, doc_instance_domain)
+	
+		del config_object
 	
 	@property
 	def name(self):
-		return "instance name"
+		return self._name
 	
 	@property
 	def root(self):
 		return cube2server.serverInstanceRoot()
+	
+	@property
+	def domain(self):
+		return self._domain
+	
+	@property
+	def ip(self):
+		return cube2server.serverIp()
+	
+	@property
+	def port(self):
+		return cube2server.serverPort()
 
 
 class enum(object):
@@ -41,7 +71,10 @@ class enum(object):
 			i += 1
 
 class ServerConstants(object):
-	pass
+	item_modes = [0, 1, 9, 11, 13, 15]
+	flag_modes = [11, 12, 13, 14, 15, 16, 17, 18, 19]
+	base_modes = [9, 10]
+	
 	
 class Team(object):
 	name = ""
@@ -83,7 +116,7 @@ class ServerState(object):
 		return cube2server.serverTimeRemaining()
 	
 	@time_remaining.setter
-	def set_time_remaining(self, value):
+	def time_remaining(self, value):
 		cube2server.serverSetTimeRemaining(value)
 	
 	class Variables:
@@ -120,11 +153,11 @@ class ServerState(object):
 		cube2server.serverSetPaused(value)
 	
 	@property
-	def master_mode(self):
+	def mastermode(self):
 		return cube2server.serverMasterMode()
 	
-	@master_mode.setter
-	def master_mode(self, value):
+	@mastermode.setter
+	def mastermode(self, value):
 		cube2server.serverSetMasterMode(value)
 		
 	@property

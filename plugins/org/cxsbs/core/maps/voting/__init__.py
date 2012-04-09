@@ -6,6 +6,8 @@ class voting(pyTensible.Plugin):
 		
 	def load(self):
 		
+		org.cxsbs.core.clients.client_manager.game_vars_template['org.cxsbs.core.maps.vote'] = ()
+		
 		Interfaces = {}
 		Resources = 	{}
 		
@@ -41,4 +43,9 @@ def next_map_vote_threshold():
 
 @org.cxsbs.core.events.manager.event_handler('client_map_vote')
 def on_client_map_vote(event):
-	cube2server.serverSetMapMode(event.args[1], event.args[2])
+	client = event.args[0]
+	
+	client.gamevars['org.cxsbs.core.maps.vote'] = (event.args[1], event.args[2])
+	
+	if not client.spectator:
+		cube2server.serverSetMapMode(event.args[1], event.args[2])

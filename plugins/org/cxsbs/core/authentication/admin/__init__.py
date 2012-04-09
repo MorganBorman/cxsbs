@@ -21,23 +21,7 @@ import time
 import random
 
 def generate_seed():
-		time_val_seed = str(time.time())
-		object_id_seed = str(id(object()))
-		
-		seed_chars = []
-		
-		for ix in range(max(len(time_val_seed), len(object_id_seed))):
-			try:
-				seed_chars.append(time_val_seed[ix])
-			except:
-				seed_chars.append(str(random.random()))
-				
-			try:
-				seed_chars.append(object_id_seed[ix])
-			except:
-				seed_chars.append((random.random()))
-		
-		return ''.join(seed_chars)
+	return format(random.getrandbits(128), 'X')
 
 @org.cxsbs.core.settings.manager.Setting
 def full_admin_keypair():

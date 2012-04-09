@@ -5,6 +5,7 @@ Author = Morgan Borman
 Enabled = True
 
 [Interfaces]
+ISelect
 IEvent
 IEventManager
 IHandlerInformation

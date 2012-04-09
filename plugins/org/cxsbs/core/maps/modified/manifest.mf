@@ -12,5 +12,7 @@ pyTensible.Plugin = [1.0.0,1.0.0]
 
 [Dependencies]
 org.cxsbs.core.events.manager = [1.0.0,1.0.0]
+org.cxsbs.core.policies = [1.0.0,1.0.0]
+org.cxsbs.core.settings.manager = [1.0.0,1.0.0]
 org.cxsbs.core.server = [1.0.0,1.0.0]
 org.cxsbs.core.clients = [1.0.0,1.0.0]

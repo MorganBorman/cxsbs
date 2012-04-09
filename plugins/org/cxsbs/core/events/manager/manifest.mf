@@ -12,6 +12,7 @@ Event[org.cxsbs.core.events.interfaces.IEvent]
 event_manager(org.cxsbs.core.events.interfaces.IEventManager)
 trigger_event
 event_handler
+select
 
 [Implements]
 pyTensible.Plugin = [1.0.0,1.0.0]

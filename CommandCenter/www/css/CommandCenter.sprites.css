@@ -1,0 +1,6 @@
+.sprite-server 			{ width: 16px; height: 16px; background:url(../sprites/server.png) 			no-repeat 0px 0px; }
+.sprite-status 			{ width: 16px; height: 16px; background:url(../sprites/status.png) 			no-repeat 0px 0px; }
+.sprite-connect 		{ width: 16px; height: 16px; background:url(../sprites/connect.png) 		no-repeat 0px 0px; }
+.sprite-disconnect 		{ width: 16px; height: 16px; background:url(../sprites/disconnect.png) 		no-repeat 0px 0px; }
+.sprite-network-error 	{ width: 16px; height: 16px; background:url(../sprites/network-error.png) 	no-repeat 0px 0px; }
+.sprite-authenticate 	{ width: 16px; height: 16px; background:url(../sprites/authenticate.png) 	no-repeat 0px 0px; }

@@ -43,16 +43,17 @@ class CategoryConfig:
 		value = None
 		
 		subcategory = '.'.join(symbolic_name.split('.')[:-1])
+		key = symbolic_name.split('.')[-1]
 		
 		if not self.parser.has_section(subcategory):
 			self.parser.add_section(subcategory)
 		
 		try:
-			value = self.parser.get(subcategory, symbolic_name)
+			value = self.parser.get(subcategory, key)
 		except NoOptionError:
 			value = default_value
 			self.parser.set(subcategory, '#' + doc)
-			self.parser.set(subcategory, symbolic_name, default_value)
+			self.parser.set(subcategory, key, default_value)
 			self.is_modified = True
 			
 		return value
