@@ -16,7 +16,7 @@ class master_clients(pyTensible.Plugin):
 import MasterClient
 
 configured_servers =        (
-                                ('localhost', 'localhost', 28780, 60*60),
+                                ('localhost', 'localhost', 28799, 60*60),
                             )
 
 configured_aliases =        (
@@ -26,10 +26,11 @@ configured_aliases =        (
 class RemoteCredential(org.cxsbs.core.authentication.interfaces.ICredential):
     def __init__(self, domain):
         self._domain = domain
+        self._groups_cache = []
     
     @property
     def groups(self):
-        return (self._domain,)
+        return [self._domain] + self._groups_cache
     
     def deauthorize(self):
         pass

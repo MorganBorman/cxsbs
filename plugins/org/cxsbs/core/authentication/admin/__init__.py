@@ -16,7 +16,7 @@ class admin(pyTensible.Plugin):
 
 settings = org.cxsbs.core.settings.manager.Accessor('org.cxsbs.core.authentication.admin')
 
-import cube2crypto		
+import cube2crypto
 import time
 import random
 

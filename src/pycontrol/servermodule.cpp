@@ -137,6 +137,21 @@ namespace SbPy
 		return Py_BuildValue("i", ci->ping);
 	}
 
+	static PyObject *clientUid(PyObject *self, PyObject *args)
+	{
+		int cn;
+		server::clientinfo *ci;
+		if(!PyArg_ParseTuple(args, "i", &cn))
+			return 0;
+		ci = server::getinfo(cn);
+		if(!ci)
+		{
+			PyErr_SetString(PyExc_ValueError, "Invalid cn specified");
+			return 0;
+		}
+		return Py_BuildValue("i", ci->uid);
+	}
+
 	static PyObject *clientTeam(PyObject *self, PyObject *args)
 	{
 		int cn;
@@ -728,6 +743,24 @@ namespace SbPy
 		return Py_None;
 	}
 
+	static PyObject *clientSetUid(PyObject *self, PyObject *args)
+	{
+		int cn;
+		int uid;
+		server::clientinfo *ci;
+		if(!PyArg_ParseTuple(args, "ii", &cn, &uid))
+			return 0;
+		ci = server::getinfo(cn);
+		if(!ci)
+		{
+			PyErr_SetString(PyExc_ValueError, "Invalid cn specified");
+			return 0;
+		}
+		ci->uid = uid;
+		Py_INCREF(Py_None);
+		return Py_None;
+	}
+
 	static PyObject *clientSetTeam(PyObject *self, PyObject *args)
 	{
 		int cn;
@@ -1298,6 +1331,7 @@ static PyMethodDef ModuleMethods[] = {
 	def(clientIpLong, 				"Get client IP."),
 	def(clientPrivilege, 			"Get client advertised privilege."),
 	def(clientPing, 				"Get client ping."),
+	def(clientUid, 					"Get client uid."),
 	def(clientTeam, 				"Get client team name."),
 	def(clientState, 				"Get client state."),
 	def(clientMapCrc, 				"Get client map crc."),
@@ -1328,6 +1362,7 @@ static PyMethodDef ModuleMethods[] = {
 	def(clientSendDemo, 			"Send demo to client."),
 	def(clientSetVariable, 			"Set a client variable."),
 	def(clientSetPrivilege, 		"Set client advertised privilege."),
+	def(clientSetUid, 				"Set uid of client."),
 	def(clientSetTeam, 				"Set team of client."),
 	def(clientPregameSetTeam, 		"Set team of player as a result of autoteam event."),
 	def(clientSetSpectator, 		"Set the spectator state of the client."),

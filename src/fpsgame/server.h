@@ -121,6 +121,23 @@ namespace server
         }
     };
 
+    enum {SE_D_SPENT, SE_D_DEALT, SE_FRAG, SE_DEATH};
+    enum {SE_NOTUSER = -1, SE_TEAMKILL = -2, SE_SUICIDE = -3};
+
+    struct stat_event
+    {
+    	short int type;
+    	long int timestamp;
+    	int uid;
+    	int mode;
+    	union {
+    		int gun;
+    		int target;
+    		int cause;
+    	};
+    	int amount;
+    };
+
     struct weapon_stat
     {
     	int damage_spent, damage_dealt;
@@ -142,6 +159,9 @@ namespace server
 
         int state, editstate;
         int lastdeath, lastspawn, lastshot, lasttimeplayed, lifesequence;
+
+        //vector of timestamped stat events
+        vector<stat_event *> stat_events;
 
         //stats stuff
         weapon_stat weapon_stats[GUN_PISTOL+1];
@@ -179,6 +199,8 @@ namespace server
             maxhealth = 100;
             rockets.reset();
             grenades.reset();
+
+            stat_events.deletecontents();
 
             lastdeath = lastspawn = lastshot = lasttimeplayed = lifesequence = 0;
 
@@ -258,6 +280,7 @@ namespace server
     struct clientinfo
     {
         int clientnum, ownernum, connectmillis, sessionid, overflow, disconnect_reason;
+        int uid;
         string name, team, mapvote;
         int playermodel;
         int modevote;
@@ -362,6 +385,7 @@ namespace server
         void reset()
         {
             name[0] = team[0] = connectpwd[0] = 0;
+            uid = -1;
             disconnect_reason = -1;
             connectstage = 0;
             playermodel = -1;

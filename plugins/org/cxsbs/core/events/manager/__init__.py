@@ -142,14 +142,14 @@ class REventManager(org.cxsbs.core.events.interfaces.IEventManager):
 							org.cxsbs.core.threads.thread_manager.queue(select.thread, select.callback, (event,), {})
 						except:
 							exception_type, exception_value, exception_traceback = sys.exc_info()	#@UnusedVariable
-							pyTensible.plugin_loader.logger.error(traceback.format_exc())
+							org.cxsbs.core.logger.log.error(traceback.format_exc())
 				except:
 					pass
 				
 	def register_handler(self, name, handler):
 		"Register an event handler function or other callable for a specified event."
 		
-		pyTensible.plugin_loader.logger.debug("Events: Registering handler: %s for: %s", str(handler), str(name))
+		org.cxsbs.core.logger.log.debug("Events: Registering handler: %s for: %s", str(handler), str(name))
 		if not name in self.handlers_info.keys():
 			self.handlers_info[name] = []
 			
@@ -165,14 +165,14 @@ class REventManager(org.cxsbs.core.events.interfaces.IEventManager):
 					org.cxsbs.core.threads.thread_manager.queue(handler_info.thread, handler_info.handler, (event,), {})
 				except:
 					exception_type, exception_value, exception_traceback = sys.exc_info()	#@UnusedVariable
-					pyTensible.plugin_loader.logger.error(traceback.format_exc())
+					org.cxsbs.core.logger.log.error(traceback.format_exc())
 	
 	def trigger_event(self, event):
 		"Trigger an event of the given name with the given arguments. Safe even if their is no handler yet registered for the named event."
 		if not isinstance(event, org.cxsbs.core.events.interfaces.IEvent):
 			raise TypeError("Expected an event object implementing the IEvent interface. Got an object of %s class." %event.__class__.__name__)
 		
-		pyTensible.plugin_loader.logger.debug("Events: Triggering event: %s with args: %s", str(event.name), str(event.args) + str(event.kwargs))
+		org.cxsbs.core.logger.log.debug("Events: Triggering event: %s with args: %s", str(event.name), str(event.args) + str(event.kwargs))
 		
 		#trigger the handlers which match this event
 		self.invoke_handlers(event)

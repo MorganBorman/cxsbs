@@ -76,7 +76,7 @@ class ClientManager:
 		'''
 		cn = event.args[0]
 		self._clients[cn] = Client(self, cn)
-		pyTensible.plugin_loader.logger.debug("Added client instance to client_manager.")
+		org.cxsbs.core.logger.log.debug("Added client instance to client_manager.")
 		
 	def on_client_disc(self, event):
 		cn = event.args[0]
@@ -94,7 +94,7 @@ class ClientManager:
 			client.setDisconnect(0)
 
 def log_client_action(client, action, level):
-	log_function = pyTensible.plugin_loader.logger.__getattribute__(level)
+	log_function = org.cxsbs.core.logger.log.__getattribute__(level)
 	log_function("clients: %s@%u: %s" %(client.name, client.ip, action))
 
 import copy
@@ -129,6 +129,8 @@ class Client(object):
 		self.__sessionvars = copy.deepcopy(self.__manager.session_vars_template)
 		
 		self.logAction("init", 'info')
+		
+		self.uid = 1
 	
 	@property
 	def cn(self):
@@ -273,8 +275,9 @@ class Client(object):
 			groups.append("__norm__")
 			
 		try:
-			for credential in self.sessionvars['credentials']:
-			 	groups.append(credential.groups())
+			for domain, credential in self.sessionvars['credentials'].items():
+				for group in credential.groups:
+					groups.append(group)
 		except KeyError:
 			pass
 			
@@ -288,6 +291,16 @@ class Client(object):
 		return groups
 	
 	#read write properties
+	
+	@property
+	def uid(self):
+		'''get the user id for this client'''
+		return cube2server.clientUid(self.cn)
+	
+	@uid.setter
+	def uid(self, uid):
+		'''set the user id for this client'''
+		cube2server.clientSetUid(self.cn, uid)
 	
 	@property
 	def team(self):

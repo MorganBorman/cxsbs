@@ -25,8 +25,8 @@ def update():
 			item[0](*item[1], **item[2])
 		except:
 			exceptionType, exceptionValue, exceptionTraceback = sys.exc_info()	
-			pyTensible.plugin_loader.logger.error("Uncaught exception occurred in server slice queue." %self.name)
-			pyTensible.plugin_loader.logger.error(traceback.format_exc())
+			org.cxsbs.core.logger.log.error("Uncaught exception occurred in server slice queue.")
+			org.cxsbs.core.logger.log.error(traceback.format_exc())
 
 def queue(func, args, kwargs):
 	function_queue.append((func, args, kwargs))

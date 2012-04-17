@@ -92,7 +92,7 @@ class RPolicyManager(IPolicyManager):
 	def register_handler(self, name, handler):
 		"Register a policy handler function or other callable for a specified event."
 		
-		pyTensible.plugin_loader.logger.debug("Policies: Registering handler: %s for: %s", str(handler), str(name))
+		org.cxsbs.core.logger.log.debug("Policies: Registering handler: %s for: %s", str(handler), str(name))
 		if not name in self.handlers.keys():
 			self.handlers[name] = []
 			
@@ -102,7 +102,7 @@ class RPolicyManager(IPolicyManager):
 		if not isinstance(query, IQuery):
 			raise TypeError("Expected a query object implementing the IQuery interface. Got an object of %s class." %query.__class__.__name__)
 		
-		pyTensible.plugin_loader.logger.debug("Policies: Querying policy: %s with args: %s and default of: %s", str(query.name), str(query.args) + str(query.kwargs), str(query.default))
+		org.cxsbs.core.logger.log.debug("Policies: Querying policy: %s with args: %s and default of: %s", str(query.name), str(query.args) + str(query.kwargs), str(query.default))
 		
 		if query.name in self.handlers.keys():
 			for handler in self.handlers[query.name]:
@@ -112,6 +112,6 @@ class RPolicyManager(IPolicyManager):
 						return 
 				except:
 					exception_type, exception_value, exception_traceback = sys.exc_info()	#@UnusedVariable
-					pyTensible.plugin_loader.logger.error(traceback.format_exc())
+					org.cxsbs.core.logger.log.error(traceback.format_exc())
 					
 		return query.default

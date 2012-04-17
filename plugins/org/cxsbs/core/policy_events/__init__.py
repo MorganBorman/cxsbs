@@ -62,7 +62,7 @@ def post_connect_initialization(client):
 		if response:
 			join_state = 2
 	
-	pyTensible.plugin_loader.logger.debug("initializing client cn: %d, join_state: %d" % (client.cn, join_state))
+	org.cxsbs.core.logger.log.debug("initializing client cn: %d, join_state: %d" % (client.cn, join_state))
 	org.cxsbs.core.threads.queue('main', cube2server.clientInitialize, (client.cn, join_state), {})
 	
 @org.cxsbs.core.events.manager.event_handler('client_set_spectator_pol')

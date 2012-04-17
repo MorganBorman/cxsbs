@@ -78,8 +78,8 @@ class ProcessingThread(threading.Thread):
 					event[0](*(event[1]))
 				except:
 					exceptionType, exceptionValue, exceptionTraceback = sys.exc_info()	
-					pyTensible.plugin_loader.logger.error("Uncaught exception occurred in a ProcessingThread named %s." %self.name)
-					pyTensible.plugin_loader.logger.error(traceback.format_exc())
+					org.cxsbs.core.logger.log.error("Uncaught exception occurred in a ProcessingThread named %s." %self.name)
+					org.cxsbs.core.logger.log.error(traceback.format_exc())
 					
 	def stop(self):
 		self.running = False

@@ -8,6 +8,8 @@
 #include "servermodule.h"
 #include "server.h"
 
+#include <time.h>
+
 #include <iostream>
 
 #include <signal.h>
@@ -1207,6 +1209,34 @@ namespace server
 
 					pTuple_weapon_stats
 				);
+
+		PyObject *pTuple_stat_events = PyTuple_New(ci->state.stat_events.length());
+
+		loopv(ci->state.stat_events)
+		{
+			stat_event *se = ci->state.stat_events[i];
+			if (se->type <= SE_D_DEALT)
+				PyTuple_SetItem(
+						pTuple_stat_events, i, Py_BuildValue("(iliii)",
+							se->type,
+							se->timestamp,
+							se->uid,
+							se->gun,
+							se->amount
+						)
+				);
+			else
+				PyTuple_SetItem(
+						pTuple_stat_events, i, Py_BuildValue("(ilii)",
+							se->type,
+							se->timestamp,
+							se->uid,
+							se->gun
+						)
+				);
+		}
+
+		SbPy::triggerEventf("client_stat_events_recorded", "p", pTuple_stat_events);
 	}
 
 	void checkintermission()
@@ -1234,6 +1264,18 @@ namespace server
 		ts.dodamage(damage);
 
 		//SbPy::triggerEventf("client_inflict_damage", "iii", actor->clientnum, gun, damage);
+
+		if(actor->uid != -1)
+		{
+			stat_event *se = new stat_event;
+			actor->state.stat_events.add(se);
+			se->type = SE_D_DEALT;
+			se->timestamp = time(NULL);
+			se->uid = actor->uid;
+			se->mode = gamemode;
+			se->gun = gun;
+			se->amount = damage;
+		}
 
 		actor->state.damage_dealt += damage;
 		actor->state.weapon_stats[gun].damage_dealt += damage;
@@ -1264,12 +1306,44 @@ namespace server
 				actor->state.suicides++;
 				actor->state.reset_sprees(actor->clientnum);
 				SbPy::triggerEventf("client_suicide", "i", actor->clientnum);
+
+				if(actor->uid != -1)
+				{
+					stat_event *se = new stat_event;
+					actor->state.stat_events.add(se);
+					se->type = SE_DEATH;
+					se->timestamp = time(NULL);
+					se->mode = gamemode;
+					se->cause = SE_SUICIDE;
+				}
+
 			}
 			else if(isteam(actor->team, target->team))
 			{
 				actor->state.teamkills++;
 				actor->state.reset_sprees(actor->clientnum);
 				SbPy::triggerEventf("client_teamkill", "ii", actor->clientnum, target->clientnum);
+
+				if(actor->uid != -1)
+				{
+					stat_event *se = new stat_event;
+					actor->state.stat_events.add(se);
+					se->type = SE_FRAG;
+					se->timestamp = time(NULL);
+					se->mode = gamemode;
+					se->target = SE_TEAMKILL;
+				}
+
+				if(target->uid != -1)
+				{
+					stat_event *se = new stat_event;
+					target->state.stat_events.add(se);
+					se->type = SE_DEATH;
+					se->timestamp = time(NULL);
+					se->mode = gamemode;
+					se->cause = SE_TEAMKILL;
+				}
+
 			}
 			else
 			{
@@ -1279,6 +1353,27 @@ namespace server
 				actor->state.spree++;
 				actor->state.weapon_kill(gun, actor->clientnum);
 				SbPy::triggerEventf("client_frag", "ii", actor->clientnum, target->clientnum);
+
+				if(actor->uid != -1)
+				{
+					stat_event *se = new stat_event;
+					actor->state.stat_events.add(se);
+					se->type = SE_FRAG;
+					se->timestamp = time(NULL);
+					se->mode = gamemode;
+					se->target = target->uid;
+				}
+
+				if(target->uid != -1)
+				{
+					stat_event *se = new stat_event;
+					target->state.stat_events.add(se);
+					se->type = SE_DEATH;
+					se->timestamp = time(NULL);
+					se->mode = gamemode;
+					se->cause = actor->uid;
+				}
+
 			}
 
 			sendf(-1, 1, "ri4", N_DIED, target->clientnum, actor->clientnum, actor->state.frags);
@@ -1372,6 +1467,18 @@ namespace server
 		int tempdamage = guns[gun].damage*(gs.quadmillis ? 4 : 1)*(gun==GUN_SG ? SGRAYS : 1);
 
 		//SbPy::triggerEventf("client_spend_damage", "iii", ci->clientnum, gun, tempdamage);
+		if(ci->uid != -1)
+		{
+			stat_event *se = new stat_event;
+			gs.stat_events.add(se);
+			se->type = SE_D_SPENT;
+			se->timestamp = time(NULL);
+			se->uid = ci->uid;
+			se->mode = gamemode;
+			se->gun = gun;
+			se->amount = tempdamage;
+		}
+
 		gs.damage_dealt += tempdamage;
 		gs.weapon_stats[gun].damage_dealt += tempdamage;
 

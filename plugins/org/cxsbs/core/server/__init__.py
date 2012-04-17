@@ -1,6 +1,8 @@
 import pyTensible, org
 import CategoryConfig
 import os.path
+import cube2crypto
+import random
 
 class server(pyTensible.Plugin):
 	def __init__(self):
@@ -39,7 +41,13 @@ class ServerInstance(object):
 		doc_instance_domain = "The domain that this server is serving for."
 		default_instance_domain = "example.com"
 		self._domain = config_object.getOption('org.cxsbs.core.server.instance.domain', default_instance_domain, doc_instance_domain)
-	
+		
+		keypair = cube2crypto.genkeypair(format(random.getrandbits(128), 'X'))
+		
+		doc_instance_privkey = "The private key used to identify this server instance to an extended master server.\n#pubkey: %s" % keypair[1]
+		default_instance_privkey = keypair[0]
+		self._privkey = config_object.getOption('org.cxsbs.core.server.instance.privkey', default_instance_privkey, doc_instance_privkey)
+		
 		del config_object
 	
 	@property
@@ -53,6 +61,10 @@ class ServerInstance(object):
 	@property
 	def domain(self):
 		return self._domain
+	
+	@property
+	def privkey(self):
+		return self._privkey
 	
 	@property
 	def ip(self):
