@@ -1,0 +1,12 @@
+General
+---------------
+
+These are messages which get sent from the server to the gateway in "feeds" which the websocket clients must subscribe to.
+
+
+
+subtypes
+---------------
+
+* Servers (0)
+* Game (1)

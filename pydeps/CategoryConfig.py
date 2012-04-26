@@ -4,6 +4,15 @@ foundation for org.cxsbs.core.settings framework.
 """
 
 from ConfigParser import RawConfigParser, NoOptionError, NoSectionError
+import os
+
+def format_doc_line(doc_line):
+	return '#' + doc_line
+
+def format_doc(doc):
+	lines = doc.split('\n')
+	lines = map(format_doc_line, lines)
+	return '\n'.join(lines)
 
 class CategoryConfig:
 	'''Allows easy reading of configuration options from configuration files'''
@@ -18,7 +27,7 @@ class CategoryConfig:
 		self.read = False
 		
 	def __configPath(self):
-		return self.path + '/' + self.category + self.extension
+		return os.path.join(self.path, self.category) + self.extension
 	
 	def __del__(self):
 		if self.is_modified:
@@ -30,6 +39,12 @@ class CategoryConfig:
 		if not self.read:
 			self.read = True
 			self.parser.read(self.__configPath())
+			
+	def flush(self):
+		if self.is_modified:
+			f = open(self.__configPath(), 'w')
+			self.parser.write(f)
+			f.close()
 			
 	def getOption(self, symbolic_name, default_value, doc):
 		'''
@@ -52,7 +67,8 @@ class CategoryConfig:
 			value = self.parser.get(subcategory, key)
 		except NoOptionError:
 			value = default_value
-			self.parser.set(subcategory, '#' + doc)
+			print "writing doc to file: '%s'" % format_doc(doc)
+			self.parser.set(subcategory, format_doc(doc), None)
 			self.parser.set(subcategory, key, default_value)
 			self.is_modified = True
 			
@@ -71,7 +87,7 @@ class CategoryConfig:
 		try:
 			self.parser.get(subcategory, symbolic_name)
 		except NoOptionError:
-			self.parser.set(subcategory, '#' + doc)
+			self.parser.set(subcategory, format_doc(doc), None)
 			self.parser.set(subcategory, symbolic_name, value)
 		else:
 			self.parser.set(subcategory, symbolic_name, value)

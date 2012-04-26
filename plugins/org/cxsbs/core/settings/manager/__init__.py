@@ -49,6 +49,10 @@ def read_setting_docstring(docstring):
 			is_doc = False
 			wbpolicy = doc_line_tokens[1]
 		elif doc_line_tokens[0] == "@doc":
+			if len(doc_line) >= 6:
+				doc_line = doc_line[5:]
+			else:
+				doc_line = ""
 			is_doc = True
 			
 		if is_doc:
@@ -69,6 +73,10 @@ def create_decorator(settings_manager):
 			
 		def __call__(self, f):
 			setting_symbolic_name = f.__module__ + '.' + f.__name__
+			print "Reading doc string for '%s'" % setting_symbolic_name
+			print 50*'#'
+			print f.__doc__
+			print 50*'%'
 			setting_category, setting_display_name, setting_default_wbpolicy, setting_doc = read_setting_docstring(f.__doc__)
 			setting_default_value = f()
 			

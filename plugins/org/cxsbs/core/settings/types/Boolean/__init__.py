@@ -135,7 +135,7 @@ class Setting(org.cxsbs.core.settings.interfaces.ISetting):
 		"""
 		Set the value and change the dirty flag to False.
 		"""
-		self._value = (self._value.lower() in ['true', '1', 'yes'])
+		self._value = (value.lower() in ['true', '1', 'yes'])
 		self._dirty = False
 	
 	@property
