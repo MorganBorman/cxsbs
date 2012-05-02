@@ -31,9 +31,7 @@ def full_admin_keypair():
 		@wbpolicy immediate
 		@doc This is the authkey pair which is used to gain full administrative access to server.
 		"""
-		admin_key_pair = cube2crypto.genkeypair(generate_seed())
-		print admin_key_pair
-		return admin_key_pair
+		return cube2crypto.genkeypair(generate_seed())
 	
 class AdminCredential(org.cxsbs.core.authentication.interfaces.ICredential):
 	def __init__(self):
@@ -48,7 +46,7 @@ class AdminCredential(org.cxsbs.core.authentication.interfaces.ICredential):
 	
 class AdminAuthority(org.cxsbs.core.authentication.interfaces.IAuthority):
 	def __init__(self):
-		pass
+		print settings['full_admin_keypair']
 	
 	@property
 	def domains(self):

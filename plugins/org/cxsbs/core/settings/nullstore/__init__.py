@@ -33,7 +33,13 @@ class SettingStore(org.cxsbs.core.settings.interfaces.ISettingStore):
 		"""
 		doc = "This is the NullStore it doesn't really do anything."
 		
-		null_option = config_object.getOption('org.cxsbs.settings.manager.nullstore.NullStore.no-options', None, doc)
+		null_option = config_object.getOption('org.cxsbs.core.settings.manager.nullstore.NullStore.no-options', None, doc)
+		
+	def finalize_initialization(self):
+		"""
+		Called after all settings have been initialized.
+		"""
+		pass
 	
 	def initialize(self, setting_object):
 		"""

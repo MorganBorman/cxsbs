@@ -10,7 +10,7 @@ class logger(pyTensible.Plugin):
 
 		logging_path = cube2server.serverInstanceRoot() + "/cxsbs.log"
 		
-		file_level=logging.INFO
+		file_level=logging.DEBUG
 		console_level=logging.ERROR
 		
 		log = logging.getLogger('cxsbs')

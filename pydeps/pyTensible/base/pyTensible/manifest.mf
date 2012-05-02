@@ -1,3 +1,12 @@
+# manifest.mf
+# Manifest for the pyTensible namespace.
+#  plug-ins must implement.
+# Copyright (c) 2012 Morgan Borman
+# E-mail: morgan.borman@gmail.com
+
+# This software is licensed under the terms of the Zlib license.
+# http://en.wikipedia.org/wiki/Zlib_License
+
 [Plug-in]
 SymbolicName = pyTensible
 Version = 1.0.0

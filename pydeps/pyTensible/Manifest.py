@@ -1,6 +1,21 @@
-import os.path
+# Manifest.py
+# A class which deals with loading of plug-in manifests.
+# Copyright (c) 2012 Morgan Borman
+# E-mail: morgan.borman@gmail.com
+
+# This software is licensed under the terms of the Zlib license.
+# http://en.wikipedia.org/wiki/Zlib_License
+
+"""
+TODO: 	This class needs to have an interface defined and have the properties
+		of the Manifest objects provided using the @property decorator to make
+		them read only.
+"""
+
 import ConfigParser
 import Dependency
+
+filename = "manifest.mf"
 
 class MalformedManifest(Exception):
 	'''Invalid manifest form'''
@@ -60,7 +75,7 @@ class Manifest(object):
 		except:
 			interfaces_provided = {}
 		
-		for interface_name, temp in interfaces_provided:
+		for interface_name, temp in interfaces_provided: #@UnusedVariable
 			if '.' in interface_name:
 				raise MalformedManifest("Names of interfaces provided may not have '.' in them.")
 			self.interfaces_provided.append(interface_name)
@@ -77,7 +92,7 @@ class Manifest(object):
 		except:
 			resources_provided = {}
 		
-		for resource_description, temp in resources_provided:
+		for resource_description, temp in resources_provided: #@UnusedVariable
 			
 			#returns a dictionary {'resource_symbolic_name': resource_symbolic_name, 'resource_interface': resource_interface, 'resource_type': resource_type}
 			resource_provided = self._process_resource_provided(resource_description)

@@ -22,6 +22,7 @@ org.cxsbs.core.events.interfaces.IEventManager = [1.0.0,1.0.0]
 [Dependencies]
 org.cxsbs.core.events.information = [1.0.0,1.0.0]
 org.cxsbs.core.threads = [1.0.0,1.0.0]
+org.cxsbs.core.logger = [1.0.0,1.0.0]
 
 [Requests]
 #None

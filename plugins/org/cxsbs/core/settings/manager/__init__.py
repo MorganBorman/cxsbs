@@ -11,6 +11,9 @@ class manager(pyTensible.Plugin):
 		SettingDecorator = create_decorator(self.settings_manager)
 		SettingAccessor = create_accessor_class(self.settings_manager)
 		
+		event_manager = org.cxsbs.core.events.manager.event_manager
+		event_manager.register_handler('server_start', self.settings_manager.on_started)
+		
 		Interfaces = {}
 		Resources = {'settings_manager': self.settings_manager, 'Setting': SettingDecorator(), 'Accessor': SettingAccessor}
 		
@@ -67,16 +70,12 @@ def read_setting_docstring(docstring):
 	
 def create_decorator(settings_manager):
 	class SettingDecorator(object):
-		'''Decorator which registers a function as an event handler.'''
+		'''Decorator which registers a setting with the settings manager.'''
 		def __init__(self):
 			self.setting_classes = pyTensible.plugin_loader.get_providers("org.cxsbs.core.settings.interfaces.ISetting")
 			
 		def __call__(self, f):
 			setting_symbolic_name = f.__module__ + '.' + f.__name__
-			print "Reading doc string for '%s'" % setting_symbolic_name
-			print 50*'#'
-			print f.__doc__
-			print 50*'%'
 			setting_category, setting_display_name, setting_default_wbpolicy, setting_doc = read_setting_docstring(f.__doc__)
 			setting_default_value = f()
 			
@@ -142,9 +141,7 @@ class SettingsManager(org.cxsbs.core.settings.interfaces.ISettingsManager):
 		config_extension = ".conf"
 		
 		config_object = CategoryConfig.CategoryConfig(config_path, config_category, config_extension)
-		
 		doc = 'Which settings store should be used. Look at the section name below for the fully qualified SettingStore names.'
-		
 		store = config_object.getOption('org.cxsbs.core.settings.manager.store', 'org.cxsbs.core.settings.nullstore.NullStore', doc)
 		
 		for store_class in store_classes.values():
@@ -162,6 +159,10 @@ class SettingsManager(org.cxsbs.core.settings.interfaces.ISettingsManager):
 			return self._by_symbolic_name[symbolic_name]
 		else:
 			raise org.cxsbs.core.settings.exceptions.InvalidSettingReference(symbolic_name)
+		
+	def on_started(self, event):
+		"Called when the server starts. After all the plug-ins have loaded."
+		self._setting_store.finalize_initialization()
 	
 	def add(self, setting_object):
 		"Add a setting object as managed and initializes it with the configured SettingStore."

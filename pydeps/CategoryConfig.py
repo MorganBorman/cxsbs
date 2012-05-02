@@ -67,7 +67,6 @@ class CategoryConfig:
 			value = self.parser.get(subcategory, key)
 		except NoOptionError:
 			value = default_value
-			print "writing doc to file: '%s'" % format_doc(doc)
 			self.parser.set(subcategory, format_doc(doc), None)
 			self.parser.set(subcategory, key, default_value)
 			self.is_modified = True

@@ -1,3 +1,12 @@
+# Namespace.py
+# A class which exists at the leaves of the namespace hierarchy and provides access to the itens which are
+#  actually available inside each plug-in.
+# Copyright (c) 2012 Morgan Borman
+# E-mail: morgan.borman@gmail.com
+
+# This software is licensed under the terms of the Zlib license.
+# http://en.wikipedia.org/wiki/Zlib_License
+
 '''
 Namespace objects live at leaves of the namespace tree.
 

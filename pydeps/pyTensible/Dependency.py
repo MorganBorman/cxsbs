@@ -1,3 +1,11 @@
+# Dependency.py
+# A class and helper functions encapsulating the functionalities associated with version dependencies
+# Copyright (c) 2012 Morgan Borman
+# E-mail: morgan.borman@gmail.com
+
+# This software is licensed under the terms of the Zlib license.
+# http://en.wikipedia.org/wiki/Zlib_License
+
 """
 Lets assume all version numbers have three numeric parts and an optional
 comment part as demonstrated below.

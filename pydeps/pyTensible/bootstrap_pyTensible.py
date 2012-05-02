@@ -1,4 +1,14 @@
-import sys, os
+# bootstrap_pyTensible.py
+# A function which loads the PluginLoader class out of the base plug-in tree
+#  and injects the contents of that base plug-in tree into the loaded plug-in 
+#  data structures inside the plugin_loader, then returns a handle to the plugin_loader.
+# Copyright (c) 2012 Morgan Borman
+# E-mail: morgan.borman@gmail.com
+
+# This software is licensed under the terms of the Zlib license.
+# http://en.wikipedia.org/wiki/Zlib_License
+
+import os, sys
 
 from pyTensible.Namespace import Namespace
 
@@ -29,5 +39,7 @@ def bootstrap_pyTensible(local_logger=None):
 	plugin_loader._provider_hierarchy['pyTensible.IPluginLoader']['pyTensible.plugin_loader'] = plugin_loader
 	
 	plugin_loader._load_order.append('pyTensible')
+	
+	sys.modules['pyTensible'] = plugin_loader._namespace_hierarchy['pyTensible']
 	
 	return plugin_loader

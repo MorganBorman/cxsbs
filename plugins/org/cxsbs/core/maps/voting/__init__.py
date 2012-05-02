@@ -26,8 +26,7 @@ def immediate_change_vote_threshold():
 	@category map_voting
 	@display_name Immediate map change vote threshold
 	@wbpolicy immediate
-	@doc This is the fractional portion of the voting population of the server which must have voted for a map to get 
-		 the map to change in the middle of the match.
+	@doc This is the fractional portion of the voting population of the server which must have voted for a map to get the map to change in the middle of the match.
 	"""
 	return 0.5
 

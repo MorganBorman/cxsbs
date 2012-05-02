@@ -1,12 +1,20 @@
-import os, sys, traceback, abc
+# __init__.py
+# Package initializer script for pyTensible.base.pyTensible
+#  Contains the actual code for the plug-in loading mechanism as well as the Interface that all 
+#  plug-ins must implement.
+# Copyright (c) 2012 Morgan Borman
+# E-mail: morgan.borman@gmail.com
 
-from pyTensible.Manifest import Manifest, MalformedManifest
+# This software is licensed under the terms of the Zlib license.
+# http://en.wikipedia.org/wiki/Zlib_License
+
+import os, sys, imp, traceback, abc
+
+from pyTensible.Manifest import Manifest, MalformedManifest, filename
 from pyTensible.Errors import * #@UnusedWildImport
 import pyTensible.Logging as Logging
 from pyTensible.Accessor import Accessor
 from pyTensible.Namespace import Namespace
-
-manifest_filename = "manifest.mf"
 
 class IPlugin:
 	"A base class for all plug-in objects."
@@ -58,11 +66,6 @@ class IPluginLoader:
 		pass
 	
 	@abc.abstractmethod
-	def get_resource(self, symbolic_name):
-		"Get a resource or an Accessor to a namespace containing resources."
-		pass
-	
-	@abc.abstractmethod
 	def get_providers(self, interface):
 		"Get all resources which implement this interface as a dictionary indexed by fully qualified symbolic_name."
 		pass
@@ -71,7 +74,7 @@ class IPluginLoader:
 	def unload_all(self):
 		"Call the unload method on all plug-ins and remove them from the plug-in registry"
 		pass
-
+	
 class PluginLoader(IPluginLoader):
 	'''A class which handles loading of plug-directories and their associated class hierarchies.'''
 	######################################################################
@@ -113,9 +116,6 @@ class PluginLoader(IPluginLoader):
 	#self._namespace_hierarchy['com']['example']['Events'] = Namespace({},{})
 	_namespace_hierarchy = {}
 	
-	#This is the main accessor all other accessors can be retreived from this one
-	_namespace_accessor = None
-	
 	#This holds dictionaries of resources which implement specific interfaces, 
 	#keyed as follows: self._provider_hierarchy['com.example.Events.IEventManager']['com.example.Events.event_manager'] = event_manager
 	_provider_hierarchy = {}
@@ -131,6 +131,10 @@ class PluginLoader(IPluginLoader):
 	#Keep track of the plug-ins in dependency order. Useful for reloading and unloading in the correct order without recalculating it.
 	#each is a fully qualified symbolic_name eg "com.example.Events"
 	_load_order = []
+	
+	######################################################################
+	########################### Public methods ###########################
+	######################################################################
 	
 	def __init__(self, local_logger):
 		"If necessary set a local logger for this instance of the pluginLoader."
@@ -148,10 +152,6 @@ class PluginLoader(IPluginLoader):
 		
 		if local_logger != None:
 			self.logger = local_logger
-		
-	######################################################################
-	########################### Public methods ###########################
-	######################################################################
 	
 	def load_suppress_list(self, suppress_list=[]):
 		"Provide a list of plug-in SymbolicNames which should not be loaded from any plug-in directory."
@@ -168,31 +168,18 @@ class PluginLoader(IPluginLoader):
 		
 		self._load_plugins(plugins_path, plugin_list, local_suppress_list)
 	
-	def get_resource(self, symbolic_name):
-		"Get the loaded plug-in object. This is the key to accessing resources provided by plug-ins."
-		namespace = symbolic_name.split('.')
-		
-		if len(namespace) < 1:
-			raise InvalidResourceComponent("The given namespace is invalid.")
-		
-		temp_accessor = self._namespace_accessor
-		
-		while len(namespace) > 0:
-			namespace_component = namespace.pop(0)
-			temp_accessor = temp_accessor.__getattr__(namespace_component)
-		
-		#return Accessor(namespace, self._namespace_hierarchy)
-		return temp_accessor
-	
 	def get_providers(self, interface):
 		"Get all loaded plug-in objects which implement this interface as a dictionary indexed by symbolic_name."
-		pass
+		try:
+			return self._provider_hierarchy[interface]
+		except KeyError:
+			return {}
 	
 	def unload_all(self):
 		"Call the unload method on all plug-ins."
 		for plugin_namespace in reversed(self._load_order):
 			self._plugin_objects[plugin_namespace].unload()
-		
+			
 	######################################################################
 	########################## Private methods ###########################
 	######################################################################
@@ -203,7 +190,7 @@ class PluginLoader(IPluginLoader):
 		
 		for directory in os.listdir(plugins_path):
 			sub_directory = os.path.join(plugins_path, directory)
-			manifest_path = os.path.join(sub_directory, manifest_filename)
+			manifest_path = os.path.join(sub_directory, filename)
 			
 			if os.path.isdir(sub_directory):
 				new_namespace = namespace[:]
@@ -305,32 +292,19 @@ class PluginLoader(IPluginLoader):
 			self._load_requests(plugins_path, manifest, depend_list, suppress_list)
 			
 			#load the interfaces implemented by resources in this plug-in
-			interfaces_dictionary = self._load_interfaces(plugins_path, manifest, depend_list, suppress_list)
-			
-			#this is the dictionary of stuff that we give the plug-in for free at load time
-			plugin_environment = {'abc': abc}
-			
-			plugin_environment.update(interfaces_dictionary)
+			self._load_interfaces(plugins_path, manifest, depend_list, suppress_list)
 			
 			#import the plug-in
 			try:
-				#place the interface classes which this module implements into the __builtins__ module so they are available to subclass
-				backups = replace_builtins(plugin_environment)
 				
 				#Actually load the plug-in's module
 				plugin_module = self._load_plugin_module(plugins_path, manifest.symbolic_name)
-				
-				#add the interface classes from which the plug-in object was derived to the global scope of the plug-in
-				#this makes it possible for later reference of static methods and things like this.
-				plugin_module.__dict__.update(plugin_environment)
 				
 			except ImportError:
 				exceptionType, exceptionValue, exceptionTraceback = sys.exc_info()	#@UnusedVariable
 				self.logger.error('Uncaught exception occurred in plug-in.')
 				self.logger.error(traceback.format_exc())
 				raise MalformedPlugin(manifest.symbolic_name + ": failed to import.")
-			finally:
-				restore_builtins(backups)
 				
 			#get the plug-in class from the module
 			try:
@@ -343,7 +317,7 @@ class PluginLoader(IPluginLoader):
 				raise MalformedPlugin(manifest.symbolic_name + ": class is not present (%s)." % class_name)
 			
 			#check that the plug-in's class is a subclass of 'Plugin'
-			if not issubclass(plugin_class, self.get_resource('pyTensible.Plugin')):
+			if not issubclass(plugin_class, self._namespace_hierarchy['pyTensible'].Plugin):
 				self._failed_list.append(manifest.symbolic_name)
 				raise MalformedPlugin(manifest.symbolic_name + ": is not derived from the pyTensible.Plugin class.")
 				
@@ -360,21 +334,58 @@ class PluginLoader(IPluginLoader):
 			
 			self.logger.info("Loaded plug-in: " + manifest.symbolic_name)
 		else:
-			self.logger.debug("Already loaded: " + manifest.symbolic_name)
+			#self.logger.debug("Already loaded: " + manifest.symbolic_name)
+			pass
 			
 	def _load_plugin_module(self, plugins_path, symbolic_name):
 		module_name = symbolic_name.split('.')[-1]
-		sub_path = '/'.join(symbolic_name.split('.')[:-1])
+		module_namespace = symbolic_name.split('.')[:-1]
+		#sub_path = '/'.join(symbolic_name.split('.')[:-1])
 
-		enclosing_namespace_path = os.path.join(plugins_path, sub_path)
+		#enclosing_namespace_path = os.path.join(plugins_path, sub_path)
 
-		sys.path.append(enclosing_namespace_path)
+		plugin_internal_path = '/'.join(symbolic_name.split('.'))
+
+		plugin_directory = os.path.join(plugins_path, plugin_internal_path)
+
+		plugin_file = os.path.join(plugin_directory, "__init__.py")
+		
+		description = ('.py', 'r', imp.PY_SOURCE)
+
+		try:
+			add_to_hierarchical_dictionary(module_namespace, {}, self._namespace_hierarchy)
+		except KeyError:
+			pass
+			
+		self._update_modules(symbolic_name)
 		
 		try:
-			plugin_module = __import__(module_name)
+			fp = open(plugin_file, 'r')
+			
+			sys.path.append(plugin_directory)
+			
+			plugin_module = imp.load_module(symbolic_name, fp, plugin_file, description)
+			
+			plugin_module.__name__ = symbolic_name
+			plugin_module.__file__ = plugin_file
+			plugin_module.__path__ = plugin_directory
+			plugin_module.__package__ = '.'.join(module_namespace)
+			
+			sys.path.remove(plugin_directory)
+			
 			return plugin_module
 		finally:
-			sys.path.remove(enclosing_namespace_path)
+			if fp:
+				fp.close()
+				
+	def _update_modules(self, symbolic_name):
+		namespace_hierarchy = symbolic_name.split('.')
+		
+		for i in range(1, len(namespace_hierarchy)):
+			symbolic_prefix = '.'.join(namespace_hierarchy[:i])
+			
+			if not symbolic_prefix in sys.modules.keys():
+				sys.modules[symbolic_prefix] = Accessor(namespace_hierarchy[:i], self._namespace_hierarchy)
 			
 	def _process_exported_resources(self, manifest, exported_resources):
 		'''
@@ -390,7 +401,7 @@ class PluginLoader(IPluginLoader):
 		
 		for interface in manifest.interfaces_provided:
 			if not interface in interfaces_exported.keys():
-				raise MalformedPlugin("The manifest states that the interface '%s' will be exported but it was not." %interface)
+				raise MalformedPlugin("The manifest(%s) states that the interface '%s' will be exported but it was not." %(manifest.symbolic_name, interface))
 			
 			#add_to_hierarchical_dictionary(namespace_hierarchy, interfaces_exported[interface], self._interface_hierarchy)
 			
@@ -401,10 +412,16 @@ class PluginLoader(IPluginLoader):
 			resource_interface = resource['resource_interface']
 			
 			if resource_interface != None:
+				local = False
 				if resource_interface in interfaces_exported.keys():
+					local = True
 					interface = interfaces_exported[resource_interface]
 				else:
-					interface = self.get_resource(resource_interface)
+					
+					interface_namespace = '.'.join(resource_interface.split('.')[:-1])
+					interface_name = resource_interface.split('.')[-1]
+					
+					interface = sys.modules[interface_namespace].__getattr__(interface_name)
 					
 				if resource['resource_type'] == type:
 					if not issubclass(resources_exported[resource['resource_symbolic_name']], interface):
@@ -414,18 +431,28 @@ class PluginLoader(IPluginLoader):
 						raise MalformedPlugin("The manifest states that the resource object '%s' will implement the interface '%s' but it does not." %(resource['resource_symbolic_name'], interface))
 					
 				#add_to_hierarchical_dictionary(namespace_hierarchy, resources_exported[resource['resource_symbolic_name']], self._resource_hierarchy)
+			
+				if not local:
+					fully_qualified_interface_name = resource['resource_interface']
+				else:
+					fully_qualified_interface_name = manifest.symbolic_name + '.' + resource['resource_interface']
+					
+					
+				fully_qualified_resource_name = manifest.symbolic_name + '.' + resource['resource_symbolic_name']
+				
+				if not fully_qualified_interface_name in self._provider_hierarchy.keys():
+					self._provider_hierarchy[fully_qualified_interface_name] = {}
+				
+				self._provider_hierarchy[fully_qualified_interface_name][fully_qualified_resource_name] = resources_exported[resource['resource_symbolic_name']]
 				
 		namespace = Namespace(interfaces_exported, resources_exported)
 		add_to_hierarchical_dictionary(namespace_hierarchy, namespace, self._namespace_hierarchy)
+		sys.modules[manifest.symbolic_name] = namespace
 				
 	def _load_interfaces(self, plugins_path, manifest, depend_list, suppress_list):
 		"Load the base plug-ins whose defined interfaces the specified plug-in claims to implement and return the dictionary of them keyed by their symbolicNames."
-		interfaces_accessors = {}
 		
 		for interface_dependency in manifest.interfaces_implemented:
-			dependency_namespace = interface_dependency.dependency_name.split('.')
-			
-			highest_namespace = dependency_namespace[0]
 			
 			#check if we have a cycle forming
 			if interface_dependency.dependency_name in depend_list:
@@ -443,8 +470,6 @@ class PluginLoader(IPluginLoader):
 				try:
 					self._load_plugin(plugins_path, interface_dependency.dependency_name, interface_dependency, depend_list, suppress_list)
 					
-					interfaces_accessors[highest_namespace] = self.get_resource(highest_namespace)
-					
 				except KeyError:
 					self.logger.error("Loading the interface, " + interface_dependency.dependency_name + " failed: unknown (interface missing from interfaces dictionary).")
 					raise UnsatisfiedInterface(interface_dependency.dependency_name + " was not loaded correctly.")
@@ -452,8 +477,6 @@ class PluginLoader(IPluginLoader):
 					self.logger.error("Loading the interface, " + interface_dependency.dependency_name + " failed: missing dependencies.")
 				except MalformedPlugin:
 					self.logger.error("Loading the interface, " + interface_dependency.dependency_name + " failed: malformed plug-in.")
-		
-		return interfaces_accessors
 	
 	def _load_dependencies(self, plugins_path, manifest, depend_list, suppress_list):
 		for dependency in manifest.dependencies:
@@ -476,7 +499,7 @@ class PluginLoader(IPluginLoader):
 	
 	def _load_requests(self, plugins_path, manifest, depend_list, suppress_list):
 		for request in manifest.requests:
-			for provider in self._get_provider_manifests(request.requestName):
+			for provider in self._get_provider_manifests(request.dependency_name):
 				#check if we have a cycle forming
 				if provider.symbolic_name in depend_list:
 					#append the name here for showing the cycle in the exception
@@ -514,19 +537,7 @@ def add_to_hierarchical_dictionary(hierarchy, item, dictionary):
 		add_to_hierarchical_dictionary(hierarchy, item, dictionary[key])
 		
 	else:
-		dictionary[key] = item
-
-def replace_builtins(replacements={}):
-	"Places the items in the replacements dictionary and returns a backup dictionary of the replaced items if any."
-	backups = {}
-	for key in replacements.keys():
-		if key in __builtins__.keys():
-			backups[key] = __builtins__[key]
-		__builtins__[key] = replacements[key]
-			
-	return backups
-
-def restore_builtins(backups):
-	"Restores the previously replaced __builtins__ with those in the provided backups dictionary."
-	for key in backups.keys():
-		__builtins__[key] = backups[key]
+		if not key in dictionary.keys():
+			dictionary[key] = item
+		else:
+			raise KeyError("That target key is already in the hierarchical dictionary.")

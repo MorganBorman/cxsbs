@@ -15,13 +15,19 @@ class master_clients(pyTensible.Plugin):
     
 import MasterClient
 
-configured_servers =        (
-                                ('localhost', 'localhost', 28799, 60*60),
-                            )
+configured_servers =    (
+                            (['cxsbs.org', ''], 'localhost', 28789, 60*60),
+                        )
 
-configured_aliases =        (
-                                ('', 'localhost'),
-                            )
+@org.cxsbs.core.settings.manager.Setting
+def master_servers():
+    """
+    @category master_servers
+    @display_name Master servers
+    @wbpolicy never
+    @doc List of configured normal master servers.
+    """
+    return configured_servers
 
 class RemoteCredential(org.cxsbs.core.authentication.interfaces.ICredential):
     def __init__(self, domain):
@@ -40,17 +46,18 @@ class MasterServerAuthority(org.cxsbs.core.authentication.interfaces.IAuthority)
         self.master_clients = {}
         
         for server in configured_servers:
-            self.master_clients[server[0]] = MasterClient.MasterClient (   self,
-                                                                        domain=server[0], 
-                                                                        master_host=server[1], 
-                                                                        master_port=server[2], 
-                                                                        server_port=28785, 
-                                                                        update_interval=server[3],
-                                                                    )
-            self.master_clients[server[0]].start()
+            mc = MasterClient.MasterClient (    self,
+                                                domain=server[0][0], 
+                                                master_host=server[1], 
+                                                master_port=server[2], 
+                                                server_port=org.cxsbs.core.server.instance.port, 
+                                                update_interval=server[3],
+                                            )
             
-        for server_alias in configured_aliases:
-            self.master_clients[server_alias[0]] = self.master_clients[server_alias[1]]
+            for server_domain in server[0]:
+                self.master_clients[server_domain] = mc
+            
+            mc.start()
     
     @property
     def domains(self):

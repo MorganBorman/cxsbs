@@ -22,6 +22,11 @@ class ISettingsManager:
 	__metaclass__ = abc.ABCMeta
 	
 	@abc.abstractmethod
+	def on_started(self, setting_object):
+		"Called when the server starts. After all the plug-ins have loaded."
+		pass
+	
+	@abc.abstractmethod
 	def add(self, setting_object):
 		"Add a setting object as managed and initializes it with the configured SettingStore."
 		pass
@@ -73,11 +78,19 @@ class ISettingStore:
 		pass
 	
 	@abc.abstractmethod
+	def finalize_initialization(self):
+		"""
+		Called after all settings have been initialized.
+		"""
+		pass
+	
+	@abc.abstractmethod
 	def initialize(self, setting_object):
 		"""
 		Initialize a setting in this store.
 		Should initialize the setting object if the setting is found, or build an entry in the store and leave the setting object in it's present state.
 		"""
+		pass
 	
 	@abc.abstractmethod
 	def write(self, setting_object):
