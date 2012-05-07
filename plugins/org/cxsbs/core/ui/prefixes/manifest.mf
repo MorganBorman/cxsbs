@@ -1,0 +1,15 @@
+[Plug-in]
+SymbolicName = org.cxsbs.core.ui.prefixes
+Version = 1.0.0
+Author = Morgan Borman
+Enabled = True
+
+[Resources]
+get_prefix_dict
+
+[Implements]
+pyTensible.Plugin = [1.0.0,1.0.0]
+
+[Dependencies]
+org.cxsbs.core.settings.manager = [1.0.0,1.0.0]
+org.cxsbs.core.ui.colors = [1.0.0,1.0.0]
