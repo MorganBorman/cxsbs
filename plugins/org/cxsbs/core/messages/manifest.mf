@@ -1,0 +1,25 @@
+[Plug-in]
+SymbolicName = org.cxsbs.core.messages
+Version = 1.0.0
+Author = Morgan Borman
+Enabled = True
+
+[Interfaces]
+
+[Resources]
+Message
+
+[Implements]
+pyTensible.Plugin = [1.0.0,1.0.0]
+org.cxsbs.core.settings.interfaces.ISettingsManager = [1.0.0,1.0.0]
+
+[Dependencies]
+org.cxsbs.core.events.manager = [1.0.0,1.0.0]
+org.cxsbs.core.server = [1.0.0,1.0.0]
+org.cxsbs.core.clients = [1.0.0,1.0.0]
+org.cxsbs.core.settings.manager = [1.0.0,1.0.0]
+org.cxsbs.core.settings.types.Template = [1.0.0,1.0.0]
+
+[Requests]
+org.cxsbs.core.settings.interfaces.ISettingStore = [1.0.0,1.0.0]
+org.cxsbs.core.settings.interfaces.ISetting = [1.0.0,1.0.0]
