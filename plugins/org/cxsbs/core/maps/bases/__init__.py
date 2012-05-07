@@ -125,7 +125,10 @@ def on_client_base_list(event):
 	@thread maps
 	'''
 	cn = event.args[0]
-	client = org.cxsbs.core.clients.get_client(cn)
+	try:
+		client = org.cxsbs.core.clients.get_client(cn)
+	except KeyError:
+		return
 	base_list = event.args[1]
 	
 	#store the base_list for future reference

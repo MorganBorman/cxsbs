@@ -32,7 +32,6 @@ def read_setting_docstring(docstring):
 	doc = []
 	
 	category = ""
-	display_name = ""
 	wbpolicy = ""
 	docstring = ""
 	
@@ -45,9 +44,6 @@ def read_setting_docstring(docstring):
 		elif doc_line_tokens[0] == "@category":
 			is_doc = False
 			category = doc_line_tokens[1]
-		elif doc_line_tokens[0] == "@display_name":
-			is_doc = False
-			display_name = ' '.join(doc_line_tokens[1:])
 		elif doc_line_tokens[0] == "@wbpolicy":
 			is_doc = False
 			wbpolicy = doc_line_tokens[1]
@@ -66,7 +62,7 @@ def read_setting_docstring(docstring):
 		
 	docstring = "\n".join(doc)
 	
-	return category, display_name, wbpolicy, docstring
+	return category, wbpolicy, docstring
 	
 def create_decorator(settings_manager):
 	class SettingDecorator(object):
@@ -76,12 +72,23 @@ def create_decorator(settings_manager):
 			
 		def __call__(self, f):
 			setting_symbolic_name = f.__module__ + '.' + f.__name__
-			setting_category, setting_display_name, setting_default_wbpolicy, setting_doc = read_setting_docstring(f.__doc__)
+			setting_category, setting_default_wbpolicy, setting_doc = read_setting_docstring(f.__doc__)
 			setting_default_value = f()
 			
 			for setting_class in self.setting_classes.values():
 				if setting_class.handles_type(type(setting_default_value)):
-					setting_object = setting_class(setting_category, setting_symbolic_name, setting_display_name, setting_default_value, setting_default_wbpolicy, setting_doc)
+					setting_object = setting_class(setting_category, setting_symbolic_name, setting_default_value, setting_default_wbpolicy, setting_doc)
+				
+					settings_manager.add(setting_object)
+					
+					return setting_object
+				
+			raise org.cxsbs.core.settings.exceptions.InvalidSettingType("There does not seem to be a Setting to handle this type (%s)." %type(setting_default_value) )
+		
+		def static_initialization(self, setting_symbolic_name, setting_category, setting_default_wbpolicy, setting_doc, setting_default_value):
+			for setting_class in self.setting_classes.values():
+				if setting_class.handles_type(type(setting_default_value)):
+					setting_object = setting_class(setting_category, setting_symbolic_name, setting_default_value, setting_default_wbpolicy, setting_doc)
 				
 					settings_manager.add(setting_object)
 					

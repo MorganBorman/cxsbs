@@ -1,4 +1,6 @@
 import pyTensible, org, cube2server, copy
+from groups.DynamicGroup import DynamicGroup
+from groups.Group import Group
 
 class clients(pyTensible.Plugin):
 	def __init__(self):
@@ -8,8 +10,17 @@ class clients(pyTensible.Plugin):
 		
 		self.client_manager = ClientManager()
 		
+		AllClientsGroup = DynamicGroup(Client, self.client_manager._clients.values)
+		EmptyClientsGroup = Group(Client, [])
+		
 		Interfaces = {}
-		Resources = {'client_manager': self.client_manager, 'get_client': self.client_manager.get_client}
+		Resources = 	{
+							'client_manager': self.client_manager, 
+							'get_client': self.client_manager.get_client, 
+							'Client': Client,
+							'AllClientsGroup': AllClientsGroup,
+							'EmptyClientsGroup': EmptyClientsGroup
+						}
 		
 		event_manager = org.cxsbs.core.events.manager.event_manager
 		
@@ -345,7 +356,7 @@ class Client(object):
 	def isPermitted(self, allowGroups, denyGroups):
 		'''Check whether this client is permitted based on the given allowGroups and denyGroups'''
 		permitted = False
-		for group in self.groups():
+		for group in self.groups:
 			if group in denyGroups:
 				return False
 			if group in allowGroups:

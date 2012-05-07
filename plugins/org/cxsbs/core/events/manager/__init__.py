@@ -7,6 +7,8 @@ class manager(pyTensible.Plugin):
 	def load(self):
 		event_manager = REventManager()
 		
+		org.cxsbs.core.threads.thread_manager.start('selects')
+		
 		class event_handler(object):
 			'''Decorator which registers a function as an event handler.'''
 			def __init__(self, name):

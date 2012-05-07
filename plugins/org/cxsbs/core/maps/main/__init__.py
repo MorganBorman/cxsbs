@@ -118,7 +118,10 @@ def on_client_map_crc(event):
 	@thread maps
 	'''
 	cn = event.args[0]
-	client = org.cxsbs.core.clients.get_client(cn)
+	try:
+		client = org.cxsbs.core.clients.get_client(cn)
+	except KeyError:
+		return
 	
 	if (org.cxsbs.core.server.state.map_name != client.map_name):
 		org.cxsbs.core.maps.modified.mark(client)

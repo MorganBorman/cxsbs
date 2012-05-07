@@ -14,7 +14,7 @@ class slice(pyTensible.Plugin):
 	def unload(self):
 		pass
 
-import sys, traceback
+import sys, traceback, threading
 
 function_queue = []
 
@@ -36,6 +36,7 @@ def on_server_stop(event):
 	print "\nServer going down."
 	org.cxsbs.core.events.manager.trigger_event('server_shutdown')
 	pyTensible.plugin_loader.unload_all()
+	org.cxsbs.core.logger.log.debug("remaining threads: " + str(threading.enumerate()))
 	
 @org.cxsbs.core.events.manager.event_handler('server_reload')
 def on_server_reload(event):

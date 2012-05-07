@@ -21,21 +21,19 @@ class Setting(org.cxsbs.core.settings.interfaces.ISetting):
 	_possessed_by = None
 	_category = ""
 	_symbolic_name = ""
-	_display_name = ""
 	_value = ""
 	_wbpolicy = ""
 	_default_value = ""
 	_default_wbpolicy = "never"
 	__doc__ = "This is the default doc string."
 	
-	def __init__(self, category, symbolic_name, display_name, default_value, default_wbpolicy, doc):
+	def __init__(self, category, symbolic_name, default_value, default_wbpolicy, doc):
 		"""
 		Initialize the Setting object.
 		"""
 		self._category = category
 		
 		self._symbolic_name = symbolic_name
-		self._display_name = display_name
 		
 		self._value = default_value
 		self._wbpolicy = default_wbpolicy
@@ -86,17 +84,6 @@ class Setting(org.cxsbs.core.settings.interfaces.ISetting):
 		This is used exclusively to access the setting in the SettingStore, therefore it must be globally unique across all the plug-ins.
 		"""
 		return self._symbolic_name
-	
-	@property
-	def display_name(self):
-		"""
-		Read only property.
-		
-		The name of the setting for printing.
-		
-		Where necessary this can be stored as another setting under the symbolic name of the setting with "_display" appended.
-		"""
-		return self._display_name
 	
 	@property
 	def doc(self):

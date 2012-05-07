@@ -8,6 +8,8 @@ class main_master(pyTensible.Plugin):
         Interfaces = {}
         Resources = {'MasterServerAuthority': MasterServerAuthority}
         
+        org.cxsbs.core.threads.thread_manager.start('user_stats')
+        
         return {'Interfaces': Interfaces, 'Resources': Resources}
         
     def unload(self):
@@ -114,6 +116,10 @@ class MasterServerAuthority(org.cxsbs.core.authentication.interfaces.IAuthority)
         '''
         @thread user_stats
         '''
+        
+        if not self.master_client.connected:
+            return
+        
         stat_events = event.args[0]
         
         def format_line(stat_event):

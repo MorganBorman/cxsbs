@@ -151,10 +151,11 @@ def on_client_message_pol(event):
 	client = org.cxsbs.core.clients.get_client(cn)
 	
 	if msg[0] == '#':
-		org.cxsbs.core.events.manager.trigger_event('command', (client, msg))
+		org.cxsbs.core.events.manager.trigger_event('command', (client, msg[1:]))
 	else:
 		#find out whether this client is allowed to talk
 		policy_query = org.cxsbs.core.policies.Query('client_can_chat', True, (client, msg))
 		response = org.cxsbs.core.policies.query_policy(policy_query)
 		if response:
 			org.cxsbs.core.chat.message(client, msg)
+

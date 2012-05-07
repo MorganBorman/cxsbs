@@ -67,7 +67,8 @@ class CategoryConfig:
 			value = self.parser.get(subcategory, key)
 		except NoOptionError:
 			value = default_value
-			self.parser.set(subcategory, format_doc(doc), None)
+			if doc != "":
+				self.parser.set(subcategory, format_doc(doc), None)
 			self.parser.set(subcategory, key, default_value)
 			self.is_modified = True
 			
@@ -86,7 +87,8 @@ class CategoryConfig:
 		try:
 			self.parser.get(subcategory, symbolic_name)
 		except NoOptionError:
-			self.parser.set(subcategory, format_doc(doc), None)
+			if doc != "":
+				self.parser.set(subcategory, format_doc(doc), None)
 			self.parser.set(subcategory, symbolic_name, value)
 		else:
 			self.parser.set(subcategory, symbolic_name, value)

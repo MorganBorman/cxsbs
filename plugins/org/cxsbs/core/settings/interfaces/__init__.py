@@ -122,7 +122,7 @@ class ISetting:
 		pass
 	
 	@abc.abstractmethod
-	def __init__(self, category, symbolic_name, display_name, default_value, default_wbpolicy, doc):
+	def __init__(self, category, symbolic_name, default_value, default_wbpolicy, doc):
 		"""
 		Initialize the Setting object.
 		"""
@@ -154,17 +154,6 @@ class ISetting:
 		The name of the setting for actually referencing the setting. 
 		A namespace should be prepended where appropriate to indicate the association of the setting to the plug-in it belongs to.
 		This is used exclusively to access the setting in the SettingStore, therefore it must be globally unique across all the plug-ins.
-		"""
-		pass
-	
-	@abc.abstractproperty
-	def display_name(self):
-		"""
-		Read only property.
-		
-		The name of the setting for printing.
-		
-		Where necessary this can be stored as another setting under the symbolic name of the setting with "_display" appended.
 		"""
 		pass
 	
