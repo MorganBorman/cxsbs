@@ -111,6 +111,9 @@ def on_client_item_list(event):
 	else:
 		return
 	
+	if not org.cxsbs.core.server.state.game_mode in org.cxsbs.core.server.constants.item_modes:
+		return
+	
 	if (org.cxsbs.core.server.state.map_name != client.map_name):
 		org.cxsbs.core.maps.modified.mark(client)
 		return
@@ -135,9 +138,9 @@ def on_client_item_list(event):
 			
 @org.cxsbs.core.events.manager.event_handler('map_changed')
 def on_map_changed(event):
-	'''
-	@thread maps
-	'''
+	#'''
+	#@thread maps
+	#'''
 	if org.cxsbs.core.server.state.game_mode in org.cxsbs.core.server.constants.item_modes:
 		server_item_list = ItemList.retrieve(org.cxsbs.core.server.state.map_name, org.cxsbs.core.server.state.game_mode)
 		if server_item_list != None:

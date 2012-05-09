@@ -137,21 +137,21 @@ def on_client_map_crc(event):
 
 @org.cxsbs.core.events.manager.event_handler('map_changed_pre')
 def on_map_changed_pre(event):
-	'''
-	@thread maps
-	'''
+	#'''
+	#@thread maps
+	#'''
 	org.cxsbs.core.server.state.paused = True
 	
 @org.cxsbs.core.events.manager.event_handler('map_changed')
 def on_map_changed(event):
-	'''
-	@thread maps
-	'''
+	#'''
+	#@thread maps
+	#'''
 	org.cxsbs.core.maps.main.map_ready_manager.new_game(event.args[1])
 	
 @org.cxsbs.core.events.manager.event_handler('map_ready')
 def on_map_ready(event):
-	'''
-	@thread main
-	'''
+	#'''
+	#@thread main
+	#'''
 	org.cxsbs.core.server.state.paused = False

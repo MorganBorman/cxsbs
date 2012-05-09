@@ -60,7 +60,7 @@ class FlagList(org.cxsbs.core.database.Base):
 		self.z = z
 		
 	@staticmethod
-	def update_valid_map_flags(mapName, gameMode, flag_list):
+	def update(mapName, gameMode, flag_list):
 		map_entry = Map.retrieve(mapName)
 		
 		if map_entry == None:
@@ -71,7 +71,7 @@ class FlagList(org.cxsbs.core.database.Base):
 			session.commit()
 			
 			for id in range(len(flag_list)):
-				flagEntry = FlagList(map_entry.id, ServerCore.gameMode(), id, flag_list[id][0], flag_list[id][1], flag_list[id][2], flag_list[id][3])
+				flagEntry = FlagList(map_entry.id, org.cxsbs.core.server.state.game_mode, id, flag_list[id][0], flag_list[id][1], flag_list[id][2], flag_list[id][3])
 				session.add(flagEntry)
 			session.commit()
 		
@@ -117,14 +117,17 @@ def on_client_flag_list(event):
 	else:
 		return
 	
+	if not org.cxsbs.core.server.state.game_mode in org.cxsbs.core.server.constants.flag_modes:
+		return
+	
 	if (org.cxsbs.core.server.state.map_name != client.map_name):
 		org.cxsbs.core.maps.modified.mark(client)
 		return
 	
 	server_flag_list = FlagList.retrieve(org.cxsbs.core.server.state.map_name, org.cxsbs.core.server.state.game_mode)
 	
-	if server_flag_list != None: 
-		if not server_flag_list != flag_list:
+	if server_flag_list != None:
+		if server_flag_list != flag_list:
 			org.cxsbs.core.maps.modified.mark(client)
 	else:
 		if not org.cxsbs.core.maps.main.map_ready_manager.pending('org.cxsbs.core.maps.flags'):
@@ -141,9 +144,9 @@ def on_client_flag_list(event):
 			
 @org.cxsbs.core.events.manager.event_handler('map_changed')
 def on_map_changed(event):
-	'''
-	@thread maps
-	'''
+	#'''
+	#@thread maps
+	#'''
 	if org.cxsbs.core.server.state.game_mode in org.cxsbs.core.server.constants.flag_modes:
 		server_flag_list = FlagList.retrieve(org.cxsbs.core.server.state.map_name, org.cxsbs.core.server.state.game_mode)
 		if server_flag_list != None:
