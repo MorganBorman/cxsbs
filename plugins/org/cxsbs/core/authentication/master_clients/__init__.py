@@ -15,6 +15,8 @@ class master_clients(pyTensible.Plugin):
     
 import MasterClient
 
+settings = org.cxsbs.core.settings.manager.Accessor('org.cxsbs.core.authentication.master_clients')
+
 configured_servers =    (
                             (['cxsbs.org', ''], 'localhost', 28789, 60*60),
                         )
@@ -45,7 +47,7 @@ class MasterServerAuthority(org.cxsbs.core.authentication.interfaces.IAuthority)
     def __init__(self):
         self.master_clients = {}
         
-        for server in configured_servers:
+        for server in settings["master_servers"]:
             mc = MasterClient.MasterClient (    self,
                                                 domain=server[0][0], 
                                                 master_host=server[1], 
@@ -67,6 +69,8 @@ class MasterServerAuthority(org.cxsbs.core.authentication.interfaces.IAuthority)
     
     def request(self, auth_ev):
         self.master_clients[auth_ev.domain].authentication_request(auth_ev.global_id, auth_ev.name)
+        if auth_ev.domain == "":
+            auth_ev.display_domain = self.master_clients[auth_ev.domain].domain
     
     def validate(self, auth_ev, answer):
         self.master_clients[auth_ev.domain].authentication_response(auth_ev.global_id, answer)

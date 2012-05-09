@@ -44,7 +44,7 @@ class ServerInstance(object):
 		
 		keypair = cube2crypto.genkeypair(format(random.getrandbits(128), 'X'))
 		
-		doc_instance_privkey = "The private key used to identify this server instance to an extended master server.\n#pubkey: %s" % keypair[1]
+		doc_instance_privkey = "The keys used to identify this server instance to other systems.\npubkey: %s" % keypair[1]
 		default_instance_privkey = keypair[0]
 		self._privkey = config_object.getOption('org.cxsbs.core.server.instance.privkey', default_instance_privkey, doc_instance_privkey)
 		

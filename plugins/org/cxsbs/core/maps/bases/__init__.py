@@ -86,7 +86,7 @@ class BaseList(org.cxsbs.core.database.Base):
 			try:
 				base_list = []
 				
-				base_results = session.query(BaseList).filter(BaseList.mapId==mapId).filter(BaseList.mode==mode).order_by(BaseList.id.asc()).all()
+				base_results = session.query(BaseList).filter(BaseList.mapId==map_entry.id).filter(BaseList.mode==mode).order_by(BaseList.id.asc()).all()
 				for base in base_results:
 					base_list.append((base.ammotype, base.x, base.y, base.z))
 					

@@ -14,6 +14,7 @@ pyTensible.Plugin = [1.0.0,1.0.0]
 org.cxsbs.core.events.manager = [1.0.0,1.0.0]
 org.cxsbs.core.settings.manager = [1.0.0,1.0.0]
 org.cxsbs.core.clients = [1.0.0,1.0.0]
+org.cxsbs.core.messages = [1.0.0,1.0.0]
 
 [Requests]
 org.cxsbs.core.authentication.interfaces.IAuthority = [1.0.0,1.0.0]

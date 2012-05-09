@@ -204,7 +204,7 @@ struct ctfservmode : servmode
     void died(clientinfo *ci, clientinfo *actor)
     {
         dropflag(ci);
-        actor->state.flags_stopped++;
+        if (actor != NULL) actor->state.flags_stopped++;
         loopv(flags) if(flags[i].dropper == ci->clientnum)
         {
             flags[i].dropper = -1;
