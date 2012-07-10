@@ -1,4 +1,4 @@
-import pyTensible, org, cube2server, copy
+import pyTensible, org, cube2server, copy, random
 from groups.DynamicGroup import DynamicGroup
 from groups.Group import Group
 
@@ -50,6 +50,7 @@ class ClientConstants(object):
 class ClientManager:
 	_clients = {}
 	_pseudoclients = {}
+	_available_pcns = list(range(128, 256))
 	_game_vars_template = {}
 	_session_vars_template = {}
 	
@@ -74,6 +75,16 @@ class ClientManager:
 	@property
 	def game_vars_template(self):
 		return self._game_vars_template
+	
+	def connect_pseudoclient(self, client):
+		"Connects a new pseudoclient and returns the client number"
+		if len(self._available_pcns) <= 0:
+			return None
+		
+		cn = random.choice(self._available_pcns)
+		self._available_pcns.remove(cn)
+		self._pseudoclients[cn] = client
+		return cn
 		
 	def get_client(self, cn):
 		if cn >= -128 and cn <= 127:
@@ -95,6 +106,7 @@ class ClientManager:
 			del self._clients[cn]
 		elif cn in self._pseudoclients.keys():
 			del self._pseudoclients[cn]
+			self._available_pcns.append(cn)
 			
 	def on_server_shutdown(self, event):
 		self.disconnect_all("Server going down.")
@@ -367,9 +379,9 @@ class Client(object):
 		allow_groups = settings[action + '_allowed']
 		deny_groups = settings[action + '_denied']
 		return self.isPermitted(allow_groups, deny_groups)
-	def requestAuth(self, description):
-		'''Request that a client send their auth key with the given description'''
-		cube2server.clientRequestAuth(self.cn, description)
+	def requestAuth(self, domain):
+		'''Request that a client send their auth key with the given domain'''
+		cube2server.clientRequestAuth(self.cn, domain)
 	def challengeAuth(self, id, domain, challenge):
 		'''Send an auth challenge to the client'''
 		cube2server.clientChallengeAuth(self.cn, id, domain, challenge)

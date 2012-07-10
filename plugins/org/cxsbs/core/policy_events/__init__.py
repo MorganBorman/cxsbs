@@ -51,7 +51,12 @@ def post_connect_initialization(client):
 	policy_query = org.cxsbs.core.policies.Query('client_can_unspectate_self', True, (client,))
 	response = org.cxsbs.core.policies.query_policy(policy_query)
 	
-	if response and org.cxsbs.core.server.state.mastermode <= 1:
+	connect_spectator = False
+	if client.connect_password == cube2crypto.hashstring("%d %d %s" % (client.cn, client.sessionid, 'spectator')):
+		policy_query = org.cxsbs.core.policies.Query('client_can_connect_spectator', False, (client,))
+		connect_spectator = org.cxsbs.core.policies.query_policy(policy_query)
+	
+	if response and org.cxsbs.core.server.state.mastermode <= 1 and not connect_spectator:
 		join_state = 0
 	else:
 		join_state = 1

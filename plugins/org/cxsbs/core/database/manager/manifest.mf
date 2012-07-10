@@ -1,0 +1,18 @@
+[Plug-in]
+SymbolicName = org.cxsbs.core.database.manager
+Version = 1.0.0
+Author = Morgan Borman
+Enabled = True
+
+[Resources]
+database_manager
+Session
+SchemaBase
+
+[Implements]
+pyTensible.Plugin = [1.0.0,1.0.0]
+
+[Dependencies]
+org.cxsbs.core.server = [1.0.0,1.0.0]
+org.cxsbs.core.database.tables = [1.0.0,1.0.0]
+org.cxsbs.core.database.interfaces = [1.0.0,1.0.0]

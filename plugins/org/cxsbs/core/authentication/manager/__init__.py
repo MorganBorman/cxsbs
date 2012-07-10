@@ -200,7 +200,7 @@ class AuthenticationManager(object):
         org.cxsbs.core.events.manager.trigger_event('client_auth_finished', (challEv.cn, False))
         
         try:
-            client = org.cxsbs.core.clients.get_client(authEv.cn)
+            client = org.cxsbs.core.clients.get_client(challEv.cn)
         except KeyError:
             return
                 

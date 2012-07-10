@@ -67,7 +67,7 @@ def read_setting_docstring(docstring):
 def create_decorator(settings_manager):
 	class SettingDecorator(object):
 		'''Decorator which registers a setting with the settings manager.'''
-		def __init__(self):
+		def __init__(self, symbolic_name=None):
 			self.setting_classes = pyTensible.plugin_loader.get_providers("org.cxsbs.core.settings.interfaces.ISetting")
 			
 		def __call__(self, f):

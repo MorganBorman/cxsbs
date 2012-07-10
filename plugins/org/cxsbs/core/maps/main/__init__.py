@@ -14,7 +14,7 @@ class main(pyTensible.Plugin):
 		self.map_ready_manager = MapReadyManager()
 		
 		Interfaces = {}
-		Resources = 	{'Map': Map, 'map_ready_manager': self.map_ready_manager}
+		Resources = 	{'map_ready_manager': self.map_ready_manager}
 		
 		return {'Interfaces': Interfaces, 'Resources': Resources}
 		
@@ -22,6 +22,8 @@ class main(pyTensible.Plugin):
 		pass
 	
 settings = org.cxsbs.core.settings.manager.Accessor('org.cxsbs.core.maps.main')
+
+Map = org.cxsbs.core.maps.tables.maps.Map
 
 class MapReadyManager(object):
 	def __init__(self):
@@ -59,16 +61,6 @@ class MapReadyManager(object):
 		return component in self.pending_components
 		
 @org.cxsbs.core.settings.manager.Setting
-def map_table_name():
-	"""
-	@category db_tables
-	@display_name Maps table name
-	@wbpolicy never
-	@doc What should the name of the table which stores the map name:crc associations be called?
-	"""
-	return "maps"
-		
-@org.cxsbs.core.settings.manager.Setting
 def update_on_new():
 	"""
 	@category map_check
@@ -77,40 +69,6 @@ def update_on_new():
 	@doc Should map definitions be updated automatically when new maps are encountered?
 	"""
 	return True
-	
-class Map(org.cxsbs.core.database.Base):
-	'''Associates a map CRC with a map name as the required map CRC'''
-	__tablename__ = settings["map_table_name"]
-	id = Column(Integer, primary_key=True)
-	mapName = Column(String(16), index=True)
-	mapCrc = Column(Integer, index=True)
-	def __init__(self, mapName, mapCrc):
-		self.mapName = mapName
-		self.mapCrc = mapCrc
-		
-	@staticmethod
-	def update(map_name, crc):
-		with org.cxsbs.core.database.Session() as session:
-			try:
-				map_entry = session.query(Map).filter(Map.mapName==map_name).one()
-				map_entry.mapCrc = crc
-				session.add(map_entry)
-				session.commit()
-			except NoResultFound:
-				map_entry = Map(map_name, crc)
-				session.add(map_entry)
-				session.commit()
-				
-	@staticmethod
-	def retrieve(map_name):
-		"Get the map entry for this map_name. Return None if it doesn't exist."
-		with org.cxsbs.core.database.Session() as session:
-			try:
-				return session.query(Map).filter(Map.mapName==map_name).one()
-			except NoResultFound:
-				return None
-		
-org.cxsbs.core.database.initialize_tables()
 
 @org.cxsbs.core.events.manager.event_handler('client_map_crc')
 def on_client_map_crc(event):

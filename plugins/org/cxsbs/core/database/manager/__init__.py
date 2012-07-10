@@ -1,22 +1,33 @@
 import pyTensible, org 
 import CategoryConfig, sqlalchemy
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.ext.declarative import declarative_base, DeclarativeMeta
 from contextlib import contextmanager
 
-class database(pyTensible.Plugin):
+class manager(pyTensible.Plugin):
     def __init__(self):
         pyTensible.Plugin.__init__(self)
         
     def load(self):
         
         self.database_manager = DatabaseManager()
+            
+        class PrefixTablesMeta(DeclarativeMeta):
+            def __init__(cls, classname, bases, dict_):
+                if '__tablename__' in dict_:
+                    settings_manager = org.cxsbs.core.settings.manager.settings_manager
+                    tables_prefix = settings_manager.get_setting('org.cxsbs.core.database.tables.prefix').value
+                    cls.__tablename__ = dict_['__tablename__'] = tables_prefix + cls.__tablename__
+                return DeclarativeMeta.__init__(cls, classname, bases, dict_)
+        
+        SchemaBase = declarative_base(metaclass=PrefixTablesMeta)
+        
+        org.cxsbs.core.database.interfaces.IDataSchema.register(SchemaBase)
         
         Interfaces = {}
         Resources =     {
-                            'manager': self.database_manager, 
-                            'Session': Session, 
-                            'Base': self.database_manager.Base, 
-                            'initialize_tables': self.database_manager.initialize_tables,
+                            'database_manager': self.database_manager, 
+                            'Session': Session,
+                            'SchemaBase': SchemaBase
                         }
         
         return {'Interfaces': Interfaces, 'Resources': Resources}
@@ -44,17 +55,12 @@ class DatabaseManager():
         self.uri = get_database_uri()
         self.engine = None
         self.session_factory = None
-        self.Base = declarative_base()
         
     def connect(self):
         if not self.is_connected:
             self.engine = sqlalchemy.create_engine(self.uri)
             self.session_factory = sqlalchemy.orm.sessionmaker(bind=self.engine, autocommit=False, autoflush=False)
             self.is_connected = True
-            
-    def initialize_tables(self):
-        self.connect()
-        self.Base.metadata.create_all(self.engine)
     
     def get_session(self):
         try:
@@ -69,7 +75,7 @@ class DatabaseManager():
 
 @contextmanager
 def Session():
-    session = org.cxsbs.core.database.manager.get_session()
+    session = org.cxsbs.core.database.manager.database_manager.get_session()
     try:
         yield session
     finally:
