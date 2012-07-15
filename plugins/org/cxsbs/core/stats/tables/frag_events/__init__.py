@@ -39,22 +39,28 @@ from enum import enum
 User = org.cxsbs.core.users.tables.users.User
 Match = org.cxsbs.core.stats.tables.matches.Match
 ShotEvent = org.cxsbs.core.stats.tables.shot_events.ShotEvent
+ActivitySpan = org.cxsbs.core.stats.tables.activity_spans.ActivitySpan
 
 class FragEvent(org.cxsbs.core.database.manager.SchemaBase):
     __tablename__ = settings["table_name"]
-    id = Column(BigInteger, Sequence(__tablename__+'_id_seq'), primary_key=True)
+    id = Column(BigInteger, primary_key=True)
     
-    who_id      = Column(BigInteger,    ForeignKey(User.id),         nullable=False)
-    match_id    = Column(BigInteger,    ForeignKey(Match.id),       nullable=False)
-    shot_id     = Column(BigInteger,    ForeignKey(ShotEvent.id),   nullable=False)
-    target_id   = Column(BigInteger,    ForeignKey(User.id),         nullable=True)
+    id_generator = org.cxsbs.core.database.manager.HiLoIdGen(__tablename__)
+    
+    who_id              = Column(BigInteger,    ForeignKey(User.id),            nullable=False)
+    match_id            = Column(BigInteger,    ForeignKey(Match.id),           nullable=False)
+    shot_id             = Column(BigInteger,    ForeignKey(ShotEvent.id),       nullable=False)
+    activity_span_id    = Column(BigInteger,    ForeignKey(ActivitySpan.id),    nullable=False)
+    target_id           = Column(BigInteger,    ForeignKey(User.id),            nullable=True)
     
     when        = Column(DateTime,      nullable=False)
-    type        = Column(SmallInteger,  nullable=False)
     
-    types = enum(NORMAL=0, TEAMKILL=1, BOT=2, SPAWNKILL=3)
+    teamkill    = Column(Boolean,       nullable=False)
+    botskill    = Column(SmallInteger,  nullable=True)
+    spawnkill   = Column(Boolean,       nullable=False)
     
     who = relationship('User', primaryjoin="User.id==FragEvent.who_id")
     match = relationship('Match')
     shot = relationship('ShotEvent')
+    activity_span = relationship('ActivitySpan')
     target = relationship('User', primaryjoin="User.id==FragEvent.target_id")

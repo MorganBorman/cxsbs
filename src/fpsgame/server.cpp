@@ -2254,7 +2254,7 @@ namespace server
 
 				std::vector<int> item_types;
 
-				int n;
+				unsigned int n;
 				while((n = getint(p))>=0 && n<MAXENTS && !p.overread())
 				{
 					while(item_types.size() < n) item_types.push_back(NOTUSED);

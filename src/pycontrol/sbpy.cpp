@@ -297,43 +297,55 @@ bool triggerEventf(const char *event_name, const char* format, ... )
 
       for(int i = 0; format[i] != '\0'; ++i )
       {
-            if (format[i] == 'b')
+            if (format[i] == 'b') // boolean
             {
             	args.push_back(PyBool_FromLong(va_arg(arguments, int)));
             }
-            else if (format[i] == 'f')
+            else if (format[i] == 'f') // double
             {
             	args.push_back(PyFloat_FromDouble(va_arg(arguments, double)));
             }
-            else if (format[i] == 'i')
+            else if (format[i] == 'i') // integer
             {
             	args.push_back(PyInt_FromLong(va_arg(arguments, int)));
             }
-            else if (format[i] == 'I')
+            else if (format[i] == 'I') // unsigned integer
             {
-            	args.push_back(PyLong_FromLong(va_arg(arguments, unsigned int)));
+            	args.push_back(PyLong_FromUnsignedLong(va_arg(arguments, unsigned int)));
             }
-            else if (format[i] == 'l')
+            else if (format[i] == 'l') // long
             {
             	args.push_back(PyLong_FromLong(va_arg(arguments, long)));
             }
-            else if (format[i] == 'L')
+            else if (format[i] == 'L') // Unsigned long
             {
-            	args.push_back(PyLong_FromLong(va_arg(arguments, unsigned long)));
+            	args.push_back(PyLong_FromUnsignedLong(va_arg(arguments, unsigned long)));
             }
-            else if (format[i] == 'p')
+            else if (format[i] == 'q') // long long
+            {
+            	args.push_back(PyLong_FromLongLong(va_arg(arguments, long long)));
+            }
+            else if (format[i] == 'Q') // Unsigned long long
+            {
+            	args.push_back(PyLong_FromUnsignedLongLong(va_arg(arguments, unsigned long long)));
+            }
+            else if (format[i] == 'p') // pyobject
             {
             	args.push_back(va_arg(arguments, PyObject *));
             }
-            else if (format[i] == 'c')
+            else if (format[i] == 'c') // char
             {
             	args.push_back(PyString_FromFormat("%c", va_arg(arguments, int)));
             }
-            else if (format[i] == 'C')
+            else if (format[i] == 'C') // unsigned char
             {
             	args.push_back(PyString_FromFormat("%C", va_arg(arguments, unsigned int)));
             }
-            else if (format[i] == 's')
+            else if (format[i] == 'x') // void*
+            {
+            	args.push_back(PyCObject_FromVoidPtr(va_arg(arguments, void*), NULL));
+            }
+            else if (format[i] == 's') // string
             {
             	args.push_back(PyString_FromString(va_arg(arguments, char *)));
             }

@@ -37,14 +37,22 @@ from sqlalchemy.schema import UniqueConstraint
 from enum import enum
 
 User = org.cxsbs.core.users.tables.users.User
+Match = org.cxsbs.core.stats.tables.matches.Match
 
 class ActivitySpan(org.cxsbs.core.database.manager.SchemaBase):
     __tablename__ = settings["table_name"]
-    id = Column(BigInteger, Sequence(__tablename__+'_id_seq'), primary_key=True)
+    id = Column(BigInteger, primary_key=True)
     
-    who     = Column(BigInteger,        ForeignKey(User.id),      nullable=False)
+    id_generator = org.cxsbs.core.database.manager.HiLoIdGen(__tablename__)
     
-    type    = Column(SmallInteger,      nullable=False)
-    start   = Column(DateTime,          nullable=False)
-    end     = Column(DateTime,          nullable=False)
-    millis  = Column(Integer,           nullable=False)
+    who_id      = Column(BigInteger,        ForeignKey(User.id),        nullable=False)
+    match_id    = Column(BigInteger,        ForeignKey(Match.id),       nullable=False)
+    
+    type        = Column(SmallInteger,      nullable=False)
+    start       = Column(DateTime,          nullable=False)
+    stop        = Column(DateTime,          nullable=False)
+
+    types = enum(ALIVE=0, DEAD=1, SPECTATOR=2, INVISIBLE=3)
+
+    who = relationship('User')
+    match = relationship('Match')

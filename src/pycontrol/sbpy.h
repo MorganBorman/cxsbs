@@ -35,8 +35,8 @@ bool init(const char*, const char*, const char*, const char*);
 bool initPy();
 void deinitPy();
 bool restartPy();
-bool triggerEvent(const char *event_name, std::vector<PyObject*> *args);
 
+bool triggerEvent(const char *event_name, std::vector<PyObject*> *args);
 bool triggerEventf(const char *event_name, const char* format, ... );
 
 extern bool reload_on_update;

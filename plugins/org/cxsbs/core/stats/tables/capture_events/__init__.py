@@ -38,16 +38,25 @@ from enum import enum
 
 User = org.cxsbs.core.users.tables.users.User
 Match = org.cxsbs.core.stats.tables.matches.Match
+ActivitySpan = org.cxsbs.core.stats.tables.activity_spans.ActivitySpan
 
 class CaptureEvent(org.cxsbs.core.database.manager.SchemaBase):
     __tablename__ = settings["table_name"]
-    id = Column(BigInteger, Sequence(__tablename__+'_id_seq'), primary_key=True)
+    id = Column(BigInteger, primary_key=True)
     
-    match_id    = Column(BigInteger,    ForeignKey(Match.id),    nullable=False)
-    who_id      = Column(BigInteger,    ForeignKey(User.id),     nullable=False)
+    id_generator = org.cxsbs.core.database.manager.HiLoIdGen(__tablename__)
     
-    start       = Column(DateTime,      nullable=False)
-    end         = Column(DateTime,      nullable=False)
-    team        = Column(SmallInteger,  nullable=True)
-    complete    = Column(Boolean,       nullable=False)
-    health      = Column(Integer,       nullable=False)
+    who_id              = Column(BigInteger,    ForeignKey(User.id),            nullable=False)
+    match_id            = Column(BigInteger,    ForeignKey(Match.id),           nullable=False)
+    activity_span_id    = Column(BigInteger,    ForeignKey(ActivitySpan.id),    nullable=False)
+    
+    start           = Column(DateTime,      nullable=False)
+    stop            = Column(DateTime,      nullable=False)
+    base_id         = Column(SmallInteger,  nullable=True)
+    complete        = Column(Boolean,       nullable=False)
+    start_health    = Column(Integer,       nullable=False)
+    stop_health     = Column(Integer,       nullable=False)
+    
+    who = relationship('User')
+    match = relationship('Match')
+    activity_span = relationship('ActivitySpan')

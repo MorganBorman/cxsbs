@@ -39,16 +39,28 @@ from enum import enum
 User = org.cxsbs.core.users.tables.users.User
 Match = org.cxsbs.core.stats.tables.matches.Match
 ShotEvent = org.cxsbs.core.stats.tables.shot_events.ShotEvent
+ActivitySpan = org.cxsbs.core.stats.tables.activity_spans.ActivitySpan
 
 class DeathEvent(org.cxsbs.core.database.manager.SchemaBase):
     __tablename__ = settings["table_name"]
-    id = Column(BigInteger, Sequence(__tablename__+'_id_seq'), primary_key=True)
+    id = Column(BigInteger, primary_key=True)
     
-    who_id      = Column(BigInteger,    ForeignKey(User.id),         nullable=False)
-    match_id    = Column(BigInteger,    ForeignKey(Match.id),       nullable=False)
-    killer_id   = Column(BigInteger,    ForeignKey(User.id),         nullable=True)
-    shot        = Column(BigInteger,    ForeignKey(ShotEvent.id),   nullable=True)
+    id_generator = org.cxsbs.core.database.manager.HiLoIdGen(__tablename__)
+    
+    who_id              = Column(BigInteger,    ForeignKey(User.id),            nullable=False)
+    match_id            = Column(BigInteger,    ForeignKey(Match.id),           nullable=False)
+    killer_id           = Column(BigInteger,    ForeignKey(User.id),            nullable=True)
+    shot_id             = Column(BigInteger,    ForeignKey(ShotEvent.id),       nullable=True)
+    activity_span_id    = Column(BigInteger,    ForeignKey(ActivitySpan.id),    nullable=False)
     
     when        = Column(DateTime,      nullable=False)
-    type        = Column(SmallInteger,  nullable=False)
+    
+    teamdeath   = Column(Boolean,       nullable=False)
+    botskill    = Column(SmallInteger,  nullable=True)
+    spawnkill   = Column(Boolean,       nullable=False)
 
+    who = relationship('User', primaryjoin="User.id==DeathEvent.who_id")
+    match = relationship('Match')
+    shot = relationship('ShotEvent')
+    killer = relationship('User', primaryjoin="User.id==DeathEvent.killer_id")
+    activity_span = relationship('ActivitySpan')

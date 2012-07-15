@@ -15,6 +15,7 @@ org.cxsbs.core.database.interfaces.IDataSchema = [1.0.0,1.0.0]
 org.cxsbs.core.settings.manager = [1.0.0,1.0.0]
 org.cxsbs.core.database.manager = [1.0.0,1.0.0]
 
+org.cxsbs.core.maps.tables.maps = [1.0.0,1.0.0]
 org.cxsbs.core.common_tables.modes = [1.0.0,1.0.0]
 org.cxsbs.core.common_tables.pseudomodes = [1.0.0,1.0.0]
 org.cxsbs.core.common_tables.instances = [1.0.0,1.0.0]

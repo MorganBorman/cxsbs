@@ -1,1 +1,3 @@
 sudo apt-get install python2.7 python2.7-dev python-sqlalchemy cmake build-essential
+SMF Names table integration
+HiLo tables for cached stat data keys

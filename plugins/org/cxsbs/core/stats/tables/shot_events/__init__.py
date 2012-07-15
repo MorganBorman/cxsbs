@@ -39,13 +39,22 @@ from enum import enum
 User = org.cxsbs.core.users.tables.users.User
 Match = org.cxsbs.core.stats.tables.matches.Match
 Gun = org.cxsbs.core.common_tables.guns.Gun
+ActivitySpan = org.cxsbs.core.stats.tables.activity_spans.ActivitySpan
 
 class ShotEvent(org.cxsbs.core.database.manager.SchemaBase):
     __tablename__ = settings["table_name"]
-    id          = Column(BigInteger,    Sequence(__tablename__+'_id_seq'), primary_key=True)
+    id          = Column(BigInteger, primary_key=True)
     
-    match_id        = Column(BigInteger,    ForeignKey(Match.id),    nullable=False)
-    who_id          = Column(BigInteger,    ForeignKey(User.id),     nullable=False)
-    gun_id          = Column(SmallInteger,  ForeignKey(Gun.id),      nullable=False)
+    id_generator = org.cxsbs.core.database.manager.HiLoIdGen(__tablename__)
+    
+    match_id            = Column(BigInteger,    ForeignKey(Match.id),           nullable=False)
+    who_id              = Column(BigInteger,    ForeignKey(User.id),            nullable=False)
+    gun_id              = Column(SmallInteger,  ForeignKey(Gun.id),             nullable=False)
+    activity_span_id    = Column(BigInteger,    ForeignKey(ActivitySpan.id),    nullable=False)
     
     when        = Column(DateTime, nullable=False)
+    
+    match = relationship('Match')
+    who = relationship('User')
+    gun = relationship('Gun')
+    activity_span = relationship('ActivitySpan')

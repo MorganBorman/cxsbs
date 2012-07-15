@@ -10,6 +10,7 @@ class initialized(pyTensible.Plugin):
         
         database_manager.connect()
         org.cxsbs.core.database.manager.SchemaBase.metadata.create_all(database_manager.engine)
+        org.cxsbs.core.database.manager.HiLoIdTablesBase.metadata.create_all(database_manager.engine)
         
         Interfaces = {}
         Resources = {}

@@ -39,18 +39,26 @@ from enum import enum
 User = org.cxsbs.core.users.tables.users.User
 Match = org.cxsbs.core.stats.tables.matches.Match
 ShotEvent = org.cxsbs.core.stats.tables.shot_events.ShotEvent
+ActivitySpan = org.cxsbs.core.stats.tables.activity_spans.ActivitySpan
     
 class DamageDealtEvent(org.cxsbs.core.database.manager.SchemaBase):
     __tablename__ = settings["table_name"]
-    id = Column(BigInteger, Sequence(__tablename__ + '_id_seq'), primary_key=True)
+    id = Column(BigInteger, primary_key=True)
     
-    match_id       = Column(BigInteger,    ForeignKey(Match.id),    nullable=False)
-    target_id      = Column(BigInteger,    ForeignKey(User.id),     nullable=False)
-    shot_id        = Column(BigInteger,    ForeignKey(ShotEvent.id),nullable=False)
+    id_generator = org.cxsbs.core.database.manager.HiLoIdGen(__tablename__)
     
+    who_id              = Column(BigInteger,    ForeignKey(User.id),            nullable=False)
+    match_id            = Column(BigInteger,    ForeignKey(Match.id),           nullable=False)
+    target_id           = Column(BigInteger,    ForeignKey(User.id),            nullable=False)
+    shot_id             = Column(BigInteger,    ForeignKey(ShotEvent.id),       nullable=False)
+    activity_span_id    = Column(BigInteger,    ForeignKey(ActivitySpan.id),    nullable=False)
+    
+    damage      = Column(Integer,       nullable=False)
     when        = Column(DateTime,      nullable=False)
     distance    = Column(Integer,       nullable=False)
     
+    who = relationship('User', primaryjoin="User.id==DamageDealtEvent.who_id")
     match = relationship('Match')
     shot = relationship('ShotEvent')
-    target = relationship('User')
+    target = relationship('User', primaryjoin="User.id==DamageDealtEvent.target_id")
+    activity_span = relationship('ActivitySpan')

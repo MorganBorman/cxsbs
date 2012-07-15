@@ -1,6 +1,8 @@
 import pyTensible, org 
 import CategoryConfig, sqlalchemy
 from sqlalchemy.ext.declarative import declarative_base, DeclarativeMeta
+from sqlalchemy import SmallInteger, BigInteger, Column
+from sqlalchemy.orm.exc import NoResultFound
 from contextlib import contextmanager
 
 class manager(pyTensible.Plugin):
@@ -23,11 +25,58 @@ class manager(pyTensible.Plugin):
         
         org.cxsbs.core.database.interfaces.IDataSchema.register(SchemaBase)
         
+        class HiLoIdTablesMeta(PrefixTablesMeta):
+            def __init__(cls, classname, bases, dict_):
+                if '__id_type__' in dict_:
+                    cls.__id_type__ = dict_['__id_type__']
+                else:
+                    cls.__id_type__ = BigInteger
+                    
+                cls.id = Column(SmallInteger, primary_key=True)
+                cls.value = Column(cls.__id_type__, nullable=False, default=0)
+                
+                return PrefixTablesMeta.__init__(cls, classname, bases, dict_)
+            
+            def fetch(cls, quantity=100):
+                """returns a tuple indicating an inclusive range of ids which have been reserved.
+                
+                returns (first_id, last_id)
+                """
+                with org.cxsbs.core.database.manager.Session() as session:
+                    #session.execute("LOCK TABLES %s WRITE" % cls.__tablename__)
+                    
+                    try:
+                        try:
+                            entry = session.query(cls).filter(cls.id==1).with_lockmode('update').one()
+                        except NoResultFound:
+                            entry = cls()
+                            entry.id = 1
+                            entry.value = 0
+                            session.add(entry)
+                        
+                        start_hival = entry.value
+                        entry.value += quantity
+                        
+                        return (start_hival, entry.value-1)
+                    finally:
+                        session.commit()
+                        #session.execute("UNLOCK TABLES")
+
+        HiLoIdTablesBase = declarative_base(metaclass=HiLoIdTablesMeta)
+        
+        org.cxsbs.core.database.interfaces.IDataSchema.register(HiLoIdTablesBase)
+        
+        def HiLoIdGen(table_id):
+            table_id = table_id + "_hilo_id"
+            return type(table_id, (HiLoIdTablesBase,), dict(__tablename__ = table_id))
+        
         Interfaces = {}
         Resources =     {
                             'database_manager': self.database_manager, 
                             'Session': Session,
-                            'SchemaBase': SchemaBase
+                            'SchemaBase': SchemaBase,
+                            'HiLoIdTablesBase': HiLoIdTablesBase,
+                            'HiLoIdGen': HiLoIdGen
                         }
         
         return {'Interfaces': Interfaces, 'Resources': Resources}

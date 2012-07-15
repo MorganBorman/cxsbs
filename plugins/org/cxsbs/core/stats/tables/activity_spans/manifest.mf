@@ -5,6 +5,7 @@ Author = Morgan Borman
 Enabled = True
 
 [Resources]
+#id_generator[org.cxsbs.core.database.interfaces.IDataSchema]
 ActivitySpan[org.cxsbs.core.database.interfaces.IDataSchema]
 
 [Implements]
@@ -16,3 +17,4 @@ org.cxsbs.core.settings.manager = [1.0.0,1.0.0]
 org.cxsbs.core.database.manager = [1.0.0,1.0.0]
 
 org.cxsbs.core.users.tables.users = [1.0.0,1.0.0]
+org.cxsbs.core.stats.tables.matches = [1.0.0,1.0.0]

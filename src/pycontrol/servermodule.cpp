@@ -638,7 +638,7 @@ namespace SbPy
 	static PyObject *clientSendDemo(PyObject *self, PyObject *args)
 	{
 		int cn, len;
-		uchar *data;
+		uchar *data = NULL;
 		server::clientinfo *ci;
 		if(!PyArg_ParseTuple(args, "is#", &cn, data, &len))
 			return 0;
@@ -1308,6 +1308,7 @@ namespace SbPy
 	static PyObject *serverReload(PyObject *self, PyObject *args)
 	{
 		SbPy::reload_on_update = true;
+		Py_INCREF(Py_None);
 		return Py_None;
 	}
 
@@ -1318,6 +1319,7 @@ namespace SbPy
 			return 0;
 
 		exit(exit_status);
+		Py_INCREF(Py_None);
 		return Py_None;
 	}
 

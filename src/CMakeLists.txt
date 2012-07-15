@@ -11,6 +11,9 @@ set(cxsbs_srcs
 	engine/command.cpp
 
 	fpsgame/server.cpp
+	
+	stats/stats.cpp
+	stats/pk_dealer.cpp
 
 	pycontrol/sbpy.cpp
 	pycontrol/servermodule.cpp)
@@ -49,6 +52,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src/engine
 	${CMAKE_SOURCE_DIR}/src/fpsgame
 	${CMAKE_SOURCE_DIR}/src/shared
 	${CMAKE_SOURCE_DIR}/src/tools
+	${CMAKE_SOURCE_DIR}/src/stats
 	${CMAKE_SOURCE_DIR}/src/pycontrol
 	${CMAKE_SOURCE_DIR}/src/enet/include
 	${PYTHON_INCLUDE_PATH}
