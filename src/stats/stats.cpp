@@ -15,6 +15,8 @@
 #include <utility>
 #include <string>
 
+#include <stdio.h>
+
 namespace stats
 {
 	// Gets the current number of microseconds since the epoch
@@ -94,6 +96,8 @@ namespace stats
 		if(!PyArg_ParseTuple(args, "iLL", &pk_dealer_index, &cur, &end))
 			return 0;
 		
+		fprintf(stderr, "Received pks callback %lld %lld\n", cur, end);
+		
 		pk_dealers[pk_dealer_index].pkd->add_counter(cur, end);
 		
 		Py_INCREF(Py_None);
@@ -107,7 +111,7 @@ namespace stats
 		for(unsigned int i=0; i < pk_dealers_count; i++)
 		{
 			bigint order = pk_dealers[i].pkd->order_pks();
-			if(order)
+			if(order > 0)
 			{
 				PyObject *appropriate_pks_callback_pymethod = PyCFunction_New(&appropriate_pks_callback_method_def, NULL);
 				SbPy::triggerEventf("data_request", "spiq", pk_dealers[i].name, appropriate_pks_callback_pymethod, i, order);
@@ -148,9 +152,14 @@ namespace stats
 
 		current_match->start = get_epoch_micros();
 	}
+	
+	int SPAWNKILL_INTERVAL = 1000;
 
 	void next_activity_span(bigint who_id, short type)
 	{
+		// Return if we don't get a valid user id
+		if(who_id < 0) return;
+		
 		// If there is an existing activity span for this user then end it
 		if(current_activity_spans.find(who_id) != current_activity_spans.end())
 			current_activity_spans[who_id]->stop = get_epoch_micros();
@@ -177,6 +186,9 @@ namespace stats
 
 	void start_capture(bigint who_id, short base_id, int health)
 	{
+		// Return if we don't get a valid user id
+		if(who_id < 0) return;
+		
 		// Bail if we don't have a current match in progress
 		if (!current_match) return;
 
@@ -205,6 +217,9 @@ namespace stats
 
 	void stop_capture(bigint who_id, short base_id, bool complete, int health)
 	{
+		// Return if we don't get a valid user id
+		if(who_id < 0) return;
+		
 		std::pair<bigint, short> ck = std::make_pair(who_id, base_id);
 
 		if(pending_captures.find(ck) == pending_captures.end()) return;
@@ -218,8 +233,11 @@ namespace stats
 		capture_events.push_back(ce);
 	}
 
-	void add_shot_event(bigint who_id, int game_shot_id, short gun_id)
+	void add_shot_event(bigint who_id, int game_shot_id, short gun_id, bool quad)
 	{
+		// Return if we don't get a valid user id
+		if(who_id < 0) return;
+		
 		// Bail if we don't have a current match in progress
 		if (!current_match) return;
 
@@ -238,6 +256,7 @@ namespace stats
 		se->match_id = current_match->id;
 		se->gun_id = gun_id;
 		se->activity_span_id = as->id;
+		se->quad = quad;
 
 		se->when = get_epoch_micros();
 
@@ -248,6 +267,9 @@ namespace stats
 
 	void add_death_event(bigint who_id, int game_shot_id, bigint killer_id, bool teamdeath, bool spawnkill, short botskill)
 	{
+		// Return if we don't get a valid user id
+		if(who_id < 0) return;
+		
 		// Bail if we don't have a current match in progress
 		if (!current_match) return;
 
@@ -282,6 +304,9 @@ namespace stats
 
 	void add_frag_event(bigint who_id, int game_shot_id, bigint target_id, bool teamkill, bool spawnkill, short botskill)
 	{
+		// Return if we don't get a valid user id
+		if(who_id < 0) return;
+		
 		// Bail if we don't have a current match in progress
 		if (!current_match) return;
 
@@ -316,6 +341,9 @@ namespace stats
 
 	void add_damage_dealt_event(bigint who_id, int game_shot_id, bigint target_id, int damage, int distance)
 	{
+		// Return if we don't get a valid user id
+		if(who_id < 0) return;
+		
 		// Bail if we don't have a current match in progress
 		if (!current_match) return;
 
@@ -349,6 +377,9 @@ namespace stats
 
 	void end_match()
 	{
+		// Bail if we don't have a current match in progress
+		if (!current_match) return;
+		
 		current_match->stop = get_epoch_micros();
 
 		dump_stats();

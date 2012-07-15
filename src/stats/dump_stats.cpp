@@ -5,7 +5,6 @@
 		PyObject *stats_data = PyDict_New();
 
 		PyObject *matches_data = PyTuple_New(1);
-		PyDict_SetItemString(stats_data, "matches", matches_data);
 		{
 			PyObject *match_data = PyDict_New();
 			PyDict_SetItemString(match_data, "id", 				PyLong_FromLongLong(	current_match->id));
@@ -18,9 +17,9 @@
 			PyTuple_SetItem(matches_data, 0, match_data);
 			delete current_match;
 		}
+		PyDict_SetItemString(stats_data, "matches", matches_data);
 
 		PyObject *activity_spans_data = PyTuple_New(activity_spans.size());
-		PyDict_SetItemString(stats_data, "activity_spans", activity_spans_data);
 		for(unsigned int i = 0; i < activity_spans.size(); i++)
 		{
 			activity_span *as = activity_spans[i];
@@ -35,9 +34,9 @@
 			PyTuple_SetItem(activity_spans_data, i, asd);
 			delete as;
 		}
+		PyDict_SetItemString(stats_data, "activity_spans", activity_spans_data);
 
 		PyObject *capture_events_data = PyTuple_New(capture_events.size());
-		PyDict_SetItemString(stats_data, "capture_events", capture_events_data);
 		for(unsigned int i = 0; i < capture_events.size(); i++)
 		{
 			capture_event *ce = capture_events[i];
@@ -57,9 +56,9 @@
 			PyTuple_SetItem(capture_events_data, i, ced);
 			delete ce;
 		}
+		PyDict_SetItemString(stats_data, "capture_events", capture_events_data);
 		
 		PyObject *shot_events_data = PyTuple_New(shot_events.size());
-		PyDict_SetItemString(stats_data, "shot_events", shot_events_data);
 		for(unsigned int i = 0; i < shot_events.size(); i++)
 		{
 			shot_event *se = shot_events[i];
@@ -74,9 +73,9 @@
 			PyTuple_SetItem(activity_spans_data, i, sed);
 			delete se;
 		}
+		PyDict_SetItemString(stats_data, "shot_events", shot_events_data);
 		
 		PyObject *damage_dealt_events_data = PyTuple_New(damage_dealt_events.size());
-		PyDict_SetItemString(stats_data, "damage_dealt_events", damage_dealt_events_data);
 		for(unsigned int i = 0; i < damage_dealt_events.size(); i++)
 		{
 			damage_dealt_event *dde = damage_dealt_events[i];
@@ -93,9 +92,9 @@
 			PyTuple_SetItem(damage_dealt_events_data, i, dded);
 			delete dde;
 		}
+		PyDict_SetItemString(stats_data, "damage_dealt_events", damage_dealt_events_data);
 		
 		PyObject *death_events_data = PyTuple_New(death_events.size());
-		PyDict_SetItemString(stats_data, "death_events", death_events_data);
 		for(unsigned int i = 0; i < death_events.size(); i++)
 		{
 			death_event *de = death_events[i];
@@ -116,9 +115,9 @@
 			PyTuple_SetItem(death_events_data, i, ded);
 			delete de;
 		}
+		PyDict_SetItemString(stats_data, "death_events", death_events_data);
 		
 		PyObject *frag_events_data = PyTuple_New(frag_events.size());
-		PyDict_SetItemString(stats_data, "frag_events", frag_events_data);
 		for(unsigned int i = 0; i < frag_events.size(); i++)
 		{
 			frag_event *fe = frag_events[i];
@@ -139,4 +138,7 @@
 			PyTuple_SetItem(frag_events_data, i, fed);
 			delete fe;
 		}
+		PyDict_SetItemString(stats_data, "frag_events", frag_events_data);
+		
+		SbPy::triggerEventf("stats_data", "p", stats_data);
 	}

@@ -14,6 +14,7 @@ struct pk_counter
 class pk_dealer
 {
 private:
+	bool awaiting_pks;
 	bigint pks_left;
 	bigint pks_this_round;
 	bigint round_number;

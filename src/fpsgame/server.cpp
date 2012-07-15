@@ -7,6 +7,7 @@
 #include "sbpy.h"
 #include "servermodule.h"
 #include "server.h"
+#include "stats.h"
 
 #include <time.h>
 
@@ -149,6 +150,8 @@ namespace server
 		// Initialize python modules
 		if(!SbPy::init("cxsbs_server", pythonRoot, pluginPath, instanceRoot))
 			return false;
+		// Initialize stats caching framework
+		stats::initialize();
 		return true;
 	}
 
@@ -1095,6 +1098,7 @@ namespace server
 
 	void changemap(const char *s, int mode)
 	{
+		stats::end_match();
 		SbPy::triggerEventf("map_changed_pre", "");
 		stopdemo();
 		if(smode) smode->reset(false);
@@ -1123,6 +1127,8 @@ namespace server
 		else smode = NULL;
 		if(smode) smode->reset(false);
 
+		stats::start_match((short)mode, (char *)s /*map name*/, 0 /*PseudoMode*/, 0 /*Instance Id*/);
+		
 		if(m_timed && smapname[0]) sendf(-1, 1, "ri2", N_TIMEUP, gamemillis < gamelimit && !interm ? max((gamelimit - gamemillis)/1000, 1) : 0);
 		loopv(clients)
 		{
@@ -1244,11 +1250,11 @@ namespace server
 		if(gamemillis >= gamelimit && !interm)
 		{
 			SbPy::triggerEventf("intermission_begin", "ii", gamemillis, intermissionlength);
-
-			loopv(clients)
-			{
-				trigger_stats(clients[i]);
-			}
+			
+			//loopv(clients)
+			//{
+			//	trigger_stats(clients[i]);
+			//}
 			sendf(-1, 1, "ri2", N_TIMEUP, 0);
 			if(smode) smode->intermission();
 			interm = gamemillis + intermissionlength;
@@ -1257,7 +1263,7 @@ namespace server
 
 	void startintermission() { gamelimit = min(gamelimit, gamemillis); checkintermission(); }
 
-	void dodamage(clientinfo *target, clientinfo *actor, int damage, int gun, const vec &hitpush = vec(0, 0, 0))
+	void dodamage(clientinfo *target, clientinfo *actor, int shot_id, int damage, int gun, const vec &hitpush = vec(0, 0, 0))
 	{
 		if(actor->state.state == CS_INVISIBLE) return;
 		gamestate &ts = target->state;
@@ -1307,43 +1313,12 @@ namespace server
 				actor->state.reset_sprees(actor->clientnum);
 				SbPy::triggerEventf("client_suicide", "i", actor->clientnum);
 
-				if(actor->uid != -1)
-				{
-					stat_event *se = new stat_event;
-					actor->state.stat_events.add(se);
-					se->type = SE_DEATH;
-					se->timestamp = time(NULL);
-					se->mode = gamemode;
-					se->cause = SE_SUICIDE;
-				}
-
 			}
 			else if(isteam(actor->team, target->team))
 			{
 				actor->state.teamkills++;
 				actor->state.reset_sprees(actor->clientnum);
 				SbPy::triggerEventf("client_teamkill", "ii", actor->clientnum, target->clientnum);
-
-				if(actor->uid != -1)
-				{
-					stat_event *se = new stat_event;
-					actor->state.stat_events.add(se);
-					se->type = SE_FRAG;
-					se->timestamp = time(NULL);
-					se->mode = gamemode;
-					se->target = SE_TEAMKILL;
-				}
-
-				if(target->uid != -1)
-				{
-					stat_event *se = new stat_event;
-					target->state.stat_events.add(se);
-					se->type = SE_DEATH;
-					se->timestamp = time(NULL);
-					se->mode = gamemode;
-					se->cause = SE_TEAMKILL;
-				}
-
 			}
 			else
 			{
@@ -1353,28 +1328,17 @@ namespace server
 				actor->state.spree++;
 				actor->state.weapon_kill(gun, actor->clientnum);
 				SbPy::triggerEventf("client_frag", "ii", actor->clientnum, target->clientnum);
-
-				if(actor->uid != -1)
-				{
-					stat_event *se = new stat_event;
-					actor->state.stat_events.add(se);
-					se->type = SE_FRAG;
-					se->timestamp = time(NULL);
-					se->mode = gamemode;
-					se->target = target->uid;
-				}
-
-				if(target->uid != -1)
-				{
-					stat_event *se = new stat_event;
-					target->state.stat_events.add(se);
-					se->type = SE_DEATH;
-					se->timestamp = time(NULL);
-					se->mode = gamemode;
-					se->cause = actor->uid;
-				}
-
 			}
+			
+			stats::add_frag_event(actor->uid, shot_id, target->uid, isteam(actor->team, target->team), 
+					(gamemillis - (ts.lastdeath + DEATHMILLIS) < stats::SPAWNKILL_INTERVAL), 
+					target->state.aitype == AI_NONE ? -1 : target->state.skill);
+			
+			stats::add_death_event(target->uid, shot_id, actor->uid, isteam(actor->team, target->team), 
+					(gamemillis - (ts.lastdeath + DEATHMILLIS) < stats::SPAWNKILL_INTERVAL), 
+					actor->state.aitype == AI_NONE ? -1 : actor->state.skill);
+			
+			stats::next_activity_span(target->uid, stats::ACTIVITY_SPAN_DEAD);
 
 			sendf(-1, 1, "ri4", N_DIED, target->clientnum, actor->clientnum, actor->state.frags);
 			target->position.setsize(0);
@@ -1432,7 +1396,7 @@ namespace server
 			hitinfo &h = hits[i];
 			clientinfo *target = getinfo(h.target);
 			if(!target || target->state.state!=CS_ALIVE || h.lifesequence!=target->state.lifesequence || h.dist<0 || h.dist>RL_DAMRAD) continue;
-
+			
 			bool dup = false;
 			loopj(i) if(hits[j].target==h.target) { dup = true; break; }
 			if(dup) continue;
@@ -1441,7 +1405,9 @@ namespace server
 			if(gs.quadmillis) damage *= 4;
 			damage = int(damage*(1-h.dist/RL_DISTSCALE/RL_DAMRAD));
 			if(gun==GUN_RL && target==ci) damage /= RL_SELFDAMDIV;
-			dodamage(target, ci, damage, gun, h.dir);
+			dodamage(target, ci, id, damage, gun, h.dir);
+			
+			stats::add_damage_dealt_event(ci->uid, id, target->uid, damage, h.dist);
 		}
 	}
 
@@ -1466,7 +1432,8 @@ namespace server
 	}
 		int tempdamage = guns[gun].damage*(gs.quadmillis ? 4 : 1)*(gun==GUN_SG ? SGRAYS : 1);
 
-		//SbPy::triggerEventf("client_spend_damage", "iii", ci->clientnum, gun, tempdamage);
+		stats::add_shot_event(ci->uid, id, gun, gs.quadmillis ? true : false);
+		
 		if(ci->uid != -1)
 		{
 			stat_event *se = new stat_event;
@@ -1495,12 +1462,14 @@ namespace server
 					hitinfo &h = hits[i];
 					clientinfo *target = getinfo(h.target);
 					if(!target || target->state.state!=CS_ALIVE || h.lifesequence!=target->state.lifesequence || h.rays<1 || h.dist > guns[gun].range + 1) continue;
-
+					
 					totalrays += h.rays;
 					if(totalrays>maxrays) continue;
 					int damage = h.rays*guns[gun].damage;
 					if(gs.quadmillis) damage *= 4;
-					dodamage(target, ci, damage, gun, h.dir);
+					dodamage(target, ci, id, damage, gun, h.dir);
+
+					stats::add_damage_dealt_event(ci->uid, id, target->uid, damage, h.dist);
 				}
 				break;
 			}
@@ -1608,6 +1577,8 @@ namespace server
 			aiman::checkai();
 			if(smode) smode->update();
 		}
+		
+		stats::update();
 
 		loopv(connects)
 		{
@@ -1687,6 +1658,8 @@ namespace server
 			}
 			sendinitclient(ci);
 			aiman::addclient(ci);
+			
+			stats::next_activity_span(ci->uid, stats::ACTIVITY_SPAN_ALIVE);
 		}
 		if (ci->state.state != CS_INVISIBLE && val)
 		{
@@ -1695,6 +1668,8 @@ namespace server
 			ci->state.state = CS_INVISIBLE;
 			ci->state.timeplayed += lastmillis - ci->state.lasttimeplayed;
 			aiman::removeai(ci);
+			
+			stats::next_activity_span(ci->uid, stats::ACTIVITY_SPAN_INVISIBLE);
 		}
 	}
 
@@ -1709,6 +1684,8 @@ namespace server
 			spinfo->state.timeplayed += lastmillis - spinfo->state.lasttimeplayed;
 			if(!spinfo->local && !spinfo->privilege) aiman::removeai(spinfo);
 			spectated = true;
+			
+			stats::next_activity_span(spinfo->uid, stats::ACTIVITY_SPAN_SPECTATOR);
 		}
 		else if(spinfo->state.state==CS_SPECTATOR && !val)
 		{
@@ -1717,9 +1694,13 @@ namespace server
 			spinfo->state.lasttimeplayed = lastmillis;
 			aiman::addclient(spinfo);
 			unspectated = true;
+			
+			stats::next_activity_span(spinfo->uid, stats::ACTIVITY_SPAN_ALIVE);
 		}
 		else
+		{
 			return false;
+		}
 		sendf(-1, 1, "ri3", N_SPECTATOR, spinfo->clientnum, val);
 		if(!val && mapreload && !spinfo->privilege) sendf(spinfo->clientnum, 1, "ri", N_MAPRELOAD);
 		if(spectated)
@@ -1766,7 +1747,7 @@ namespace server
 		SbPy::triggerEventf("client_disconnect", "i", n);
 		if(ci->connected && ci->connectstage == 2)
 		{
-			trigger_stats(ci);
+			//trigger_stats(ci);
 			if(ci->privilege) resetpriv(ci);
 			if(smode) smode->leavegame(ci, true);
 			ci->state.timeplayed += lastmillis - ci->state.lasttimeplayed;
@@ -1777,6 +1758,8 @@ namespace server
 			clients.removeobj(ci);
 			aiman::removeai(ci);
 			if(!numclients(-1, false, true)) noclients();
+			
+			stats::next_activity_span(ci->uid, stats::ACTIVITY_SPAN_DISCONNECT);
 		}
 		else
 		{
@@ -2160,7 +2143,6 @@ namespace server
 				}
 				exp->id = getint(p);
 				int hits = getint(p);
-				//SbPy::triggerEventf("client_explode", "iii", cq->clientnum, exp->millis, exp->gun);
 				loopk(hits)
 				{
 					if(p.overread()) break;
@@ -2170,7 +2152,6 @@ namespace server
 					hit.dist = getint(p)/DMF;
 					hit.rays = getint(p);
 					loopk(3) hit.dir[k] = getint(p)/DNF;
-					//SbPy::triggerEventf("client_explode_hit", "iiiii", cq->clientnum, hit.target, hit.lifesequence, hit.dist, hit.rays);
 				}
 				if(cq) cq->addevent(exp);
 				else delete exp;

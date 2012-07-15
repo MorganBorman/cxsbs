@@ -48,6 +48,7 @@ namespace stats
 	    short gun_id;
 		bigint activity_span_id;
 		bigint when;
+		bool quad;
 	};
 
 	struct damage_dealt_event
@@ -97,19 +98,23 @@ namespace stats
 
 	void start_match(short mode_id, char *map_name, short pseudomode_id, int instance_id);
 
+	extern int SPAWNKILL_INTERVAL;
+	
+	enum {ACTIVITY_SPAN_ALIVE, ACTIVITY_SPAN_DEAD, ACTIVITY_SPAN_SPECTATOR, ACTIVITY_SPAN_INVISIBLE, ACTIVITY_SPAN_DISCONNECT};
+
 	void next_activity_span(bigint who_id, short type);
 
 	void start_capture(bigint who_id, short team, int health);
 
 	void stop_capture(bigint who_id, bool complete, int health);
 
-	void add_shot_event(bigint who_id, int game_shot_id, short gun_id);
+	void add_shot_event(bigint who_id, int game_shot_id, short gun_id, bool quad);
 
 	void add_death_event(bigint who_id, int game_shot_id, bigint killer_id, bool teamdeath, bool spawnkill, short botskill);
 
 	void add_frag_event(bigint who_id, int game_shot_id, bigint target_id, bool teamkill, bool spawnkill, short botskill);
 
-	void add_damage_dealt_event(bigint who_id, int game_shot_id, bigint target_id, int distance);
+	void add_damage_dealt_event(bigint who_id, int game_shot_id, bigint target_id, int damage, int distance);
 
 	void end_match();
 }

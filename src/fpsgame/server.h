@@ -385,7 +385,7 @@ namespace server
         void reset()
         {
             name[0] = team[0] = connectpwd[0] = 0;
-            uid = -1;
+            uid = 1;
             disconnect_reason = -1;
             connectstage = 0;
             playermodel = -1;

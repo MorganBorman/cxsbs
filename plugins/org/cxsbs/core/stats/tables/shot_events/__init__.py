@@ -52,6 +52,8 @@ class ShotEvent(org.cxsbs.core.database.manager.SchemaBase):
     gun_id              = Column(SmallInteger,  ForeignKey(Gun.id),             nullable=False)
     activity_span_id    = Column(BigInteger,    ForeignKey(ActivitySpan.id),    nullable=False)
     
+    quad                = Column(Boolean,       nullable=False);
+    
     when        = Column(DateTime, nullable=False)
     
     match = relationship('Match')
