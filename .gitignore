@@ -4,3 +4,6 @@
 /Makefile
 /CMakeFiles
 /instances
+*.pyc
+/plugins.old
+pydeps/enet.so

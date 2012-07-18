@@ -6,9 +6,10 @@ class logger(pyTensible.Plugin):
 		
 	def load(self):
 		
-		import logging, cube2server
+		import logging#, cube2server
 
-		logging_path = cube2server.serverInstanceRoot() + "/cxsbs.log"
+		#logging_path = cube2server.serverInstanceRoot() + "/cxsbs.log"
+		logging_path = "cxsbs.log"
 		
 		file_level=logging.DEBUG
 		console_level=logging.ERROR

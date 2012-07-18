@@ -17,17 +17,14 @@ def unmask(data, mask):
     return ''.join(map(chr, data))
 
 class GatewayClient(object):
-    def __init__(self, gateway, sock, address):
-        self.gateway = gateway
+    def __init__(self, gateway_server, sock, address):
+        self.gateway_server = gateway_server
         self.socket = sock
         self.address = address
         self.buffer = ""
         self.handshaken = False
         
-        self.gateway_pending_answer = None
-        self.gateway_pending_gid = None
-        
-        #server name: pseudo-client number
+        #ServiceProvider: pseudo-client number
         self.cns = {}
         
     def send(self, msg):
@@ -57,7 +54,7 @@ class GatewayClient(object):
             pass
         elif self.buffer[0] == '\x88':
             self.socket.close()
-            self.gateway.disconnect(self.socket)
+            self.gateway_server.gateway_client_disconnected(self.socket)
             print "Client disconnected."
             return None
         else:
@@ -169,17 +166,8 @@ class GatewayClient(object):
         
         self.handshaken = True
         
-        self.send("{type: 4, subtype: 0, servers: [{name: '[FD] mars', credentials: ['view', 'register']}, {name: '[FD] pluto', credentials: ['view', 'register']}]}")
+        self.gateway_server.GatewayClientConnected.emit(self)
             
     def handle_datum(self, datum):
-        print "got datum:", datum
-        
-        if datum['type'] == 2:
-            if datum['subtype'] == 0:
-                self.gateway.get_challenges(self, datum['domain'], datum['name'])
-            elif datum['subtype'] == 1:
-                if self.gateway_pending_answer != None and self.gateway_pending_gid != None:               
-                    if datum['answer'] == self.gateway_pending_answer and datum['gid'] == self.gateway_pending_gid:
-                        self.send("{type: 4, subtype: 0, servers: [{name: '[FD] mars', credentials: ['*']}, {name: '[FD] pluto', credentials: ['*']}, {name: '[FD] vulcan', credentials: ['*']}]}")
-                    self.gateway_pending_answer = None
-                    self.gateway_pending_gid = None
+        self.gateway_server.GatewayClientMessage.emit(self, datum)
+

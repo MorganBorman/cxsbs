@@ -1,9 +1,0 @@
-[Plugin]
-Name = Processing Thread
-SymbolicName = ProcessingThread
-Version = 0.0.1
-Author = Chasm
-Enabled = True
-
-[Dependencies]
-Logging = 0.0.1

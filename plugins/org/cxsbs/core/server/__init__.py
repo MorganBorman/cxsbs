@@ -10,11 +10,11 @@ class server(pyTensible.Plugin):
 		
 	def load(self):
 		
-		#self.server_object = ServerClass()
+		self.server_instance = ServerInstance()
 		
 		Interfaces = {}
 		Resources = {
-						'instance': ServerInstance(),
+						'instance': self.server_instance,
 						'state': ServerState(),
 						'constants': ServerConstants(),
 					}
@@ -23,8 +23,6 @@ class server(pyTensible.Plugin):
 		
 	def unload(self):
 		pass
-	
-import cube2server
 
 class ServerInstance(object):
 	def __init__(self):
@@ -33,6 +31,18 @@ class ServerInstance(object):
 		config_extension = ".conf"
 		
 		config_object = CategoryConfig.CategoryConfig(config_path, config_category, config_extension)
+		
+		doc_host = "What host/ip should this server instance listen on."
+		default_host = "localhost"
+		self._host = config_object.getOption('org.cxsbs.core.server.instance.host', default_host, doc_host)
+		
+		doc_port = "What port should this server instance listen on."
+		default_port = "28785"
+		self._port = config_object.getOption('org.cxsbs.core.server.instance.port', default_port, doc_port)
+		
+		doc_maxclients = "What should the absolute max number of clients be for this server instance."
+		default_maxclients = "32"
+		self._maxclients = config_object.getOption('org.cxsbs.core.server.instance.maxclients', default_maxclients, doc_maxclients)
 		
 		doc_instance_name = "The name that should be used to refer to this server instance."
 		default_instance_name = os.path.basename(self.root)
@@ -49,6 +59,25 @@ class ServerInstance(object):
 		self._privkey = config_object.getOption('org.cxsbs.core.server.instance.privkey', default_instance_privkey, doc_instance_privkey)
 		
 		del config_object
+		
+		self._engine = None
+		
+	def run(self):
+		#org.cxsbs.core.engine.Engine(self.host, self.port, self.maxclients, self.maxdown, self.maxup)
+		engine = org.cxsbs.core.engine.Engine(self.host, self.port, self.maxclients, 0, 0)
+		engine.start()
+	
+	@property
+	def host(self):
+		return self._host
+	
+	@property
+	def port(self):
+		return self._port
+	
+	@property
+	def maxclients(self):
+		return self._maxclients
 	
 	@property
 	def name(self):
@@ -56,7 +85,7 @@ class ServerInstance(object):
 	
 	@property
 	def root(self):
-		return cube2server.serverInstanceRoot()
+		return instance_root
 	
 	@property
 	def domain(self):
@@ -65,14 +94,6 @@ class ServerInstance(object):
 	@property
 	def privkey(self):
 		return self._privkey
-	
-	@property
-	def ip(self):
-		return cube2server.serverIp()
-	
-	@property
-	def port(self):
-		return cube2server.serverPort()
 
 
 class enum(object):

@@ -1,8 +1,0 @@
-[Plugin]
-Name = Manage Core
-SymbolicName = ManageCore
-Version = 0.0.1
-Author = Chasm
-Enabled = True
-
-[Dependencies]
