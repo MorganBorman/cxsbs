@@ -38,6 +38,7 @@ namespace server
     bool persistentIntermission = false;
     bool private_editing = false;
     bool allowShooting = true;
+    bool chainSawOnly = false;
     enet_uint32 lastsend = 0;
     int mastermode = MM_OPEN, mastermask = MM_PRIVSERV;
     int currentmaster = -1;
@@ -1401,6 +1402,7 @@ namespace server
 		        int(to.x*DMF), int(to.y*DMF), int(to.z*DMF),
 		        ci->ownernum);
 	}
+    	if (chainSawOnly && gun != 0) return;
         int tempdamage = guns[gun].damage*(gs.quadmillis ? 4 : 1)*(gun==GUN_SG ? SGRAYS : 1);
         gs.shotdamage += tempdamage;
         SbPy::triggerEventIntIntInt("player_spend_damage", ci->clientnum, gun, tempdamage);

@@ -1221,6 +1221,21 @@ static PyObject *setAllowShooting(PyObject *self, PyObject *args)
 	return Py_None;
 }
 
+static PyObject *chainSawOnly(PyObject *self, PyObject *args)
+{
+	return Py_BuildValue("b", server::chainSawOnly);
+}
+
+static PyObject *setChainSawOnly(PyObject *self, PyObject *args)
+{
+	bool val;
+	if(!PyArg_ParseTuple(args, "b", &val))
+		return 0;
+	server::chainSawOnly = val;
+	Py_INCREF(Py_None);
+	return Py_None;
+}
+
 static PyObject *setTeam(PyObject *self, PyObject *args)
 {
 	int cn;
@@ -1465,6 +1480,8 @@ static PyMethodDef ModuleMethods[] = {
 
 	{"allowShooting", allowShooting, METH_VARARGS, "get whether or not shooting is allowed."},
 	{"setAllowShooting", setAllowShooting, METH_VARARGS, "set whether or not shooting is allowed."},
+	{"chainSawOnly", chainSawOnly, METH_VARARGS, "get whether or not only chainsaw is allowed."},
+	{"setChainSawOnly", setChainSawOnly, METH_VARARGS, "set whether or not only chainsaw is allowed."},
 	{"setTeam", setTeam, METH_VARARGS, "Set team of player."},
 	{"pregameSetTeam", pregameSetTeam, METH_VARARGS, "Set team of player as a result of autoteam event."},
 	{"teamScore", teamScore, METH_VARARGS, "Score of team."},

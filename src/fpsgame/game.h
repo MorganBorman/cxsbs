@@ -5,6 +5,11 @@
 
 // console message types
 
+namespace server
+{
+	extern bool chainSawOnly;
+}
+
 enum
 {
     CON_CHAT       = 1<<8,
@@ -483,6 +488,11 @@ struct fpsstate
         {
             ammo[GUN_PISTOL] = m_sp ? 80 : 40;
             ammo[GUN_GL] = 1;
+        }
+        if (server::chainSawOnly)
+        {
+            loopi(NUMGUNS) ammo[i] = 0;
+            ammo[GUN_FIST] = 1;
         }
     }
 

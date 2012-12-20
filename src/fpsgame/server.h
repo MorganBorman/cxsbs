@@ -400,6 +400,7 @@ namespace server
 	extern int gamemillis;
 	extern bool persistentIntermission;
 	extern bool allowShooting;
+	extern bool chainSawOnly;
 	extern int nextexceeded;
 	extern vector<clientinfo *> connects, clients, bots;
 	extern int mastermode;
